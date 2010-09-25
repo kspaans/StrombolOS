@@ -1,0 +1,22 @@
+STMFD instruction:
+	Store Multiple (Full, Descending Stack) - store multiple registers to the stack,
+	where the stack pointer points to the last used word on the stack and the stack
+	grows downward toward 0x0. Registers are saved sequentially according to their
+	register number, starting with the lowest numbers
+	EG
+	stmfd	sp!, {fp, ip, lr, pc}
+	is usually near the beginning of a subroutine, and will store the
+	frame pointer(?) ip(?), link register, and program counter to the stack, saving
+	an incremented value back into sp (
+
+
+==
+REGISTERS
+==
+
+pc - r15, Program Counter
+lr - r14, Link Register
+sp - r13, Stack Pointer
+ip - r12, interprocedural scratch
+fp - r11, frame pointer
+sl - r10, ???
