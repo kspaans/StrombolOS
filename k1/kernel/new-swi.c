@@ -1,15 +1,18 @@
 #include <bwio.h>
 #include <ts7200.h>
+#include "switch.h"
+#include "regdump.h"
 
 void fuck () {
   bwputstr (COM2, "swi totally worked. going into infinite loop..\n");
+  regdump();
   while (1) {}
 }
 
 int main () {
   bwsetfifo (COM2, OFF);
   bwputstr (COM2, "[2JHello. in main.\n");
-
+  regdump();
 
   asm ("ldr r4, .ADDR\n\t"
        "mov r5, #0x28\n\t"
@@ -17,7 +20,10 @@ int main () {
 
   bwputstr (COM2, "handler installed! gonna swi this shit nigggaaaaa\n");
  
-  asm ("swi 0\n\t");
+  regdump();
+  swtch(2);
+  regdump();
+  //asm ("swi 0\n\t");
  
   bwputstr (COM2, "SHOULD NOT BE HERE.\n");
 
