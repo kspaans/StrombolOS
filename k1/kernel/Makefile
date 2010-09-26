@@ -11,8 +11,9 @@ ASFLAGS	= -mcpu=arm920t -mapcs-32
 LDFLAGS = -init main -Map kernel.map -N -T orex.ld \
           -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../lib
 
-OBJS    = new-swi.o switch.o regdump.o
+OBJS    = kernel.o exception.o switch.o regdump.o
 DEPS    = $(OBJS:.o=.d)
+ASMS	= $(OBJS:.o=.s)
 EXEC    = StrombolOS.elf
 
 # So that ``all'' isn't considered a normal rule
@@ -34,8 +35,9 @@ all: ${EXEC}
 ${EXEC}: ${OBJS}
 	${LD} ${LDFLAGS} -o $@ ${OBJS} -lbwio -lgcc
 
+# Use special built-ins to filter out the .s files we care about
 clean:
-	rm -rf ${DEPS} ${OBJS} ${EXEC} *.map
+	rm -rf ${DEPS} ${OBJS} ${EXEC} *.map $(filter-out switch.s regdump.s,$(ASMS))
 
 copy:
 	cp ${EXEC} /u3/cs452/tftpboot/ARM/
