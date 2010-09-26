@@ -15,6 +15,10 @@ swtch:
 	ldr	r3, [sp, #8]
 	str	r3, [sp, #0]
 	ldr	r3, [sp, #0]
+	str	lr, [sp, #4]
+
+	mov	r5, #0x28
+	str	r1, [r5]	@ put the function pointer into interrupt handler
 
 	cmp	r3, #0
 	beq	RET0
@@ -48,7 +52,8 @@ RET4:
 
 	@ Return value should already be in r0
 EGRESS:
+	ldr	lr, [sp, #4]
 	add	sp, sp, #12
-	bx	lr
+	mov	pc, lr
 	.size	swtch, .-swtch
 	.ident	"GCC: (GNU) 4.0.2"

@@ -1,1 +1,1 @@
-int swtch(int arg);
+int swtch(int arg, void (*func)());
