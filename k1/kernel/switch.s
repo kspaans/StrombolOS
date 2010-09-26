@@ -9,51 +9,17 @@ swtch:
 	@ args = 0, pretend = 0, frame = 12
 	@ frame_needed = 0, uses_anonymous_args = 0
 	@ link register save eliminated.
-	sub	sp, sp, #12
 	@ lr needed for prologue
-	str	r0, [sp, #8]
-	ldr	r3, [sp, #8]
-	str	r3, [sp, #0]
-	ldr	r3, [sp, #0]
-	str	lr, [sp, #4]
+	stmfd	sp, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14}
+	sub	sp, sp, #60
 
 	mov	r5, #0x28
 	str	r1, [r5]	@ put the function pointer into interrupt handler
 
-	cmp	r3, #0
-	beq	RET0
-	cmp	r3, #1
-	beq	RET1
-	cmp	r3, #2
-	beq	RET2
-	cmp	r3, #3
-	beq	RET3
-	cmp	r3, #4
-	beq	RET4
-	b	.L2
-
-RET0:
 	swi	#0
-	b	EGRESS
-RET1:
-	swi	#1
-	b	EGRESS
-RET2:
-	swi	#2
-	b	EGRESS
-RET3:
-	swi	#3
-	b	EGRESS
-RET4:
-	swi	#4
-	b	EGRESS
-.L2:
-	swi	#42
 
 	@ Return value should already be in r0
-EGRESS:
-	ldr	lr, [sp, #4]
-	add	sp, sp, #12
+	ldmfd	sp, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14}
 	mov	pc, lr
 	.size	swtch, .-swtch
 	.ident	"GCC: (GNU) 4.0.2"

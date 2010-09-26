@@ -12,7 +12,7 @@ void fuck () {
 void bluepill()
 {
   bwputstr(COM2, "Welcome to The Matrix...\n");
-  regdump();
+  //regdump();
 }
 
 int main () {
@@ -24,8 +24,10 @@ int main () {
 
   bwputstr (COM2, "handler installed! gonna swi this shit nigggaaaaa\n");
  
-  retval = swtch(2, fp);
+  retval = swtch(88, fp);
+  //regdump();
   bwprintf(COM2, "Returned %d from SWI\n", retval);
+  //regdump();
  
   return 0;
 }
