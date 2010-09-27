@@ -34,8 +34,11 @@ int activate(struct td *taskd)
 
 void first()
 {
-  bwputstr(COM2, "Hey, I'm a user!\n");
-  swtch(0, NULL);
+  int i = 4;
+  while (i--) {
+    bwputstr(COM2, "Hey, I'm a user!\n");
+    swtch(0, NULL);
+  }
 }
 
 void kinit(struct td *tds, void *s, void (*first)())
@@ -44,7 +47,7 @@ void kinit(struct td *tds, void *s, void (*first)())
   install_handler(handle);
   bwputstr(COM2, "< init> installed exception handler\n");
   bwputstr(COM2, "< init> will initialize some space probably...\n");
-  tds[0].tid      = 0;
+  tds[0].tid      = 0xdeadbeef;
   tds[0].stack    = s;
   tds[0].state    = 0;
   tds[0].priority = 0;

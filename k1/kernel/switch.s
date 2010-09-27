@@ -4,11 +4,9 @@
 	.type	swtch, %function
 swtch:
 	str	lr, [sp, #-4]!	@ writes-back decr'd value of sp
-	mov	r0, #1
-	mov	r1, sp
-	bl	bwputr
 	swi	#0
-	ldr	pc, [sp], #4	@ also performs a write-back to sp
+	ldr	lr, [sp], #4	@ also performs a write-back to sp
+	mov	pc, lr
 	.size	swtch, .-swtch
 	.text
 	.align  2
@@ -53,16 +51,9 @@ activate_lower:
 	stmfd	sp, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14}
 	sub	sp, sp, #60
 	@ Swap to "user" state
-	ldr	sp, [r0], #0
-	mov	r0, #1
-	mov	r1, sp
-	bl	bwputr
-	@ Right now, only retval and LR are ''saved''
-	@@ldmfd	sp!, {r0, lr}
-	ldr	r1, [sp], #-4
-	mov	r0, #1
-	bl	bwputr
+	ldr	sp, [r0, #4]
 	@ Jump into the user
+	ldr	pc, [sp, #-4]  @ this jumps to first()
 	mov	pc, lr
 	.size	activate_lower, .-activate_lower
 	.ident	"GCC: (GNU) 4.0.2"
