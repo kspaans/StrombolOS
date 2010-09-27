@@ -56,7 +56,6 @@ void first()
   b[3]--;
   bwputstr (COM2, "now b[2] = b[2] - x  and b[3] = b[3] - 1...\n");
   i = 5; while (i--) { bwprintf (COM2, "b[%d] = ", i); bwputr(COM2, b[i]); bwputstr (COM2, "\n");}
- 
 }
 
 

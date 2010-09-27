@@ -65,11 +65,8 @@ activate_lower:
 	mov	sp, r2
 
 	@ Jump into the user
-	ldr	pc, [sp, #-4]  @ this jumps to first()
-	@mov	r0,#1
-	@ldr	r1, [sp, #-4]
-	@bl	bwputr(PLT)
-	@.FOO: ldr pc, .FOO
-	mov	pc, lr
+	ldr	pc, [sp, #-4]  @ this jumps to first()   should there be a bang??? think carefully later!!
+
+	@ should not get here: mov	pc, lr ?????
 	.size	activate_lower, .-activate_lower
 	.ident	"GCC: (GNU) 4.0.2"
