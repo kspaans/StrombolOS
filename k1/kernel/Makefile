@@ -37,7 +37,7 @@ ${EXEC}: ${OBJS}
 
 # Use special built-ins to filter out the .s files we care about
 clean:
-	rm -rf ${DEPS} ${OBJS} ${EXEC} *.map $(filter-out switch.s regdump.s,$(ASMS))
+	rm -rf ${DEPS} ${OBJS} ${EXEC} *.map $(filter-out switch.s regdump.s exception.s,$(ASMS))
 
 copy:
 	cp ${EXEC} /u3/cs452/tftpboot/ARM/

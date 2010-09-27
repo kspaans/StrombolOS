@@ -40,7 +40,13 @@ int main () {
  
   a *= (c - b);
   bwputstr(COM2, "< kernel> Jump!\n");
-  retval = swtch(88, fp);
+  int xx = 42;
+  bwprintf (COM2, "xx is %d\n", xx);
+  retval = swtch(88, fp); // Exit from the kernel, and return right after
+  xx++;
+  retval = swtch (88,fp);
+  bwprintf (COM2, "xx is %d\n", xx);
+
   //regdump();
   bwprintf(COM2, "< kernel> Returned %d from SWI\n", retval);
   //regdump();
