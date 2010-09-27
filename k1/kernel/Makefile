@@ -14,7 +14,7 @@ LDFLAGS = -init main -Map kernel.map -N -T orex.ld \
 OBJS    = kernel.o exception.o switch.o regdump.o
 DEPS    = $(OBJS:.o=.d)
 ASMS	= $(OBJS:.o=.s)
-EXEC    = StrombolOS.elf
+EXEC    = j3.elf
 
 # So that ``all'' isn't considered a normal rule
 .PHONY: all
@@ -39,7 +39,9 @@ ${EXEC}: ${OBJS}
 clean:
 	rm -rf ${DEPS} ${OBJS} ${EXEC} *.map $(filter-out switch.s regdump.s exception.s,$(ASMS))
 
-copy:
-	cp ${EXEC} /u3/cs452/tftpboot/ARM/
+jcopy:
+	cp ${EXEC} /u3/cs452/tftpboot/ARM/StrombolOS/j3parker.elf
+kcopy: 
+	cp ${EXEC} /u3/cs452/tftpboot/ARM/StrombolOS/kspaans.elf
 
 -include ${DEPS}

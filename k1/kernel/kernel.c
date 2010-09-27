@@ -39,6 +39,9 @@ void first()
     bwputstr(COM2, "Hey, I'm a user!\n");
     swtch(0, NULL);
   }
+  bwputstr (COM2, "CPU Mode: ");
+  print_mode();
+  bwputstr (COM2, "\n\n");
 }
 
 void kinit(struct td *tds, void *s, void (*first)())
