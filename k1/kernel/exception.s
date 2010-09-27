@@ -7,13 +7,24 @@
 	.global	handle
 	.type	handle, %function
 handle:
-	stmfd	sp, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14}
-	sub	sp, sp, #60
+	@ Change to server mode || what about SPSR stuff? tromped r3?
+	mrs	r3, CPSR
+	orr	r3, r3, #0x1F
+	msr     CPSR_c, r3
 
-	@ doooo stufff
+	@ Save the SP and LR, for now...
+	stmfd	sp, {sp, lr}
+	sub	sp, sp, #8
 
+	@ Back to svc mode to restore kernel state
+	mrs	r3, CPSR
+	bic	r3, r3, #0x1F
+	orr	r3, r3, #0x13
+	msr     CPSR_c, r3
 	ldmfd	sp, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14}
 
+	@ grab arguments, make kernel do stuff!
+	@@bl	fuck @ fun for a test?
 	mov	pc, lr
 .L4:
 	.align	2
