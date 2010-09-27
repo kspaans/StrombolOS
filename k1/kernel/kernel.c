@@ -32,17 +32,33 @@ int activate(struct td *taskd)
   return 0;
 }
 
+void initdeadbeef (int *p, int n) {
+  int *i;
+  for (i = p; i<p+n; *(++i) = 0xDEADBEEF);
+}
+
 void first()
 {
   int i = 4;
   while (i--) {
     bwputstr(COM2, "Hey, I'm a user!\n");
-    swtch(0, NULL);
+//    swtch(0, NULL);
   }
   bwputstr (COM2, "CPU Mode: ");
   print_mode();
   bwputstr (COM2, "\n\n");
+  int x = 42;
+  int b[5];
+  initdeadbeef (b, 5);
+  bwprintf (COM2, "x is %d\n", x);
+  i = 5; while (i--) { bwprintf (COM2, "b[%d] = ", i); bwputr(COM2, b[i]); bwputstr (COM2, "\n");}
+  b[2] -= x;
+  b[3]--;
+  bwputstr (COM2, "now b[2] = b[2] - x  and b[3] = b[3] - 1...\n");
+  i = 5; while (i--) { bwprintf (COM2, "b[%d] = ", i); bwputr(COM2, b[i]); bwputstr (COM2, "\n");}
+ 
 }
+
 
 void kinit(struct td *tds, void *s, void (*first)())
 {
@@ -79,18 +95,22 @@ int main () {
   struct td tds[10]; // why not?
   int ustack1[1024]; // Probably a bit much?
   int ustack2[1024];
+  initdeadbeef (ustack1,1024);
+  initdeadbeef (ustack2,1024);
 
   bwsetfifo (COM2, OFF);
   bwputstr (COM2, "[2J< kernel> Hello, world!\n");
+
   //regdump();
+  bwputstr (COM2, "ustack1[1023] is ");
+  bwputr (COM2,ustack1[1023]); 
+  bwputstr (COM2, "\n");
 
   a = 1; b = 2; c = 10;
   kinit(tds, (void *)ustack1, &first);
  
   a *= (c - b);
   bwputstr(COM2, "< kernel> Jump!\n");
-  int xx = 42;
-  bwprintf (COM2, "xx is %d\n", xx);
 
   activate(&tds[0]);
 
@@ -99,9 +119,7 @@ int main () {
   //print_mode();
   //retval = swtch(88, fp); // Exit from the kernel, and return right after
   //print_mode();
-  xx++;
   //retval = swtch (88,fp);
-  bwprintf (COM2, "xx is %d\n", xx);
 
   //regdump();
   bwprintf(COM2, "< kernel> Returned %d from SWI\n", retval);

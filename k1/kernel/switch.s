@@ -50,10 +50,26 @@ activate_lower:
 	@ Save kernel state
 	stmfd	sp, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14}
 	sub	sp, sp, #60
-	@ Swap to "user" state
-	ldr	sp, [r0, #4]
+	
+	@ setup user state
+	@~@~@~@~@~@~@~@~@ldr	sp, [r0, #4]
+        ldr	r2, [r0, #4] @ pull sp out of td
+
+        @ Change to user mode
+	mrs	r3, CPSR
+	bic	r3, r3, #0x1F
+	orr	r3, r3, #0x10
+        msr     CPSR_c, r3
+
+	@ Restore the sp - ugliness because of register banking
+	mov	sp, r2
+
 	@ Jump into the user
 	ldr	pc, [sp, #-4]  @ this jumps to first()
+	@mov	r0,#1
+	@ldr	r1, [sp, #-4]
+	@bl	bwputr(PLT)
+	@.FOO: ldr pc, .FOO
 	mov	pc, lr
 	.size	activate_lower, .-activate_lower
 	.ident	"GCC: (GNU) 4.0.2"
