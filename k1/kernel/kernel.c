@@ -14,7 +14,7 @@ void fuck () {
 
 void bluepill()
 {
-  bwputstr(COM2, "Welcome to The Matrix...\n");
+  bwputstr(COM2, "< bluepill> Welcome to The Matrix...\n");
   //regdump();
 }
 
@@ -30,16 +30,22 @@ void kinit()
 int main () {
   int retval   = 0;
   void (*fp)() = &bluepill;
+  int a, b, c;
   bwsetfifo (COM2, OFF);
   bwputstr (COM2, "[2J< kernel> Hello, world!\n");
   //regdump();
 
+  a = 1; b = 2; c = 10;
   kinit();
  
+  a *= (c - b);
+  bwputstr(COM2, "< kernel> Jump!\n");
   retval = swtch(88, fp);
   //regdump();
-  bwprintf(COM2, "Returned %d from SWI\n", retval);
+  bwprintf(COM2, "< kernel> Returned %d from SWI\n", retval);
   //regdump();
+  c += a;
+  bwprintf(COM2, "< kernel> Context arithmetic is %d\n", c);
  
   return 0;
 }
