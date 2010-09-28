@@ -28,7 +28,7 @@ int activate(struct td *taskd)
   bwprintf(COM2, "< activate>   %x\n", (int)taskd->stack[0]);
   bwprintf(COM2, "< activate>   %x\n", (int)taskd->stack[-1]);
   activate_lower(taskd);
-  //change_mode(0x10);
+  // update TD.stack here...
   return 0;
 }
 
@@ -41,8 +41,8 @@ void first()
 {
   int i = 4;
   while (i--) {
-    bwputstr(COM2, "Hey, I'm a user!\n");
-//    swtch(0, NULL);
+    bwprintf(COM2, "Hey, I'm a user(%d)!\n", i);
+    swtch(0, NULL);
   }
   bwputstr (COM2, "CPU Mode: ");
   print_mode();
@@ -74,8 +74,8 @@ void kinit(struct td *tds, void *s, void (*first)())
   tds[0].pc       = first;
 
   tds[0].stack[0] = (int)tds[0].pc; // setup LR, aka the entry point
-  ++(tds[0].stack);
   tds[0].stack[0] = tds[0].retval; // increment MORE>?!
+  ++(tds[0].stack);
   bwputstr(COM2, "< init> Setup the initial state\n");
 
   bwprintf(COM2, "< init> Using initial stack: %x\n", (int)s);
@@ -111,6 +111,10 @@ int main () {
   a *= (c - b);
   bwputstr(COM2, "< kernel> Jump!\n");
 
+  activate(&tds[0]);
+  bwputstr(COM2, "< kernel> Jump1!\n");
+  activate(&tds[0]);
+  bwputstr(COM2, "< kernel> Jump2!\n");
   activate(&tds[0]);
 
   //print_mode();

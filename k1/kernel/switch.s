@@ -51,8 +51,7 @@ activate_lower:
 	stmfd	sp, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14}
 	sub	sp, sp, #60
 	
-	@ setup user state
-	@~@~@~@~@~@~@~@~@ldr	sp, [r0, #4]
+	@ restore user state, we get the CORRECT stack pointer from the TD
         ldr	r2, [r0, #4] @ pull sp out of td
 
         @ Change to user mode
@@ -63,6 +62,8 @@ activate_lower:
 
 	@ Restore the sp - ugliness because of register banking
 	mov	sp, r2
+	@ Now restore user state...
+	@ ???
 
 	@ Jump into the user
 	ldr	pc, [sp, #-4]  @ this jumps to first()   should there be a bang??? think carefully later!!
