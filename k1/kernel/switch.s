@@ -3,9 +3,7 @@
 	.global	swtch
 	.type	swtch, %function
 swtch:
-	str	lr, [sp, #-4]!	@ writes-back decr'd value of sp
 	swi	#0
-	ldr	lr, [sp], #4	@ also performs a write-back to sp
 	mov	pc, lr
 	.size	swtch, .-swtch
 	.text
@@ -22,11 +20,12 @@ print_mode:
 	.size	print_mode, .-print_mode
 	.text
 	.align  2
-	.global activate_lower
-	.type   activate_lower, %function
-activate_lower:
+	.global activate
+	.type   activate, %function
+activate:
 	@@
 	@@ r0 is pointer to task descriptor
+	@@ r1 is return value to user task
 	@@
 	@ Save kernel state
 	stmfd	sp, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14}
@@ -34,6 +33,9 @@ activate_lower:
 	
 	@ restore user state, we get the CORRECT stack pointer from the TD
         ldr	r2, [r0, #4] @ pull sp out of td
+
+	@ Put the return value onto the user's stack, SP points at saved r0
+	str	r1, [r2, #0]
 
         @ Change to user mode
 	mrs	r3, CPSR
@@ -87,8 +89,9 @@ activate_lower:
 	msr     CPSR_c, r4
 
 	@ r0 has the pointer to the TD
-	@str	sp, [r0, #4]
-	mov	r0, sp
+	str	sp, [r0, #4]
+	@ Grab the user's argument
+	ldr	r0, [sp], #0
 
 	@ Back to supervisor mode
 	mrs	r4, CPSR
@@ -101,7 +104,7 @@ activate_lower:
 
 	@ grab user arguments
 	mov	pc, lr
-	.size	activate_lower, .-activate_lower
+	.size	activate, .-activate
 	.text
 	.align	2
 	.global	install_handler
