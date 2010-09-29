@@ -73,17 +73,32 @@ activate_lower:
 	@ Restore the user's correct r4
 	ldr	r4, [sp, #0]!
 	str	r4, [r5, #16]
-
-	@ SAVE USER STACK POINTER FOR UPDATING TD???
-
 	@ User's state now successfully saved
-	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 	@ Restore kernel state
 	ldmfd	sp, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14}
 
-	@ grab arguments, make kernel do stuff!
-	@@bl	fuck @ fun for a test?
+	@ Save r4 for the purpose of getting the user's SP
+	stmfd	sp!, {r4}
+
+	@ Go back to server mode to save the user's stack pointer
+	mrs	r4, CPSR
+	orr	r4, r4, #0x1F
+	msr     CPSR_c, r4
+
+	@ r0 has the pointer to the TD
+	str	sp, [r0, #4]
+
+	@ Back to supervisor mode
+	mrs	r4, CPSR
+	bic	r4, r4, #0x1F
+	orr	r4, r4, #0x13
+	msr     CPSR_c, r4
+
+	@ Restore the kernel's real r4
+	ldmfd	sp!, {r4}
+
+	@ grab user arguments
 	mov	pc, lr
 	.size	activate_lower, .-activate_lower
 	.text

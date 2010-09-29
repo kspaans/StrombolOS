@@ -8,7 +8,7 @@ struct td {
 	void *pc;     // entry point?
 };
 
-int swtch(int arg, void (*func)());
+int swtch(int arg);
 void print_mode();
 void activate_lower(struct td *t);
 void install_handler();

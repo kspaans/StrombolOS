@@ -6,18 +6,6 @@
 #define FOREVER for(;;)
 #define NULL (void *)0
 
-void fuck () {
-  bwputstr (COM2, "swi totally worked. going into infinite loop..\n");
-  //regdump();
-  while (1) {}
-}
-
-void bluepill()
-{
-  bwputstr(COM2, "< bluepill> Welcome to The Matrix...\n");
-  //regdump();
-}
-
 int activate(struct td *taskd)
 {
   bwputstr(COM2, "< activate> upper half...\n");
@@ -27,12 +15,11 @@ int activate(struct td *taskd)
   bwprintf(COM2, "< activate>   %x\n", (int)taskd->stack[0]);
   bwprintf(COM2, "< activate>   %x\n", (int)taskd->stack[-1]);
   bwprintf(COM2, "< activate> with bottom of stack at %x\n", (int)taskd->stack);
-  int i = 0;
-  for (; i < 15; ++i) {
-    bwprintf(COM2, "< activate> stack[%d] = %x\n", i, (int)taskd->stack[i]);
-  }
+  //int i = 0;
+  //for (; i < 15; ++i) {
+  //  bwprintf(COM2, "< activate> stack[%d] = %x\n", i, (int)taskd->stack[i]);
+  //}
   activate_lower(taskd);
-  // update TD.stack here...
   return 0;
 }
 
@@ -44,9 +31,11 @@ void initbuf (int *p, int n, int val) {
 void first()
 {
   int i = 4;
+  int r;
   while (i--) {
     bwprintf(COM2, "Hey, I'm a user(%d)!\n", i);
-    swtch(0, NULL);
+    r = swtch(0);
+    bwprintf(COM2, "And the kernel gave me %d!\n", r);
   }
   bwputstr (COM2, "CPU Mode: ");
   print_mode();
@@ -76,6 +65,8 @@ void kinit(struct td *tds, int *s, void (*first)())
   tds[0].next     = NULL;
   tds[0].retval   = 88;
   tds[0].pc       = first;
+
+  bwprintf(COM2, "< init> Initializing %x through %x of user stack.\n", tds[0].stack - 15, tds[0].stack);
 
   tds[0].stack -= 15;
   initbuf(tds[0].stack, 15, 0x00FACE00);
