@@ -10,5 +10,5 @@ struct td {
 
 int swtch(int arg);
 void print_mode();
-void activate_lower(struct td *t);
+int activate_lower(struct td *t);
 void install_handler();

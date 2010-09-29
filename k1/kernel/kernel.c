@@ -8,24 +8,27 @@
 
 int activate(struct td *taskd)
 {
+  int blah;
   bwputstr(COM2, "< activate> upper half...\n");
-  bwprintf(COM2, "< activate> with TD %x\n", (int)taskd);
-  bwprintf(COM2, "< activate> with TD.tid %x\n", taskd->tid);
-  bwprintf(COM2, "< activate> with stack:\n");
-  bwprintf(COM2, "< activate>   %x\n", (int)taskd->stack[0]);
-  bwprintf(COM2, "< activate>   %x\n", (int)taskd->stack[-1]);
+  bwprintf(COM2, "< activate> with TD.stack pointer %x\n", (int)(&taskd->stack));
+  bwprintf(COM2, "< activate> with TD.tid(%x): %x\n", (int)(&taskd->tid), taskd->tid);
+  bwprintf(COM2, "< activate> with stack conents:\n");
+  bwprintf(COM2, "< activate>  1  %x\n", (int)taskd->stack[1]);
+  bwprintf(COM2, "< activate>  0  %x\n", (int)taskd->stack[0]);
   bwprintf(COM2, "< activate> with bottom of stack at %x\n", (int)taskd->stack);
-  //int i = 0;
-  //for (; i < 15; ++i) {
-  //  bwprintf(COM2, "< activate> stack[%d] = %x\n", i, (int)taskd->stack[i]);
-  //}
-  activate_lower(taskd);
+  int i = 0;
+  for (i = 14; i >= 0; --i) {
+    bwprintf(COM2, "< activate> stack[%d](%x)\t= %x\n", i, (int)(taskd->stack + i), (int)taskd->stack[i]);
+  }
+  blah = activate_lower(taskd);
+  bwprintf(COM2, "TD pointer (%x) and TD.stack (%x)\n", blah, *((int *)blah + 1));
+  taskd->stack = (int *)blah;
   return 0;
 }
 
 void initbuf (int *p, int n, int val) {
   int *i;
-  for (i = p; i<p+n; *(++i) = val);
+  for (i = p; i<p+n; *(i++) = val);
 }
 
 void first()
@@ -54,11 +57,12 @@ void first()
 
 void kinit(struct td *tds, int *s, void (*first)())
 {
+  int i;
   bwputstr(COM2, "< init> entering\n");
   install_handler();
   bwputstr(COM2, "< init> installed exception handler\n");
   bwputstr(COM2, "< init> will initialize some space probably...\n");
-  tds[0].tid      = 0xdeadbeef;
+  tds[0].tid      = 0xdeadb00b;
   tds[0].stack    = s + 1024; // We are now pointing just below the stack
   tds[0].state    = 0;
   tds[0].priority = 0;
@@ -70,6 +74,10 @@ void kinit(struct td *tds, int *s, void (*first)())
 
   tds[0].stack -= 15;
   initbuf(tds[0].stack, 15, 0x00FACE00);
+  for (i=-1; i<16; i++) {
+    bwputr (COM2, tds[0].stack[i]);
+    bwputstr (COM2, "\n");
+  }
   tds[0].stack[0] = tds[0].retval;
   tds[0].stack[13] = (int)(tds[0].stack + 15);
   tds[0].stack[14] = (int)tds[0].pc;
@@ -95,20 +103,22 @@ int main () {
   bwputstr (COM2, "ustack1 is ");
   bwputr (COM2,(int)ustack1); 
   bwputstr (COM2, "\n");
+  bwprintf(COM2, "ustack1+1023 is %x\n", (int)(ustack1 + 1023));
   bwputstr (COM2, "ustack2 is ");
   bwputr (COM2,(int)ustack2); 
   bwputstr (COM2, "\n");
+  bwprintf(COM2, "ustack2+1023 is %x\n", (int)(ustack2 + 1023));
+  bwprintf(COM2, "tds is %x\n", (int)tds);
 
   a = 1; b = 2; c = 10;
   kinit(tds, (void *)ustack1, &first);
  
   a *= (c - b);
-  bwputstr(COM2, "< kernel> Jump!\n");
-
+  bwputstr(COM2, "< kernel> Jump0! ---- ---- ---- ----\n");
   activate(&tds[0]);
-  bwputstr(COM2, "< kernel> Jump1!\n");
+  bwputstr(COM2, "< kernel> Jump1! ---- ---- ---- ----\n");
   activate(&tds[0]);
-  bwputstr(COM2, "< kernel> Jump2!\n");
+  bwputstr(COM2, "< kernel> Jump2! ---- ---- ---- ----\n");
   activate(&tds[0]);
   activate(&tds[0]);
 

@@ -52,7 +52,7 @@ activate_lower:
 .HANDLE:
 	@ We return to the kernel  H E R E
 	@ Change to server mode || what about SPSR stuff?
-	str	r4, [sp, #0]!
+	stmfd	sp!, {r4}
 
 	mrs	r4, CPSR
 	orr	r4, r4, #0x1F
@@ -71,7 +71,7 @@ activate_lower:
 	msr     CPSR_c, r4
 
 	@ Restore the user's correct r4
-	ldr	r4, [sp, #0]!
+	ldmfd	sp!, {r4}
 	str	r4, [r5, #16]
 	@ User's state now successfully saved
 
@@ -87,7 +87,8 @@ activate_lower:
 	msr     CPSR_c, r4
 
 	@ r0 has the pointer to the TD
-	str	sp, [r0, #4]
+	@str	sp, [r0, #4]
+	mov	r0, sp
 
 	@ Back to supervisor mode
 	mrs	r4, CPSR
