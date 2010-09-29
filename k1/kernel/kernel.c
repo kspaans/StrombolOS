@@ -1,6 +1,5 @@
 #include <bwio.h>
 #include <ts7200.h>
-#include "exception.h"
 #include "switch.h"
 #include "regdump.h"
 
@@ -27,14 +26,15 @@ int activate(struct td *taskd)
   bwprintf(COM2, "< activate> with stack:\n");
   bwprintf(COM2, "< activate>   %x\n", (int)taskd->stack[0]);
   bwprintf(COM2, "< activate>   %x\n", (int)taskd->stack[-1]);
+  bwprintf(COM2, "< activate> with bottom of stack at %x\n", (int)taskd->stack);
   activate_lower(taskd);
   // update TD.stack here...
   return 0;
 }
 
-void initdeadbeef (int *p, int n) {
+void initbuf (int *p, int n, int val) {
   int *i;
-  for (i = p; i<p+n; *(++i) = 0xDEADBEEF);
+  for (i = p; i<p+n; *(++i) = val);
 }
 
 void first()
@@ -49,7 +49,7 @@ void first()
   bwputstr (COM2, "\n\n");
   int x = 42;
   int b[5];
-  initdeadbeef (b, 5);
+  initbuf (b, 5, 0xDEADBEEF);
   bwprintf (COM2, "x is %d\n", x);
   i = 5; while (i--) { bwprintf (COM2, "b[%d] = ", i); bwputr(COM2, b[i]); bwputstr (COM2, "\n");}
   b[2] -= x;
@@ -62,29 +62,27 @@ void first()
 void kinit(struct td *tds, void *s, void (*first)())
 {
   bwputstr(COM2, "< init> entering\n");
-  install_handler(handle);
+  install_handler();
   bwputstr(COM2, "< init> installed exception handler\n");
   bwputstr(COM2, "< init> will initialize some space probably...\n");
   tds[0].tid      = 0xdeadbeef;
-  tds[0].stack    = s;
+  tds[0].stack    = s + 1024; // We are now pointing just below the stack
   tds[0].state    = 0;
   tds[0].priority = 0;
   tds[0].next     = NULL;
   tds[0].retval   = 88;
   tds[0].pc       = first;
 
-  tds[0].stack[0] = (int)tds[0].pc; // setup LR, aka the entry point
-  tds[0].stack[0] = tds[0].retval; // increment MORE>?!
-  ++(tds[0].stack);
+  //tds[0].stack[0] = (int)tds[0].pc; // setup LR, aka the entry point
+  tds[0].stack -= 15;
+  initbuf(tds[0].stack, 15, 0x00FACE00);
+  tds[0].stack[0] = tds[0].retval;
+  tds[0].stack[52] = (int)tds[0].stack + 15;
+  tds[0].stack[56] = (int)tds[0].pc;
   bwputstr(COM2, "< init> Setup the initial state\n");
 
   bwprintf(COM2, "< init> Using initial stack: %x\n", (int)s);
   bwputstr(COM2, "< init> leaving\n");
-}
-
-void test()
-{
-  change_mode(0x10);
 }
 
 int main () {
@@ -94,15 +92,18 @@ int main () {
   struct td tds[10]; // why not?
   int ustack1[1024]; // Probably a bit much?
   int ustack2[1024];
-  initdeadbeef (ustack1,1024);
-  initdeadbeef (ustack2,1024);
+  initbuf (ustack1,1024, 0xDEADBEEF);
+  initbuf (ustack2,1024, 0xDEADBEEF);
 
   bwsetfifo (COM2, OFF);
   bwputstr (COM2, "[2J< kernel> Hello, world!\n");
 
   //regdump();
-  bwputstr (COM2, "ustack1[1023] is ");
-  bwputr (COM2,ustack1[1023]); 
+  bwputstr (COM2, "ustack1 is ");
+  bwputr (COM2,(int)ustack1); 
+  bwputstr (COM2, "\n");
+  bwputstr (COM2, "ustack2 is ");
+  bwputr (COM2,(int)ustack2); 
   bwputstr (COM2, "\n");
 
   a = 1; b = 2; c = 10;

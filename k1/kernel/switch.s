@@ -10,25 +10,6 @@ swtch:
 	.size	swtch, .-swtch
 	.text
 	.align  2
-	.global change_mode
-	.type   change_mode, %function
-change_mode:
-	stmfd	sp!, {r1}
-	mrs	r1, CPSR
-	bic	r1, r1, #0x1F
-	orr	r1, r1, r0
-	stmfd	sp!, {r2, r3}
-	mov	r2, r13
-	mov	r3, r14
-	msr	CPSR_c, r1
-	mov	r14, r3
-	mov	r13, r2
-	ldmfd	sp!, {r2, r3}
-	ldmfd	sp!, {r1}
-	mov	pc, lr
-	.size	change_mode, .-change_mode
-	.text
-	.align  2
 	.global print_mode
 	.type   print_mode, %function
 print_mode:
@@ -62,12 +43,70 @@ activate_lower:
 
 	@ Restore the sp - ugliness because of register banking
 	mov	sp, r2
+
 	@ Now restore user state...
-	@ ???
+	ldmfd	sp, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14}
+	@@@@@@@ldr	pc, [sp, #0]  @ this jumps to first()   should there be a bang??? think carefully later!!
+
+	mov	r0, #1
+	mov	r1, lr
+	bl	bwputr
 
 	@ Jump into the user
-	ldr	pc, [sp, #-4]  @ this jumps to first()   should there be a bang??? think carefully later!!
+	mov	pc, lr
+.HANDLE:
+	@ We return to the kernel  H E R E
+	@ Change to server mode || what about SPSR stuff?
+	str	r4, [sp, #0]!
 
-	@ should not get here: mov	pc, lr ?????
+	mrs	r4, CPSR
+	orr	r4, r4, #0x1F
+	msr     CPSR_c, r4
+
+	@ Save the user state, but r4 is dirty
+	@                             V
+	stmfd	sp, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14}
+	sub	sp, sp, #60
+	mov	r5, sp
+
+	@ Back to svc mode to restore kernel state, also kernel PSR?
+	mrs	r4, CPSR
+	bic	r4, r4, #0x1F
+	orr	r4, r4, #0x13
+	msr     CPSR_c, r4
+
+	@ Restore the user's correct r4
+	ldr	r4, [sp, #0]!
+	str	r4, [r5, #16]
+
+	@ SAVE USER STACK POINTER FOR UPDATING TD???
+
+	@ User's state now successfully saved
+	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+	@ Restore kernel state
+	ldmfd	sp, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14}
+
+	@ grab arguments, make kernel do stuff!
+	@@bl	fuck @ fun for a test?
+	mov	pc, lr
 	.size	activate_lower, .-activate_lower
+	.text
+	.align	2
+	.global	install_handler
+	.type	install_handler, %function
+install_handler:
+	@ args = 0, pretend = 0, frame = 4
+	@ frame_needed = 0, uses_anonymous_args = 0
+	@ link register save eliminated.
+	stmfd	sp!, {r0, r1}
+	MOV	r1, #0x28
+	ldr	r0, .L1
+	STR	r0, [r1]
+	ldmfd	sp!, {r0, r1}
+	mov	pc, lr
+	.align 2
+.L1:
+	.word	.HANDLE
+	.size	install_handler, .-install_handler
 	.ident	"GCC: (GNU) 4.0.2"

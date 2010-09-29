@@ -4,4 +4,3 @@
 *.s
 !k1/kernel/switch.s
 !k1/kernel/regdump.s
-!k1/kernel/exception.s
