@@ -27,6 +27,10 @@ int activate(struct td *taskd)
   bwprintf(COM2, "< activate>   %x\n", (int)taskd->stack[0]);
   bwprintf(COM2, "< activate>   %x\n", (int)taskd->stack[-1]);
   bwprintf(COM2, "< activate> with bottom of stack at %x\n", (int)taskd->stack);
+  int i = 0;
+  for (; i < 15; ++i) {
+    bwprintf(COM2, "< activate> stack[%d] = %x\n", i, (int)taskd->stack[i]);
+  }
   activate_lower(taskd);
   // update TD.stack here...
   return 0;
@@ -59,7 +63,7 @@ void first()
 }
 
 
-void kinit(struct td *tds, void *s, void (*first)())
+void kinit(struct td *tds, int *s, void (*first)())
 {
   bwputstr(COM2, "< init> entering\n");
   install_handler();
@@ -73,21 +77,19 @@ void kinit(struct td *tds, void *s, void (*first)())
   tds[0].retval   = 88;
   tds[0].pc       = first;
 
-  //tds[0].stack[0] = (int)tds[0].pc; // setup LR, aka the entry point
   tds[0].stack -= 15;
   initbuf(tds[0].stack, 15, 0x00FACE00);
   tds[0].stack[0] = tds[0].retval;
-  tds[0].stack[52] = (int)tds[0].stack + 15;
-  tds[0].stack[56] = (int)tds[0].pc;
+  tds[0].stack[13] = (int)(tds[0].stack + 15);
+  tds[0].stack[14] = (int)tds[0].pc;
   bwputstr(COM2, "< init> Setup the initial state\n");
 
-  bwprintf(COM2, "< init> Using initial stack: %x\n", (int)s);
+  bwprintf(COM2, "< init> Using initial stack pointer: %x\n", (int)tds[0].stack);
   bwputstr(COM2, "< init> leaving\n");
 }
 
 int main () {
   int retval   = 0;
-  void (*fp)() = &bluepill;
   int a, b, c;
   struct td tds[10]; // why not?
   int ustack1[1024]; // Probably a bit much?
@@ -116,6 +118,7 @@ int main () {
   bwputstr(COM2, "< kernel> Jump1!\n");
   activate(&tds[0]);
   bwputstr(COM2, "< kernel> Jump2!\n");
+  activate(&tds[0]);
   activate(&tds[0]);
 
   //print_mode();
