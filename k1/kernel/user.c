@@ -3,9 +3,26 @@
 #include "usyscall.h"
 #include "user.h"
 
+void second () {
+  bwprintf (COM2, "I AM IDLE.\n\n");
+  while (1) {)
+}
+
 void first()
 {
-  int i = 0xFFFFF;
+  int i=0,j=0,k=0;
+  while (1) {
+    bwprintf (COM2, "I AM FIRST USER.\n");
+    i++;
+    if (i>10) j++;
+    if (j>10) k++;
+    i %= 11; j %= 11;
+//    bwprintf (COM2, "(i,j,k) = (%d,%d,%d)\n",i,j,k);
+    Pass();
+    Exit(0);
+  }
+
+//  int i = 0xFFFFF;
   int r;
   while (i--) {
     bwprintf(COM2, "Hey, I'm a user(%d)!\n", i);

@@ -1,3 +1,6 @@
+#ifndef SWITCH__INCLUDED
+#define SWITCH__INCLUDED
+
 enum STATE {
   ACTIVE,
   READY,
@@ -26,7 +29,7 @@ struct td {
 	int *stack;             // memory, user's state
 	enum STATE state;       // to be impl'd
 	enum PRIORITY priority; // Task's priority --  NOT NEEDED?
-	void *next;             // for ready queue
+	struct td *next;	// next td
 	int retval;             // saved return value
 	void *pc;               // entry point?
 	int ptid;               // Task's Parent's TID
@@ -36,3 +39,5 @@ int swtch(int arg);
 void print_mode();
 int activate(struct td *t, int retval);
 void install_handler();
+
+#endif // SWITCH__INCLUDED

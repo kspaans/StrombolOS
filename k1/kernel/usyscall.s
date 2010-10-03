@@ -7,7 +7,9 @@
 	.global	Create
 	.type	Create, %function
 Create:
+	stmfd   sp!, {lr}
 	swi	#0
+	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	Create, .-Create
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -16,7 +18,9 @@ Create:
 	.global	MyTid
 	.type	MyTid, %function
 MyTid:
+	stmfd   sp!, {lr}
 	swi	#1
+	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	MyTid, .-MyTid
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -25,7 +29,9 @@ MyTid:
 	.global	MyParentTid
 	.type	MyParentTid, %function
 MyParentTid:
+	stmfd   sp!, {lr}
 	swi	#2
+	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	MyParentTid, .-MyParentTid
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -34,7 +40,9 @@ MyParentTid:
 	.global	Pass
 	.type	Pass, %function
 Pass:
+	stmfd   sp!, {lr}
 	swi	#3
+	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	Pass, .-Pass
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -43,7 +51,9 @@ Pass:
 	.global	Exit
 	.type	Exit, %function
 Exit:
+	stmfd   sp!, {lr}
 	swi	#4
+	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	Exit, .-Exit
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

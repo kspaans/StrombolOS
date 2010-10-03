@@ -2,8 +2,10 @@
 #include <ts7200.h>
 #include "switch.h"
 #include "regdump.h"
-
+#include "ksyscall.h"
+#include "usyscall.h"
 #include "user.h"
+#include "tasks.h"
 
 #define FOREVER for(;;)
 #define NULL (void *)0
@@ -47,22 +49,29 @@ void kinit(struct td *tds, int *s, void (*first)())
   bwputstr(COM2, "< init> leaving\n");
 }
 
+
 int main () {
-  int retval = 1;
-  int a, b, c;
+  int req = 1;
+  //int a, b, c;
   struct td tds[10]; // why not?
   int ustack1[1024]; // Probably a bit much?
   int ustack2[1024];
+  
+
+  struct taskq tasks;
+
   initbuf (ustack1,1024, 0xDEADBEEF);
   initbuf (ustack2,1024, 0xDEADBEEF);
 
   bwsetfifo (COM2, OFF);
-  bwputstr (COM2, "[2J< kernel> Hello, world!\n");
 
+/*
+  bwputstr (COM2, "[2J< kernel> Hello, world!\n");
+*/
   bwputstr (COM2, "ustack1 is ");
   bwputr (COM2,(int)ustack1); 
   bwputstr (COM2, "\n");
-  bwprintf(COM2, "ustack1+1023 is %x\n", (int)(ustack1 + 1023));
+  /*bwprintf(COM2, "ustack1+1023 is %x\n", (int)(ustack1 + 1023));
   bwputstr (COM2, "ustack2 is ");
   bwputr (COM2,(int)ustack2); 
   bwputstr (COM2, "\n");
@@ -70,17 +79,59 @@ int main () {
   bwprintf(COM2, "tds is %x\n", (int)tds);
 
   a = 1; b = 2; c = 10;
+
+*/
   kinit(tds, (void *)ustack1, &first);
  
-  a *= (c - b);
-  bwputstr(COM2, "< kernel> Jump!\n\n");
-  while (retval) {
-    retval = activate(&tds[0], (0xF1 + (int)(&retval)) % retval);
-    bwprintf(COM2, "< kernel> User called me with %x\n", retval);
+ // a *= (c - b);
+ // bwputstr(COM2, "< kernel> Jump!\n\n");
+
+  inittasks (&tasks);
+  addtask (&tds[0], 0, &tasks);
+  struct td *cur = schedule (&tds[0], &tasks);
+bwprintf (COM2,"HEY\n\n\n");
+  while (cur) {
+    //cur = schedule (cur, tasks);
+    req = cur->retval;
+    bwprintf (COM2, "AM KERNEL. GOING TO USER\n");
+    req = activate(cur, req);
+    bwprintf (COM2, "AM KERNEL. USER ASKED %d\n",req);
+    
+    switch (req) { // eventually should move into exception.c?
+      case 0:
+        req = _kCreate(0,        // PRIORITY - FIX
+                       0,        // CODE - FIX
+                       cur->tid);
+        break;
+      case 1:
+        req = _kMyTid(cur);
+        break;
+      case 2:
+        req = _kMyParentTid(cur);
+        break;
+      case 3:
+        _kPass(cur);
+        break;
+      case 4:
+        _kExit(cur);
+        break;
+      default:
+        req = 0; // ????????????? should probably just kill the proc and print an error?
+    }
+    cur->retval = req;
+    cur = schedule (cur, &tasks);
   }
-  bwprintf(COM2, "< kernel> Returned 0x%x from SWI, finally. It should be 0x0.\n", retval);
-  c += a;
-  bwprintf(COM2, "< kernel> Context arithmetic is %d\n", c);
+
+
+
+
+
+
+
+
+  //bwprintf(COM2, "< kernel> Returned 0x%x from SWI, finally. It should be 0x0.\n", retval);
+  //c += a;
+  //bwprintf(COM2, "< kernel> Context arithmetic is %d\n", c);
  
   return 0;
 }

@@ -1,7 +1,7 @@
 #include "switch.h"
 #include "ksyscall.h"
 
-int _MyTid(struct td *taskd)
+int _kMyTid(struct td *taskd)
 {
   return taskd->tid;
 }
