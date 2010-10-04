@@ -39,7 +39,7 @@ void kinit(struct td *tds, int *s, void (*first)())
   }
   */
   tds[0].stack[0] = 16;                        // CPSR
-  //NOT REALLY NEEDED: tds[0].stack[1] = tds[0].retval;             // register 0
+  tds[0].stack[1] = tds[0].retval;             // register 0
   tds[0].stack[14] = (int)(tds[0].stack + 16); // register 13 (stack register)
   tds[0].stack[15] = (int)tds[0].pc;           // register 14 (link register)
 /*
