@@ -27,78 +27,61 @@ activate:
 	@@ r0 is pointer to task descriptor
 	@@ r1 is return value to user task
 	@@
-	@ Save kernel state
-	stmfd	sp!, {r0 - r14}
-	
-	@ to restore user state, we get the CORRECT stack pointer from the TD
-        ldr	r2, [r0, #4] @ pull sp out of td
-
-        @ Change to user mode
-	ldmfd	r2!, {r0}
-	msr	CPSR_cxsf, r0 
-
-	@ Now restore user state...
-	ldmfd	r2, {r0 - r14}
-	@ Jump into the user
-	mov	pc, lr
+	stmfd	sp!, {r0 - r14}		@ Save kernel state.
+        ldr	r2, [r0, #4] 		@ Pull user sp out of td.
+        str 	r1, [r2, #4]		@ Give the user a return value.
+	ldmfd	r2!, {r0}		@ Load user CPSR.
+	msr	CPSR_cxsf, r0 		@ Change to user mode.
+	ldmfd	r2, {r0 - r14}		@ Restore user state.
+	mov	pc, lr			@ Return to user code.
 .HANDLE:
-	@ We return to the kernel  H E R E
-	@ Change to system mode || what about SPSR stuff?
-	stmfd	sp!, {r0, r4, r14}
+	stmfd	sp!, {r0, r4, r14}	@ Make room for scratch registers - will be able to shrink/remove this.
+	mrs	r0, SPSR		@ Get users CPSR.
 
-	mrs	r0, SPSR
-
-	mrs	r4, CPSR
+	mrs	r4, CPSR		@ Go to system state.
 	orr	r4, r4, #0x1F
 	msr     CPSR_c, r4
 
-	stmfd	sp!, {r0 - r14}     @ Save regular state,r0,r4,r14 dirty.
-        stmfd	sp!, {r0}           @ Save SPSR.
-	str	sp, [sp, #-8]	    @ Fix up stack pointer.
+	stmfd	sp!, {r0 - r14}		@ Save regular state,r0,r4,r14 dirty.
+        stmfd	sp!, {r0}		@ Save SPSR.
+	str	sp, [sp, #-8]		@ Fix up stack pointer.
 
-	mov	r5, sp              @ Sneak the sp into supervisor mode.
+	mov	r5, sp			@ Sneak the sp into supervisor mode.
 
-	@ Back to svc mode to restore kernel state, also kernel PSR?
-	mrs	r4, CPSR
+	mrs	r4, CPSR		@ Go to supervisor mode. Can shrink this to one instruction.
 	bic	r4, r4, #0x1F
 	orr	r4, r4, #0x13
 	msr     CPSR_c, r4
 
-	ldmfd	sp!, {r0, r4, r14}  @ Get back correct values for user's r0,r4,r14 
-        str     r0, [r5, #4]        @ Store them back. Note that stack is pointing
-	str	r4, [r5, #20]       @ to saved sp, so we have to offset by 4.
+	ldmfd	sp!, {r0, r4, r14}	@ Get back correct values for user's r0,r4,r14.
+        str     r0, [r5, #4]		@ Store them back. Note that stack is pointing.
+	str	r4, [r5, #20]		@ to saved sp, so we have to offset by 4.
         str     r14, [r5, #60]
 
-	@ User's state now successfully saved
+	ldmfd	sp, {r0 - r14}		@ Restore kernel state.
 
-	@ Restore kernel state
-	ldmfd	sp, {r0 - r14}
+	stmfd   sp!, {r4}		@ Need scratch register.
 
-	@ Save r4 for the purpose of getting the user's SP
-	stmfd   sp!, {r4}
-
-	@ Go back to server mode to save the user's stack pointer
-	mrs	r4, CPSR
+	mrs	r4, CPSR		@ Going into server mode to get user sp.
 	orr	r4, r4, #0x1F
 	msr     CPSR_c, r4
 
-	@ r0 has the pointer to the TD
-	str	sp, [r0, #4]
+	str	sp, [r0, #4]		@ Update the td to have the new user stack pointer.
        
-	@ Back to supervisor mode
-	mrs	r4, CPSR
+	mrs	r4, CPSR		@ Back to supervisor mode. Can shrink this to one instruction.
 	bic	r4, r4, #0x1F
 	orr	r4, r4, #0x13
 	msr     CPSR_c, r4
 
-	@ Restore the kernel's real r4
-	ldmfd	sp!, {r4}
-        ldr	r0, [r0, #4]
+	ldmfd	sp!, {r4}		@ Get back kernel's r4.
+
+        ldr	r0, [r0, #4]		@ This brain damage is to get which system call was called.
         ldr     r0, [r0, #60]
 	ldr	r0, [r0, #-4]
 	and	r0, r0, #0xFF
-        @ grab user arguments
-	mov	pc, lr
+
+	mov	pc, lr			@ Go to kernel.
+
 	.size	activate, .-activate
 	.text
 	.align	2

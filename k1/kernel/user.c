@@ -15,10 +15,10 @@ void first()
   bwprintf (COM2, "I AM FIRST USER.\n\tMODE IS ");
   print_mode ();
   bwputstr (COM2, ".\n\tCREATE???\n");
-  Create (0xABCDEF01, (void*)0x10FEDCBA);
+  int z = Create (0xABCDEF01, (void*)0x10FEDCBA);
   int i=0,j=0,k=0;
   while (1) {
-    bwprintf (COM2, "I AM FIRST USER.\n\tMODE IS ");
+    bwprintf (COM2, "I AM FIRST USER.\n\tKERNEL SAID %d\n\tMODE IS ",z);
     print_mode ();
     bwputstr (COM2, ".\n\tPASS??\n");
     i++;
