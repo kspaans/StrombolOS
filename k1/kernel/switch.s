@@ -28,41 +28,35 @@ activate:
 	@@ r1 is return value to user task
 	@@
 	@ Save kernel state
-
 	stmfd	sp!, {r0 - r14}
 	
-	@ restore user state, we get the CORRECT stack pointer from the TD
+	@ to restore user state, we get the CORRECT stack pointer from the TD
         ldr	r2, [r0, #4] @ pull sp out of td
 
-	@ Put the return value onto the user's stack, SP points at saved r0
-	@str	r1, [r2, #0]
-
         @ Change to user mode
-	mrs	r3, CPSR
-	bic	r3, r3, #0x1F
-	orr	r3, r3, #0x10
-        msr     CPSR_c, r3
-
-	@ Restore the sp - ugliness because of register banking
-	mov	sp, r2
+	ldmfd	r2!, {r0}
+	msr	CPSR_cxsf, r0 
 
 	@ Now restore user state...
-	ldmfd	sp, {r0 - r14}
-
+	ldmfd	r2, {r0 - r14}
 	@ Jump into the user
 	mov	pc, lr
 .HANDLE:
 	@ We return to the kernel  H E R E
 	@ Change to system mode || what about SPSR stuff?
-	stmfd	sp!, {r4, r14}
+	stmfd	sp!, {r0, r4, r14}
+
+	mrs	r0, SPSR
 
 	mrs	r4, CPSR
 	orr	r4, r4, #0x1F
 	msr     CPSR_c, r4
 
-	@ Save the user state, but r4/r14 is dirty
-	stmfd	sp!, {r0 - r14}
-	mov	r5, sp
+	stmfd	sp!, {r0 - r14}     @ Save regular state,r0,r4,r14 dirty.
+        stmfd	sp!, {r0}           @ Save SPSR.
+	str	sp, [sp, #-8]	    @ Fix up stack pointer.
+
+	mov	r5, sp              @ Sneak the sp into supervisor mode.
 
 	@ Back to svc mode to restore kernel state, also kernel PSR?
 	mrs	r4, CPSR
@@ -70,10 +64,10 @@ activate:
 	orr	r4, r4, #0x13
 	msr     CPSR_c, r4
 
-	@ Restore the user's correct r4
-	ldmfd	sp!, {r4, r14}
-	str	r4, [r5, #16]
-        str     r14, [r5, #56]
+	ldmfd	sp!, {r0, r4, r14}  @ Get back correct values for user's r0,r4,r14 
+        str     r0, [r5, #4]        @ Store them back. Note that stack is pointing
+	str	r4, [r5, #20]       @ to saved sp, so we have to offset by 4.
+        str     r14, [r5, #60]
 
 	@ User's state now successfully saved
 
@@ -100,7 +94,7 @@ activate:
 	@ Restore the kernel's real r4
 	ldmfd	sp!, {r4}
         ldr	r0, [r0, #4]
-        ldr     r0, [r0, #56]
+        ldr     r0, [r0, #60]
 	ldr	r0, [r0, #-4]
 	and	r0, r0, #0xFF
         @ grab user arguments

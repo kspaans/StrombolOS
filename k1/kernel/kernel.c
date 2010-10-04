@@ -18,10 +18,10 @@ void initbuf (int *p, int n, int val) {
 void kinit(struct td *tds, int *s, void (*first)())
 {
   int i;
-  bwputstr(COM2, "< init> entering\n");
+ // bwputstr(COM2, "< init> entering\n");
   install_handler();
-  bwputstr(COM2, "< init> installed exception handler\n");
-  bwputstr(COM2, "< init> will initialize some space probably...\n");
+ // bwputstr(COM2, "< init> installed exception handler\n");
+ // bwputstr(COM2, "< init> will initialize some space probably...\n");
   tds[0].tid      = 0xdeadb00b;
   tds[0].stack    = s + 1024; // We are now pointing just below the stack
   tds[0].state    = 0;
@@ -30,24 +30,26 @@ void kinit(struct td *tds, int *s, void (*first)())
   tds[0].retval   = 88;
   tds[0].pc       = first;
 
-  bwprintf(COM2, "< init> Initializing %x through %x of user stack.\n", tds[0].stack - 15, tds[0].stack);
+ // bwprintf(COM2, "< init> Initializing %x through %x of user stack.\n", tds[0].stack - 15, tds[0].stack);
 
-  tds[0].stack -= 15;
-  initbuf(tds[0].stack, 15, 0x00FACE00);
+  tds[0].stack -= 16;
+  initbuf(tds[0].stack, 16, 0x00FACE00);
   /*
   for (i=-1; i<16; i++) {
     bwputr (COM2, tds[0].stack[i]);
     bwputstr (COM2, "\n");
   }
   */
-  tds[0].stack[0] = tds[0].retval;
-  tds[0].stack[13] = (int)(tds[0].stack + 15);
-  tds[0].stack[14] = (int)tds[0].pc;
+  tds[0].stack[0] = 16;                        // CPSR
+  tds[0].stack[1] = tds[0].retval;             // register 0
+  tds[0].stack[14] = (int)(tds[0].stack + 16); // register 13 (stack register)
+  tds[0].stack[15] = (int)tds[0].pc;           // register 14 (link register)
+/*
   bwputstr(COM2, "< init> Setup the initial state\n");
 
   bwprintf(COM2, "< init> Using initial stack pointer: %x\n", (int)tds[0].stack);
   bwputstr(COM2, "< init> leaving\n");
-}
+*/}
 
 
 int main () {
@@ -67,11 +69,11 @@ int main () {
 
 /*
   bwputstr (COM2, "[2J< kernel> Hello, world!\n");
-*/
+
   bwputstr (COM2, "ustack1 is ");
   bwputr (COM2,(int)ustack1); 
   bwputstr (COM2, "\n");
-  /*bwprintf(COM2, "ustack1+1023 is %x\n", (int)(ustack1 + 1023));
+  bwprintf(COM2, "ustack1+1023 is %x\n", (int)(ustack1 + 1023));
   bwputstr (COM2, "ustack2 is ");
   bwputr (COM2,(int)ustack2); 
   bwputstr (COM2, "\n");
@@ -85,22 +87,22 @@ int main () {
  
  // a *= (c - b);
  // bwputstr(COM2, "< kernel> Jump!\n\n");
-
   inittasks (&tasks);
   addtask (&tds[0], 0, &tasks);
   struct td *cur = schedule (&tds[0], &tasks);
-bwprintf (COM2,"HEY\n\n\n");
   while (cur) {
     //cur = schedule (cur, tasks);
     req = cur->retval;
-    bwprintf (COM2, "AM KERNEL. GOING TO USER\n");
+    bwputstr (COM2, "\tGOING TO USER NOW.\n");
     req = activate(cur, req);
-    bwprintf (COM2, "AM KERNEL. USER ASKED %d\n",req);
-    
+    bwprintf (COM2, "AM KERNEL.\n\tMODE IS ");
+    print_mode ();
+    bwprintf (COM2, ".\n\tUSER ASKED %d.\n",req);
+     
     switch (req) { // eventually should move into exception.c?
       case 0:
-        req = _kCreate(0,        // PRIORITY - FIX
-                       0,        // CODE - FIX
+        req = _kCreate(cur->stack[1],        // PRIORITY 
+                       cur->stack[2],        // CODE
                        cur->tid);
         break;
       case 1:
@@ -121,13 +123,6 @@ bwprintf (COM2,"HEY\n\n\n");
     cur->retval = req;
     cur = schedule (cur, &tasks);
   }
-
-
-
-
-
-
-
 
   //bwprintf(COM2, "< kernel> Returned 0x%x from SWI, finally. It should be 0x0.\n", retval);
   //c += a;

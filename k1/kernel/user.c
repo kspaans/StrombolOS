@@ -4,22 +4,33 @@
 #include "user.h"
 
 void second () {
-  bwprintf (COM2, "I AM IDLE.\n\n");
-  while (1) {)
+  bwprintf (COM2, "I AM IDLE.\tMODE IS");
+  print_mode ();
+  bwputstr (COM2, ".\n\n");
+  while (1) {}
 }
 
 void first()
 {
+  bwprintf (COM2, "I AM FIRST USER.\n\tMODE IS ");
+  print_mode ();
+  bwputstr (COM2, ".\n\tCREATE???\n");
+  Create (0xABCDEF01, (void*)0x10FEDCBA);
   int i=0,j=0,k=0;
   while (1) {
-    bwprintf (COM2, "I AM FIRST USER.\n");
+    bwprintf (COM2, "I AM FIRST USER.\n\tMODE IS ");
+    print_mode ();
+    bwputstr (COM2, ".\n\tPASS??\n");
     i++;
     if (i>10) j++;
     if (j>10) k++;
     i %= 11; j %= 11;
 //    bwprintf (COM2, "(i,j,k) = (%d,%d,%d)\n",i,j,k);
     Pass();
-    Exit(0);
+    bwprintf (COM2, "I AM FIRST USER.\n\tMODE IS ");
+    print_mode ();
+    bwputstr (COM2, ".\n\tEXIT????\n");
+    Exit();
   }
 
 //  int i = 0xFFFFF;

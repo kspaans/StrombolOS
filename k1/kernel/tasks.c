@@ -24,7 +24,7 @@ void inittasks (struct taskq *q) {
 }
 
 void addtask (struct td *nt, int p, struct taskq *tasks) {
-  nt->next = tasks->p[p];
+  nt->next = tasks->head[p];
   tasks->head[p] = nt;
   if (!tasks->p[p]) tasks->p[p] = nt;
 }

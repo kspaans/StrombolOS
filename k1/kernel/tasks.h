@@ -3,8 +3,8 @@
 #include "switch.h"
 
 struct taskq {
-  void *p[NUMPRIO];
-  void *head[NUMPRIO];
+  struct td *p[NUMPRIO];
+  struct td *head[NUMPRIO];
 };
 
 struct td *schedule (struct td *cur, struct taskq *tasks);
