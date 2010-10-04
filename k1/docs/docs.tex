@@ -1,0 +1,153 @@
+\documentclass{article}
+\usepackage[left=2cm,top=1cm,right=3cm,nohead,nofoot]{geometry}
+\usepackage{graphicx}
+
+
+\usepackage[T1]{fontenc}
+\usepackage[scaled]{helvet}
+%\renewcommand*\familydefault{\sfdefault} 
+
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+\begin{document}
+
+
+
+
+
+
+
+\begin{titlepage}
+\phantom{.}
+\vspace{50pt}
+\begin{center} 
+\includegraphics{gstrombo}
+\vspace{15pt}\\
+\HRule \\[0.4cm]
+\renewcommand*\familydefault{\sfdefault} 
+
+{\huge \bfseries 
+
+{        
+        
+\renewcommand*\rmdefault{helvet}\normalfont\upshape\sffamily
+Documention for the {\sc StrombolOS}\texttrademark \\
+\vspace{10pt}
+Real-Time Operating System}
+\vspace{12pt}
+
+
+}
+
+
+\HRule \\[1.5cm]
+\end{center}
+\begin{minipage}{0.4\textwidth}
+\begin{flushleft} \large
+\emph{Authors:}\\
+Jacob Parker\\
+Kyle Spaans
+\end{flushleft}
+\end{minipage}
+\end{titlepage}
+
+
+\tableofcontents
+\pagebreak
+
+
+
+
+
+
+
+
+
+\setcounter{section}{-4}
+\section{Administrivia}
+
+\section{Sample Output}
+\section{README}
+
+This is from the README file in our project's \texttt{docs/} directory. This entire 
+document is also available as \texttt{DOCS/overview.pdf}.
+
+\begin{verbatim}
+To launch the executable from RedBoot, type ``l ARM/StrombolOS/k1'' and type 
+``g'' after it loads.
+
+It is strongly suggested that the ts7200 be reset before running this kernel 
+incase someone else's kernel trashed the system.
+\end{verbatim}
+
+\section{Kernel Description}
+\subsection{General Overview}
+Our kernel's main function is organized as follows:
+
+\begin{verbatim}
+bootstrap ()
+create_first_user_task ()
+
+while (there is a task to run) {
+  req <- get current task's return value from the kernel
+  req <- activate (active task, req)
+  req = handle(req, task descriptor)
+  store req in the active task's task descriptor
+  schedule ()
+}
+\end{verbatim}
+
+\texttt{activate} is our context handler. It will restore a users state and then
+jump to user code. When a software interrupt is triggered by a system call the 
+cpu will jump back into the code for activate. The user state is saved and the 
+kernel's is restored. The value returned by activate is the opcode of the system
+call the user called.\\
+
+\texttt{handle} takes the system call opcode and the relevant information for 
+this task and does the appropriate thing. We have implemented \texttt{Pass}, 
+\texttt{Exit}, \texttt{Create}, \texttt{MyTid}, \texttt{MyParentTid} as 
+described in the kernel specification document.\\
+
+\texttt{schedule} will take the current task and make it's state {\sc Ready} 
+(only if it's current state is {\sc Active}) and pick the next task to run. 
+This is described in more detail in the following section.\\
+
+\subsection{Scheduling}
+The type of scheduling used is round robin with priority levels. Our kernel will 
+always run the task which is both in the state {\sc Ready} and of the highest 
+priority.\\
+
+The task descriptors have a next pointer in them of type 
+pointer-to-a-task-descriptor. In this way a group of tasks can be stored in a 
+single-linked list.\\
+
+The task management system uses a pair of arrays of pointers to task descriptors. 
+The first array, \texttt{p}, points to the last activated task of a given priority. 
+The second array,\texttt{head}, points to the most recently created task of a given 
+priority. In this way we are able to have circular buffers.\\
+
+The \texttt{schedule} function starts at priority 0. If at any point in any priority 
+it finds a task in the {\sc Ready} state it sets the state to {\sc Active}, updates the 
+\texttt{p} pointer for that priority (for round robin scheduling) and returns a pointer 
+to this task. If it cannot find a task of priority 0 that is {\sc Ready} it then tries 
+level 1 and so on until it has exhausted all levels. If there is no task available to 
+run, \texttt{schedule} will return 0 and the main kernel loop will exit, causing the kernel 
+to exit and redboot to take over.\\
+
+There are 6 priority levels. The justification for each level is given below. The names 
+are considered self explainatory. As things change we will adjust the number of priority 
+levels accordingly.
+
+\begin{verbatim}
+enum PRIORITY {
+     INTERRUPT    = 0,
+     SYSCALL_HIGH = 1,
+     SYSCALL_LOW  = 2,
+     USER_HIGH    = 3,
+     USER_LOW     = 4,
+     IDLE         = 5,
+};
+\end{verbatim}
+
+\end{document}
