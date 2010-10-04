@@ -4,9 +4,7 @@
 #include "user.h"
 
 void second () {
-  bwprintf (COM2, "I AM IDLE.\tMODE IS");
-  print_mode ();
-  bwputstr (COM2, ".\n\n");
+  bwputstr(COM2, "I AM IDLE\n");
   while (1) {}
 }
 
@@ -15,7 +13,8 @@ void first()
   bwprintf (COM2, "I AM FIRST USER.\n\tMODE IS ");
   print_mode ();
   bwputstr (COM2, ".\n\tCREATE???\n");
-  int z = Create (0xABCDEF01, (void*)0x10FEDCBA);
+  //int z = Create (0xABCDEF01, (void*)0x10FEDCBA);
+  int z = Create (3, second);
   int i=0,j=0,k=0;
   while (1) {
     bwprintf (COM2, "I AM FIRST USER.\n\tKERNEL SAID %d\n\tMODE IS ",z);
@@ -64,5 +63,36 @@ void lol()
   int i;
   bwprintf(COM2, "HAHA! I'm a new user task and my tid is '%d'\n", MyTid());
   for(i = 0; i < 50000; ++i);
+  Exit();
+}
+
+void other_user_task();
+
+void first_user_task()
+{
+  int tids[4];
+
+  //Create(IDLE, second);
+
+  tids[0] = Create(USER_LOW, other_user_task);
+  bwprintf(COM2, "Created: %d.\n", tids[0]);
+  tids[1] = Create(USER_LOW, other_user_task);
+  bwprintf(COM2, "Created: %d.\n", tids[1]);
+  tids[2] = Create(SYSCALL_LOW, other_user_task);
+  bwprintf(COM2, "Created: %d.\n", tids[2]);
+  tids[3] = Create(SYSCALL_LOW, other_user_task);
+  bwprintf(COM2, "Created: %d.\n", tids[3]);
+
+  bwputstr(COM2, "First: exiting\n");
+  Exit();
+}
+
+void other_user_task()
+{
+  bwprintf(COM2, "My TID is %d and my parent's TID is %d.\n",
+           MyTid(), MyParentTid());
+  Pass();
+  bwprintf(COM2, "My TID is %d and my parent's TID is %d.\n",
+           MyTid(), MyParentTid());
   Exit();
 }

@@ -40,4 +40,11 @@ void print_mode();
 int activate(struct td *t, int retval);
 void install_handler();
 
+#define MAXTASKS 50    // Should do for now.
+#define STACKSIZE 1024 // Probably a bit much?
+
+#define FOREVER for(;;)
+#define FOREACH(i,n) for(i = 0; i < n; ++i)
+#define NULL (void *)0
+
 #endif // SWITCH__INCLUDED

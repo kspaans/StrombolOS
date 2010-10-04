@@ -2,20 +2,30 @@
 #include <ts7200.h>
 #include "switch.h"
 #include "ksyscall.h"
-int _kCreate(int priority, void (*code)(), int parenttid)
+int _kCreate(struct td *newtd, int priority, void (*code)(), int parenttid,
+             int newtid, int *stack)
 {
-  bwprintf (COM2, "AM CREATE()\n\tFIRST ARG: ");
-  bwputr (COM2, priority);
-  bwprintf (COM2, ".\n\tSECOND ARG: ");
-  bwputr (COM2, (int)code);
-  bwprintf (COM2, ".\n\tOK BYE.\n");
-  return 0;
   if (priority < 0 || priority > NUMPRIO) {
     return -1;
   }
-  //if (next_td == NULL) {
-  //  return -2;
-  //}
-  bwputstr (COM2, "create () not implemented.");
-  return 0;
+  if (newtid == MAXTASKS) { // Oh shit, this should be changed to make destroy() easier...
+    return -2;
+  }
+
+  newtd->tid       = newtid;
+  newtd->stack     = stack + STACKSIZE; // We are now pointing just below the stack
+  newtd->state    = READY;
+  newtd->priority = priority;
+  newtd->next     = NULL;
+  newtd->retval   = 0;
+  newtd->pc       = code;
+  newtd->ptid     = parenttid;
+
+  newtd->stack    -= 16;
+  newtd->stack[0]  = 16;                         // CPSR
+  newtd->stack[1]  = newtd[0].retval;            // register 0
+  newtd->stack[14] = (int)(newtd[0].stack + 16); // register 13 (stack register)
+  newtd->stack[15] = (int)newtd[0].pc;           // register 14 (link register)
+
+  return newtid;
 }

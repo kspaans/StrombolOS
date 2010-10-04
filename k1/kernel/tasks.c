@@ -23,10 +23,10 @@ void inittasks (struct taskq *q) {
     q->p[i] = q->head[i] = 0;
 }
 
-void addtask (struct td *nt, int p, struct taskq *tasks) {
-  nt->next = tasks->head[p];
-  tasks->head[p] = nt;
-  if (!tasks->p[p]) tasks->p[p] = nt;
+void addtask (struct td *nt, struct taskq *tasks) {
+  nt->next = tasks->head[nt->priority];
+  tasks->head[nt->priority] = nt;
+  if (!tasks->p[nt->priority]) tasks->p[nt->priority] = nt;
 }
 
 struct td *schedule (struct td *cur, struct taskq *tasks) {

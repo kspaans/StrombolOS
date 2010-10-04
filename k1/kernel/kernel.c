@@ -7,9 +7,6 @@
 #include "user.h"
 #include "tasks.h"
 
-#define FOREVER for(;;)
-#define NULL (void *)0
-
 void initbuf (int *p, int n, int val) {
   int *i;
   for (i = p; i<p+n; *(i++) = val);
@@ -22,13 +19,14 @@ void kinit(struct td *tds, int *s, void (*first)())
   install_handler();
  // bwputstr(COM2, "< init> installed exception handler\n");
  // bwputstr(COM2, "< init> will initialize some space probably...\n");
-  tds[0].tid      = 0xdeadb00b;
+  tds[0].tid      = 0;
   tds[0].stack    = s + 1024; // We are now pointing just below the stack
   tds[0].state    = 0;
   tds[0].priority = 0;
   tds[0].next     = NULL;
   tds[0].retval   = 88;
   tds[0].pc       = first;
+  tds[0].ptid     = 0;
 
  // bwprintf(COM2, "< init> Initializing %x through %x of user stack.\n", tds[0].stack - 15, tds[0].stack);
 
@@ -54,16 +52,16 @@ void kinit(struct td *tds, int *s, void (*first)())
 
 int main () {
   int req = 1;
-  //int a, b, c;
-  struct td tds[10]; // why not?
-  int ustack1[1024]; // Probably a bit much?
-  int ustack2[1024];
-  
-
+  int i, newtid;
+  int current_tid = 1;
+  struct td tds[MAXTASKS];
+  int stacks[MAXTASKS][STACKSIZE];
   struct taskq tasks;
 
-  initbuf (ustack1,1024, 0xDEADBEEF);
-  initbuf (ustack2,1024, 0xDEADBEEF);
+  FOREACH(i, MAXTASKS) {
+    //bwprintf(COM2, "kernel init %d\n", i);
+    initbuf(stacks[i], STACKSIZE, 0xDEADBEEF);
+  }
 
   bwsetfifo (COM2, OFF);
 
@@ -83,27 +81,34 @@ int main () {
   a = 1; b = 2; c = 10;
 
 */
-  kinit(tds, (void *)ustack1, &first);
+  kinit(tds, stacks[0], &first_user_task);
  
  // a *= (c - b);
  // bwputstr(COM2, "< kernel> Jump!\n\n");
   inittasks (&tasks);
-  addtask (&tds[0], 0, &tasks);
+  addtask (&tds[0], &tasks);
   struct td *cur = schedule (&tds[0], &tasks);
   while (cur) {
     //cur = schedule (cur, tasks);
     req = cur->retval;
-    bwputstr (COM2, "\tGOING TO USER NOW.\n");
+    //bwputstr (COM2, "\tGOING TO USER NOW.\n");
     req = activate(cur, req);
-    bwprintf (COM2, "AM KERNEL.\n\tMODE IS ");
-    print_mode ();
-    bwprintf (COM2, ".\n\tUSER ASKED %d.\n",req);
+    //bwprintf (COM2, "AM KERNEL.\n\tMODE IS ");
+    //print_mode ();
+    //bwprintf (COM2, ".\n\tUSER ASKED %d.\n",req);
      
     switch (req) { // eventually should move into exception.c?
       case 0:
-        req = _kCreate(cur->stack[1],        // PRIORITY 
+	newtid = current_tid++;
+        req = _kCreate(&(tds[newtid]),
+	               cur->stack[1],        // PRIORITY 
                        cur->stack[2],        // CODE
-                       cur->tid);
+                       cur->tid,
+		       newtid,               // NEW TID
+		       stacks[newtid]);
+	if (req >= 0) {
+          addtask(&(tds[newtid]), &tasks);
+	}
         break;
       case 1:
         req = _kMyTid(cur);

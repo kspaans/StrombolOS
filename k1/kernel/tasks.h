@@ -9,5 +9,5 @@ struct taskq {
 
 struct td *schedule (struct td *cur, struct taskq *tasks);
 void inittasks (struct taskq *q);
-void addtask (struct td *nt, int p, struct taskq *tasks);
+void addtask (struct td *nt, struct taskq *tasks);
 #endif
