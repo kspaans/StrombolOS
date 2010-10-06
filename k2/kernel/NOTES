@@ -1,0 +1,2 @@
+Send/Receive/Reply queues should be global and statically allocated... as linked lists! :D
+Say MAXTASKS * 5 initially?

@@ -5,6 +5,7 @@ enum STATE {
   ACTIVE,
   READY,
   DEFUNCT,
+  BLOCKED,
 }; /* More can be added in K2 */
 
 /*
