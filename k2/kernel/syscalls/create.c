@@ -1,6 +1,6 @@
 #include <bwio.h>
 #include <ts7200.h>
-#include "switch.h"
+#include "../switch.h"
 #include "ksyscall.h"
 int _kCreate(struct td *newtd, int priority, void (*code)(), int parenttid,
              int newtid, int *stack)

@@ -12,7 +12,7 @@ LDFLAGS = -init main -Map kernel.map -N -T orex.ld \
           -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../lib
 
 OBJS    = kernel.o switch.o regdump.o user.o usyscall.o tasks.o \
-          create.o mytid.o myparenttid.o pass.o exit.o rand.o
+          create.o mytid.o myparenttid.o pass.o exit.o rand.o send.o
 DEPS    = $(OBJS:.o=.d)
 ASMS	= $(OBJS:.o=.s)
 EXEC    = StrombolOS.elf
@@ -41,8 +41,8 @@ clean:
 	rm -rf ${DEPS} ${OBJS} ${EXEC} *.map $(filter-out switch.s regdump.s usyscall.s,$(ASMS))
 
 jcopy:
-	cp ${EXEC} /u3/cs452/tftpboot/ARM/StrombolOS/j3parker.elf
+	cp ${EXEC} /u3/cs452/tftpboot/ARM/StrombolOS/j3parker2.elf
 kcopy: 
-	cp ${EXEC} /u3/cs452/tftpboot/ARM/StrombolOS/kspaans.elf
+	cp ${EXEC} /u3/cs452/tftpboot/ARM/StrombolOS/kspaans2.elf
 
 -include ${DEPS}

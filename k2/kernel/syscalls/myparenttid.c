@@ -1,4 +1,4 @@
-#include "switch.h"
+#include "../switch.h"
 #include "ksyscall.h"
 
 int _kMyParentTid(struct td *taskd)

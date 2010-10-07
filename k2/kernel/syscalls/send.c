@@ -7,19 +7,21 @@
 
 #include <bwio.h>
 #include <ts7200.h>
-#include "switch.h"
+#include "../switch.h"
 #include "ksyscall.h"
 
+int is_valid_tid(int tid);
+
 int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
-           int replylen)
+           int replylen, struct td *tds)
 {
   char *sentdata; // or a message structure?
   int sentlen;
 
-  if (tid < 0) {
+  if (Tid < 0) { // the only impossible TIDs?
     return -1;
   }
-  if (!find_tid(tid)) {
+  if (!is_valid_tid(Tid)) {
     return -2;
   }
 
@@ -31,7 +33,7 @@ int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
   } // LOOKS CORRECT TO ME!!! >.<
 
   if (!waiting_for_recv(Tid)) {
-    mytd->status = SEND_BLOCKED;
+    mytd->state = SEND_BLOCKED;
   }
 
   return sentlen;

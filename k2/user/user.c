@@ -1,5 +1,5 @@
 #include <bwio.h>
-#include "switch.h"
+#include "../kernel/switch.h"
 #include "usyscall.h"
 #include "user.h"
 

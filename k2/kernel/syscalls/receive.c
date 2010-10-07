@@ -11,7 +11,7 @@ should be simple!
 
 #include <bwio.h>
 #include <ts7200.h>
-#include "switch.h"
+#include "../switch.h"
 #include "ksyscall.h"
 
 int _kReceive(struct td *mytd, int *tid, char *msg, int msglen)

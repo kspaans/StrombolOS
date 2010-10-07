@@ -1,10 +1,9 @@
 #include <bwio.h>
 #include <ts7200.h>
 #include "switch.h"
-#include "regdump.h"
-#include "ksyscall.h"
-#include "usyscall.h"
-#include "user.h"
+#include "syscalls/ksyscall.h"
+#include "../user/usyscall.h"
+#include "../user/user.h"
 #include "tasks.h"
 
 void initbuf (int *p, int n, int val) {
