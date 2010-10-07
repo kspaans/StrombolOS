@@ -5,16 +5,11 @@ enum STATE {
   ACTIVE,
   READY,
   DEFUNCT,
-  BLOCKED,
-}; /* More can be added in K2 */
+  SEND_BLOCKED,
+  RECEIVE_BLOCKED,
+  REPLY_BLOCKED,
+};
 
-/*
- * Why not split what Prof Cowan suggested:
- * INTERRUPT
- * SYSCALL
- * USER
- * IDLE
- */
 #define NUMPRIO 6
 enum PRIORITY {
   INTERRUPT    = 0,

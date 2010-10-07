@@ -21,7 +21,7 @@ void kinit(struct td *tds, int *s, void (*first)())
  // bwputstr(COM2, "< init> will initialize some space probably...\n");
   tds[0].tid      = 0;
   tds[0].stack    = s + 1024; // We are now pointing just below the stack
-  tds[0].state    = 0;
+  tds[0].state    = READY;
   tds[0].priority = 0;
   tds[0].next     = NULL;
   tds[0].retval   = 88;

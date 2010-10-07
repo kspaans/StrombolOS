@@ -1,11 +1,7 @@
 /*
-should be simple!
-1 - Check the current TID's message queue for messages
-  1.A - If queue is not empty, GOTO step 2
-  1.B - If queue is empty, change status to BLOCKED, move task to blocked queue
-        (do we have that?) (must be unblocked by send)
-2 - Grab first message in message queue
-3 - copy contents of message into recv buffer UP TO MSGLEN bytes (lol, aligned fast copy?)
+1 - check validity of TID given...
+2 - copy mesg to mq of recv'ing task
+3 - if no mesg waiting to recv, BLOCK
 4 - regardless of result, return send mesg size
 */
 
@@ -14,20 +10,29 @@ should be simple!
 #include "switch.h"
 #include "ksyscall.h"
 
-int _kReceive(struct td *mytd, int *tid, char *msg, int msglen)
+int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
+           int replylen)
 {
   char *sentdata; // or a message structure?
   int sentlen;
 
-  if (mytd->mq == NULL) {
-    mytd->status = BLOCKED;
-    /* ... do the proper scheduling stuff to block us ... call Pass() maybe? */
+  if (tid < 0) {
+    return -1;
+  }
+  if (!find_tid(tid)) {
+    return -2;
   }
 
+  // COPY DATA
   sentdata = mytd->mq->data;
   sentlen  = mytd->mq->mlen;
   while (msglen--) {
     *msg++ = *sentdata;
   } // LOOKS CORRECT TO ME!!! >.<
+
+  if (!waiting_for_recv(Tid)) {
+    mytd->status = SEND_BLOCKED;
+  }
+
   return sentlen;
 }
