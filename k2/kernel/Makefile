@@ -12,7 +12,7 @@ LDFLAGS = -init main -Map kernel.map -N -T orex.ld \
           -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../lib
 
 OBJS    = kernel.o switch.o regdump.o user.o usyscall.o tasks.o \
-          create.o mytid.o myparenttid.o pass.o exit.o
+          create.o mytid.o myparenttid.o pass.o exit.o rand.o
 DEPS    = $(OBJS:.o=.d)
 ASMS	= $(OBJS:.o=.s)
 EXEC    = StrombolOS.elf

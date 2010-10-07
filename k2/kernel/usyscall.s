@@ -57,4 +57,3 @@ Exit:
 	mov	pc, lr
 	.size	Exit, .-Exit
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-	.ident	"GCC: (GNU) 4.0.2"
