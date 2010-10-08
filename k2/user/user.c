@@ -14,6 +14,41 @@ void ipc1 () {
   Exit();
 }
 
+int Sendt(int a, char *b, int c, char *d, int e)
+{
+  start = TIMERV;
+  Send(a, b, c, d, e);
+  end = TIMERV; /// this doesn't help, it's still not going to time right
+  bwprintf(COM2, "KJS: It took %d 200mses\r\n", start - end);
+}
+
+void timesend()
+{
+  int end, start;
+  char out[4], in[4];
+
+  Sendt(2, out, 4, in, 4);
+  Exit();
+}
+
+void timerecvrep()
+{
+  int t;
+  char out[4], in[4];
+  Receive(&t, in, 4);
+  Reply(t, out, 4);
+  Exit();
+}
+
+void timeit()
+{
+  Create(SYSCALL_LOW, timerecvrep);
+  Pass();
+  Create(SYSCALL_LOW, timesend);
+  Pass();
+  Exit();
+}
+
 void second () {
   bwputstr(COM2, "I AM IDLE\n");
   while (1) {}

@@ -57,5 +57,6 @@ void install_handler();
 #define FOREVER for(;;)
 #define FOREACH(i,n) for(i = 0; i < n; ++i)
 #define NULL (void *)0
+#define TIMERV *((unsigned int *)(TIMER3_BASE + VAL_OFFSET))
 
 #endif // SWITCH__INCLUDED

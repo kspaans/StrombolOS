@@ -66,6 +66,22 @@ int main () {
 
   bwsetfifo (COM2, OFF);
 
+  /*
+   * Initialize special clock bits
+   */
+  int *clk, buf;
+
+  clk  = (int *)(TIMER3_BASE + LDR_OFFSET);
+  *clk = 0xFFFFFFFF;   // Initialize the counter
+
+  clk  = (int *)(TIMER3_BASE + CRTL_OFFSET);
+  buf  = *clk;
+  buf &= ~MODE_MASK;   // Set mode to off for free running
+  buf &= ~CLKSEL_MASK; // Select 2KHz clock
+  buf |= ENABLE_MASK;  // Enable the timer
+  *clk = buf;
+
+
 /*
   bwputstr (COM2, "[2J< kernel> Hello, world!\n");
 
