@@ -26,7 +26,6 @@ int _kReply(struct td *mytd, int tid, char *reply, int replylen,
   if (tds[tid].state != REPLY_BLOCKED) {
     return -3;
   }
-
   // We know the sender is waiting, to reply to them
   replybuf = tds[tid].replyq.msg;
   B = buflen = tds[tid].replyq.msglen;

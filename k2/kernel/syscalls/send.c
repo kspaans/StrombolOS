@@ -31,18 +31,17 @@ int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
     tds[Tid].state = READY;
     
     //copy into replyq.msg, for this edgecase
-    char *sendbuf = tds[Tid].replyq.msg;
-    int buflen  = tds[Tid].replyq.msglen;
+    char *sendbuf = tds[Tid].fuckq.msg;
+    int buflen  = tds[Tid].fuckq.msglen;
     while (buflen-- && msglen--) {
       *sendbuf++ = *msg++;
     }
 
-  // Tell Reply() where to reply to
-  tds[Tid].replyq.msg    = reply;
-  tds[Tid].replyq.msglen = replylen;
+  mytd->replyq.msg    = reply;
+  mytd->replyq.msglen = replylen;
   //bwprintf (COM2, "going to derefence %d, punk.\r\n\r\n\r\n", mytd
-  *((int*)tds[Tid].replyq.tid) = mytd->tid;
-    bwprintf (COM2, "kSend: setting %d to READY.\r\n", Tid);
+  *((int*)tds[Tid].fuckq.tid) = mytd->tid;
+//    bwprintf (COM2, "kSend: setting %d to READY.\r\n", Tid);
     return 0;
   }
 

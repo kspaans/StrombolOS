@@ -9,8 +9,9 @@ void ipc1 () {
   bwprintf (COM2, "ipc1: Registering as LOL\r\n");
   RegisterAs ("LOL"); RegisterAs ("POO");
   bwprintf (COM2, "ipc1: Registration complete.\r\n");
-//  bwprintf (COM2, "ipc1: WhoIs(\"LOL\") = %d\r\n",WhoIs("LOL"));
+  bwprintf (COM2, "ipc1: WhoIs(\"LOL\") = %d\r\n",WhoIs("LOL"));
   bwprintf (COM2, "ipc1: Exiting.\r\n");
+  bwprintf (COM2, "ipc1: WhoIs(\"POO\") = %d\r\n",WhoIs("POO"));
   Exit();
 }
 
@@ -100,8 +101,14 @@ void first_user_task()
 
   Create (SYSCALL_HIGH, nameserv);
   //Pass();
-  Create (SYSCALL_LOW, ipc1);
-  
+  Create (SYSCALL_LOW, rps_server);
+  Create (USER_HIGH, rps_client); 
+  Create (USER_HIGH, rps_client); 
+  Create (USER_HIGH, rps_client); 
+  Create (USER_HIGH, rps_client); 
+  Create (USER_HIGH, rps_client); 
+  Create (USER_HIGH, rps_client); 
+  Create (USER_HIGH, rps_client); 
  // Pass();
   //Create (SYSCALL_LOW, rps_client);
   //Create(IDLE, second);

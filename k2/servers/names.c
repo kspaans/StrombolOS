@@ -7,10 +7,16 @@ struct name {
   int tid;
 };
 
-int strcmp (char *s, char *t) {
-  bwprintf (COM2, "Comparing %s to %s\r\n", s,t);
-  while ((*s++ == *t++));
-  return (t-1==0&&s-1==0) ? 0 : 1;
+int strcmp(const char *s1, const char *s2)
+{
+while (*s1==*s2)
+{
+if(*s1=='\0')
+return(0);
+s1++;
+s2++;
+}
+return(*s1-*s2);
 }
 
 void atoi (char *c, int *res) {
@@ -27,7 +33,10 @@ int itoa (int x, char *res) {
 int lookup (char *name, struct name *reg,int num) {
   int i;
   for (i = 0; i < num; i++) {
-    if (strcmp(name, reg[i].name)) return reg[i].tid; 
+    if (!strcmp(name, reg[i].name)) {//bwprintf (COM2, "yup\r\n");
+    return reg[i].tid; }
+    else { //bwprintf (COM2, "nope\r\n"); }
+    }
   }
   return -1;
 }
@@ -38,28 +47,26 @@ void nameserv () {
   int ans;
   
   struct name reg[100];
-  int ind = 0;
   int num = 0;
-  bwprintf (COM2, "IT'S A MOTHERFUCKING NAME SERVER!!!!!!!!\n\r");
+//  bwprintf (COM2, "IT'S A MOTHERFUCKING NAME SERVER!!!!!!!!\n\r");
 
   while (1) {
-    bwprintf (COM2, "Nameserv: waiting for packet.\r\n");
+//    bwprintf (COM2, "Nameserv: waiting for packet.\r\n");
     Receive (&tid, msg, 6);
-    bwprintf (COM2, "Nameserv: recieved, from %d,  packet:  %s\r\n", tid,msg);
+  //  bwprintf (COM2, "Nameserv: recieved, from %d,  packet:  %s\r\n", tid,msg);
     switch (msg[0]) {
       case 'w':
         ans = lookup ((msg+1), reg, num);
-	bwprintf (COM2, "Nameserv: Going to reply with %d.\r\n", ans);
+//	bwprintf (COM2, "Nameserv:lookup gave %d.\r\n", ans);
         Reply(tid, (char*)&ans, 4);
-	bwprintf (COM2, "Nameserv: Reply sucessfull.\r\n");
+//	bwprintf (COM2, "Nameserv: Reply sucessfull.\r\n");
         break;
       case 'r':
-        num ++;
-        bwprintf (COM2, "NAMES: registering %s to tid %d.\r\n", msg+1,tid);
-        strcpy (reg[ind].name, msg + 1);
-        reg[ind].tid  = tid;
+  //      bwprintf (COM2, "NAMES: registering %s to tid %d.\r\n", msg+1,tid);
+        strcpy (reg[num].name, msg + 1);
+        reg[num++].tid  = tid;
 	Reply (tid, 0, 0);
-	bwprintf (COM2, "Nameserv: Reply sucessfull.\r\n");
+//	bwprintf (COM2, "Nameserv: Reply sucessfull.\r\n");
         break;
       default: 
         Reply (tid, 0, 0);

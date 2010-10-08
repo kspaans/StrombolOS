@@ -23,16 +23,16 @@ int _kReceive(struct td *mytd, int *tid, char *msg, int msglen, struct td *tds)
 //  bwprintf(COM2, "RECEIVE: tid: %d next: %d last: %d\r\n", mytd->tid, mytd->mq_next, mytd->mq_last);
 
   if (mytd->mq_next == mytd->mq_last) {
-    bwprintf (COM2, "kReceive: BLOCKED\r\n");
+//    bwprintf (COM2, "kReceive: BLOCKED\r\n");
     mytd->state = RECEIVE_BLOCKED;
-    mytd->replyq.msg = msg;
-    mytd->replyq.msglen = msglen;
-    mytd->replyq.tid = tid;
+    mytd->fuckq.msg = msg;
+    mytd->fuckq.msglen = msglen;
+    mytd->fuckq.tid = (int)tid;
     /* ... do the proper scheduling stuff to block us ... call Pass() maybe? */
     return 666;
   }
   *tid = mytd->messageq[mytd->mq_next].tid;
-  bwprintf (COM2, "kReceive: next: %d, last: %d\r\n",mytd->mq_next, mytd->mq_last);
+//  bwprintf (COM2, "kReceive: next: %d, last: %d\r\n",mytd->mq_next, mytd->mq_last);
 //  bwputstr(COM2, "RECEIVE: 1\r\n");
   sentdata = mytd->messageq[mytd->mq_next].msg;
 //  bwputstr(COM2, "RECEIVE: 2\r\n");

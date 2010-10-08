@@ -4,25 +4,25 @@
 
 void rps_server() {
   int q[50];
-  int *cur = q;
-  int *next = 0;
-  int p1, p2;
+  int start = 0;
+  int end = 0;
+  int p1=0, p2=0;
   char a1, a2;
   char m[2]; m[1] = 0;
   int tid;
   int nump = 0;
-  bwprintf (COM2, "IT'S A MOTHERFUCKING RPS SERVER!!!!!!!!!.\r\n");
+  bwprintf (COM2, "RPS server started.\r\n");
   RegisterAs ("RPS");
-  bwprintf (COM2, "I AM REGISTERED??? WhoIs (\"RPS\") = %d\r\n",WhoIs ("RPS"));
+//  bwprintf (COM2, "I AM REGISTERED??? WhoIs (\"RPS\") = %d\r\n",WhoIs ("RPS"));
   while (1) {
    Receive (&tid, m, 1);
-   bwprintf (COM2, "dicks");
+//   bwprintf (COM2, "dicks");
  
     switch (m[0]) {
       case 'J':
         bwprintf (COM2, "RPS_SERVER: %d joined.\r\n", tid);
-        *(next++) = tid;
-        nump++;
+	q[end]=tid;
+        end++;
         break;
       case 'R':
       case 'P':
@@ -34,13 +34,14 @@ void rps_server() {
       case 'Q':
         bwprintf (COM2, "RPS_SERVER: %d quit.", tid);
         if (tid == p1) p1 = 0;
-        else  p2 = 0;
+        else  p2 = 0; p1=0;p2=0;
         break;
     }
-    if (p1 == p2 && p1 == 0 && nump >= 2) {
+    if (p1 == p2 && p1 == 0 && end-start >= 2) {
+      p1 = q[start];
+      p2 = q[start+1];
+      start += 2;
       bwprintf (COM2, "\r\n RPS_SERVER: Start game: %d vs. %d.\r\n", p1, p2);
-      p1 = cur[0];
-      p2 = cur[1];
       nump -= 2;
       a1 = a2 = 0;
       Reply (p1, 0, 0);
