@@ -34,7 +34,7 @@ if (mytd->mq_next == mytd->mq_last) {
   bwputstr(COM2, "RECEIVE: 2\r\n");
   sentlen  = mytd->messageq[mytd->mq_next].msglen;
   bwputstr(COM2, "RECEIVE: 3\r\n");
-  while (msglen-- && *sentdata) {
+  while (--msglen && *sentdata) {
     *msg++ = *sentdata++;
   } // What about null terminator?
   *msg = '\0'; // hopefully this does it?

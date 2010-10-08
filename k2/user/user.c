@@ -75,7 +75,9 @@ void fuckit()
   char blah[20];
   bwputstr(COM2, "FUCKIT: Going to recieve\r\n");
   i = Receive(&tid, blah, 20);
-  bwprintf(COM2, "FUCKIT:recv'd(%d) %s\r", i, blah);
+  bwprintf(COM2, "FUCKIT:recv'd(%d) %s\r\n", i, blah);
+  i = Reply(tid, "EAT MY ASS", 11);
+  bwprintf(COM2, "FUCKIT: replyed %d. exiting. \r\n", i);
   Exit();
 }
 
@@ -83,7 +85,7 @@ void first_user_task()
 {
   int tids[4];
   int i;
-  char msg[4];
+  char msg[50];
 
   //Create(IDLE, second);
 
@@ -99,9 +101,9 @@ void first_user_task()
   bwprintf (COM2, "FIRST: creating fuckit\r\n");
   i = Create(USER_LOW, fuckit);
   bwprintf(COM2, "FIRST: Sending to %d\r\n", i);
-  Send(i, "haha", 5, msg, 4);
+  Send(i, "SUP NIGGA", 10, msg, 50);
   bwputstr(COM2, "FIRST: no longer send blocked...\r\n");
-
+  bwprintf(COM2, "FIRST: response was %s\r\n", msg);
   bwputstr(COM2, "First: exiting\r\n");
   Exit();
 }

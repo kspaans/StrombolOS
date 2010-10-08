@@ -35,5 +35,10 @@ int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
     tds[Tid].state = READY;
   }
 
+  // Tell Reply() where to reply to
+  mytd->replyq.msg    = reply;
+  mytd->replyq.msglen = replylen;
+  mytd->replyq.tid    = mytd->tid; /// Uhh, prolly not necessary????
+
   return 0; // how to get replylen?
 }

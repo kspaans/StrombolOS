@@ -62,9 +62,11 @@ Exit:
 	.global	Send
 	.type	Send, %function
 Send:
+        swp     r5, r5, [sp]
 	stmfd   sp!, {lr}
 	swi	#5
 	ldmfd   sp!, {lr}
+	swp     r5, r5, [sp]
 	mov	pc, lr
 	.size	Send, .-Send
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -78,4 +80,15 @@ Receive:
 	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	Receive, .-Receive
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	.text
+	.align	2
+	.global	Reply
+	.type	Reply, %function
+Reply:
+	stmfd   sp!, {lr}
+	swi	#7
+	ldmfd   sp!, {lr}
+	mov	pc, lr
+	.size	Reply, .-Reply
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

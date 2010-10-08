@@ -11,5 +11,7 @@ int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
            int replylen, struct td *tds, int current_tid);
 int _kReceive(struct td *mytd, int *tid, char *msg, int msglen,
 	      struct td *tds);
+int _kReply(struct td *mytd, int tid, char *reply, int replylen,
+            struct td *tds, int current_tid);
 
 #endif // KSYSCALLS__INCLUDED

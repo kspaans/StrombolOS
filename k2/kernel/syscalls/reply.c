@@ -11,34 +11,40 @@
 #include "../switch.h"
 #include "ksyscall.h"
 
-int _kReply(struct td *mytd, int tid, char *reply, int replylen)
+int _kReply(struct td *mytd, int tid, char *reply, int replylen,
+            struct td *tds, int current_tid)
 {
-  char *sentdata; // or a message structure?
-  int sentlen;
+  char *replybuf;
+  int B, buflen;
 
   if (tid < 0) {
     return -1;
   }
-  if (!find_tid(tid)) {
+  if (tid >= current_tid) {
     return -2;
   }
-  if (tds[tid].status != SEND_BLOCKED) {
+  if (tds[tid].state != REPLY_BLOCKED) {
     return -3;
   }
 
-  // check for space in sender's buffer
-  /*   SEND DATA ...
-  sentdata = mytd->mq->data;
-  sentlen  = mytd->mq->mlen;
-  while (msglen--) {
-    *msg++ = *sentdata;
-  } // LOOKS CORRECT TO ME!!! >.<
-  */
-  if (overflow) {
-    return -4;
-  }
+  // We know the sender is waiting, to reply to them
+  replybuf = tds[tid].replyq.msg;
+  B = buflen = tds[tid].replyq.msglen;
+  // should do it? What about replyer tid?
 
-  //mytd->status = READY; // if it wasn't already?, it should be
+  while (--buflen && *reply) {
+    *replybuf++ = *reply++;
+  }
+  *replybuf = '\0'; // hopefully this does it?
+
+  bwprintf(COM2, "REPLY: Waking up %d.\r\n", tid); 
+  tds[tid].state = READY;
+  tds[tid].retval = replylen;
+
+  if (B < replylen) {
+    return -4;
+  } 
+
 
   return 0;
 }
