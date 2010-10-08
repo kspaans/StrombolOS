@@ -22,10 +22,6 @@ int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
 
   // Regardless of whether or not Receive() has been called, store the message
   // in the recipient's message queue
-  tds[Tid].messageq[tds[Tid].mq_last].msg = msg;
-  tds[Tid].messageq[tds[Tid].mq_last].msglen = msglen;
-  tds[Tid].messageq[tds[Tid].mq_last].tid = mytd->tid;
-  tds[Tid].mq_last = (tds[Tid].mq_last + 1) % MQSIZE;
 
   if (tds[Tid].state != RECEIVE_BLOCKED) {
     mytd->state = SEND_BLOCKED;
@@ -33,8 +29,27 @@ int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
   else {
     mytd->state = REPLY_BLOCKED;
     tds[Tid].state = READY;
+    
+    //copy into replyq.msg, for this edgecase
+    char *sendbuf = tds[Tid].replyq.msg;
+    int buflen  = tds[Tid].replyq.msglen;
+    while (buflen-- && msglen--) {
+      *sendbuf++ = *msg++;
+    }
+
+  // Tell Reply() where to reply to
+  tds[Tid].replyq.msg    = reply;
+  tds[Tid].replyq.msglen = replylen;
+  //bwprintf (COM2, "going to derefence %d, punk.\r\n\r\n\r\n", mytd
+  *((int*)tds[Tid].replyq.tid) = mytd->tid;
+    bwprintf (COM2, "kSend: setting %d to READY.\r\n", Tid);
+    return 0;
   }
 
+  tds[Tid].messageq[tds[Tid].mq_last].msg = msg;
+  tds[Tid].messageq[tds[Tid].mq_last].msglen = msglen;
+  tds[Tid].messageq[tds[Tid].mq_last].tid = mytd->tid;
+  tds[Tid].mq_last = (tds[Tid].mq_last + 1) % MQSIZE;
   // Tell Reply() where to reply to
   mytd->replyq.msg    = reply;
   mytd->replyq.msglen = replylen;

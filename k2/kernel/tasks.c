@@ -17,7 +17,7 @@ struct td *findtask (struct td *head, struct td *loop) {
 	i->state == RECEIVE_BLOCKED)
       ++num_blocked;
     if (i->state == READY) {
-      //bwprintf(COM2, "SCHEDULER: %d blocked tasks\r\n", num_blocked);
+//      bwprintf(COM2, "SCHEDULER: %d blocked tasks\r\n", num_blocked);
       return i;
       }
     i = i->next;

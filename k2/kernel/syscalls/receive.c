@@ -18,33 +18,35 @@ int _kReceive(struct td *mytd, int *tid, char *msg, int msglen, struct td *tds)
 {
   char *sentdata;
   int sentlen;
-  bwputstr(COM2, "RECEIVE 0\r\n");
+//  bwputstr(COM2, "RECEIVE 0\r\n");
  
-  bwprintf(COM2, "RECEIVE: tid: %d next: %d last: %d\r\n", mytd->tid, mytd->mq_next, mytd->mq_last);
+//  bwprintf(COM2, "RECEIVE: tid: %d next: %d last: %d\r\n", mytd->tid, mytd->mq_next, mytd->mq_last);
 
-if (mytd->mq_next == mytd->mq_last) {
+  if (mytd->mq_next == mytd->mq_last) {
+    bwprintf (COM2, "kReceive: BLOCKED\r\n");
     mytd->state = RECEIVE_BLOCKED;
+    mytd->replyq.msg = msg;
+    mytd->replyq.msglen = msglen;
+    mytd->replyq.tid = tid;
     /* ... do the proper scheduling stuff to block us ... call Pass() maybe? */
     return 666;
   }
   *tid = mytd->messageq[mytd->mq_next].tid;
-
-  bwputstr(COM2, "RECEIVE: 1\r\n");
+  bwprintf (COM2, "kReceive: next: %d, last: %d\r\n",mytd->mq_next, mytd->mq_last);
+//  bwputstr(COM2, "RECEIVE: 1\r\n");
   sentdata = mytd->messageq[mytd->mq_next].msg;
-  bwputstr(COM2, "RECEIVE: 2\r\n");
+//  bwputstr(COM2, "RECEIVE: 2\r\n");
   sentlen  = mytd->messageq[mytd->mq_next].msglen;
-  bwputstr(COM2, "RECEIVE: 3\r\n");
-  while (--msglen && *sentdata) {
+//  bwputstr(COM2, "RECEIVE: 3\r\n");
+  while (msglen-- && sentlen--) {
     *msg++ = *sentdata++;
-  } // What about null terminator?
-  *msg = '\0'; // hopefully this does it?
-
+  }
   // "Clear" this message struct from the queue
   mytd->mq_next = (mytd->mq_next + 1) % MQSIZE;
   
   // Sender is now REPLY_BLOCKED, waiting for someone to reply
   tds[*tid].state = REPLY_BLOCKED;
   
-  bwprintf (COM2, "RECEIVE: BITCH\r\n");
-  return sentlen;
+ // bwprintf (COM2, "RECEIVE: BITCH\r\n");
+  return mytd->messageq[mytd->mq_next].msglen;
 }

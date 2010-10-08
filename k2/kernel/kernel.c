@@ -21,7 +21,7 @@ void kinit(struct td *tds, int *s, void (*first)())
   tds[0].tid      = 0;
   tds[0].stack    = s + 1024; // We are now pointing just below the stack
   tds[0].state    = READY;
-  tds[0].priority = 0;
+  tds[0].priority = SYSCALL_LOW;
   tds[0].next     = NULL;
   tds[0].retval   = 88;
   tds[0].pc       = first;
@@ -124,20 +124,20 @@ int main () {
         _kExit(cur);
         break;
       case 5:
-	bwprintf(COM2, "KERNEL: user sent to tid %x\r\n", cur->stack[1]);
-	req = _kSend(cur, cur->stack[1], cur->stack[2], cur->stack[3], cur->stack[4], cur->stack[5], tds, current_tid);
+//	bwprintf(COM2, "KERNEL: user sent to tid %x\r\n", cur->stack[1]);
+	req = _kSend(cur, cur->stack[1], (char*)cur->stack[2], cur->stack[3], (char*)cur->stack[4], cur->stack[5], tds, current_tid);
 	break;
       case 6:
-	bwprintf(COM2, "KERNEL: user recieve, *tid %x\r\n", *((int *)(cur->stack[1])));
-	bwprintf(COM2, "KERNEL: user recv w/ char%x\r\n", (int)cur->stack[2]);
-	bwprintf(COM2, "KERNEL: user recv w/ len %x\r\n", cur->stack[3]);
+//	bwprintf(COM2, "KERNEL: user recieve, *tid %x\r\n", *((int *)(cur->stack[1])));
+//	bwprintf(COM2, "KERNEL: user recv w/ char%x\r\n", (int)cur->stack[2]);
+//	bwprintf(COM2, "KERNEL: user recv w/ len %x\r\n", cur->stack[3]);
 	req = _kReceive(cur, (int *)cur->stack[1], (char *)cur->stack[2], cur->stack[3], tds);
-	bwprintf(COM2, "KERNEL: DON'T GO BACK YOU FUCKFACE.\r\n");
+//	bwprintf(COM2, "KERNEL: DON'T GO BACK YOU FUCKFACE.\r\n");
 	break;
       case 7:
-	bwprintf(COM2, "KERNEL: user reply, tid %x\r\n", cur->stack[1]);
+//	bwprintf(COM2, "KERNEL: user reply, tid %x\r\n", cur->stack[1]);
         req = _kReply(cur, cur->stack[1], (char *)cur->stack[2], cur->stack[3], tds, current_tid);
-	bwprintf(COM2, "KERNEL: done replying\r\n");
+//	bwprintf(COM2, "KERNEL: done replying\r\n");
         break;
       default:
         req = 0; // ????????????? should probably just kill the proc and print an error?

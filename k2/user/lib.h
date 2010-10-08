@@ -1,7 +1,7 @@
 #ifndef LIB__INCLUDED
 #define LIB__INCLUDED
 
-int RegisterAs (char *name);
-int WhoIs (char *name);
+int strlen (char *s);
+void strcpy (char *d, char *s);
 
 #endif // LIB__INCLUDED

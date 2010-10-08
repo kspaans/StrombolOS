@@ -2,6 +2,17 @@
 #include "../kernel/switch.h"
 #include "usyscall.h"
 #include "user.h"
+#include "../servers/servers.h"
+
+void ipc1 () {
+  bwprintf (COM2, "ipc1: I am %d\r\n", MyTid());
+  bwprintf (COM2, "ipc1: Registering as LOL\r\n");
+  RegisterAs ("LOL"); RegisterAs ("POO");
+  bwprintf (COM2, "ipc1: Registration complete.\r\n");
+//  bwprintf (COM2, "ipc1: WhoIs(\"LOL\") = %d\r\n",WhoIs("LOL"));
+  bwprintf (COM2, "ipc1: Exiting.\r\n");
+  Exit();
+}
 
 void second () {
   bwputstr(COM2, "I AM IDLE\n");
@@ -80,13 +91,19 @@ void fuckit()
   bwprintf(COM2, "FUCKIT: replyed %d. exiting. \r\n", i);
   Exit();
 }
-
+void rps_client();
 void first_user_task()
 {
   int tids[4];
   int i;
   char msg[50];
 
+  Create (SYSCALL_HIGH, nameserv);
+  //Pass();
+  Create (SYSCALL_LOW, ipc1);
+  
+ // Pass();
+  //Create (SYSCALL_LOW, rps_client);
   //Create(IDLE, second);
 
 /*  tids[0] = Create(USER_LOW, other_user_task);
@@ -98,14 +115,14 @@ void first_user_task()
   tids[3] = Create(SYSCALL_LOW, other_user_task);
   bwprintf(COM2, "Created: %d.\n", tids[3]);
 */
-  bwprintf (COM2, "FIRST: creating fuckit\r\n");
+/*  bwprintf (COM2, "FIRST: creating fuckit\r\n");
   i = Create(USER_LOW, fuckit);
   bwprintf(COM2, "FIRST: Sending to %d\r\n", i);
   Send(i, "SUP NIGGA", 10, msg, 50);
   bwputstr(COM2, "FIRST: no longer send blocked...\r\n");
   bwprintf(COM2, "FIRST: response was %s\r\n", msg);
   bwputstr(COM2, "First: exiting\r\n");
-  Exit();
+*/  Exit();
 }
 
 void other_user_task()
@@ -117,3 +134,8 @@ void other_user_task()
            MyTid(), MyParentTid());
   Exit();
 }
+
+
+
+
+

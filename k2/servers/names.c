@@ -1,17 +1,16 @@
-#include "lib.h"
-
+#include "../user/lib.h"
+#include "../user/usyscall.h"
+#include <bwio.h>
+#include <ts7200.h>
 struct name {
-  char name[4];
+  char name[5];
   int tid;
 };
 
-void strcpy (char *d, char *s) {
-  while (*d++ = *s++);
-}
-
 int strcmp (char *s, char *t) {
-  while (s++ == t++);
-  return (t--==0&&s--==0) ? 0 : 1;
+  bwprintf (COM2, "Comparing %s to %s\r\n", s,t);
+  while ((*s++ == *t++));
+  return (t-1==0&&s-1==0) ? 0 : 1;
 }
 
 void atoi (char *c, int *res) {
@@ -25,38 +24,46 @@ int itoa (int x, char *res) {
   return i;
 }
 
-int lookup (char *name, struct name *reg) {
-  while (reg++) 
-    if (!strcmp(name, reg->name)) return reg->tid;
+int lookup (char *name, struct name *reg,int num) {
+  int i;
+  for (i = 0; i < num; i++) {
+    if (strcmp(name, reg[i].name)) return reg[i].tid; 
+  }
   return -1;
 }
 
-void nameserver () {
-  char msg[5];
+void nameserv () {
+  char msg[6];
   int tid;
-  int len;
+  int ans;
   
   struct name reg[100];
   int ind = 0;
+  int num = 0;
+  bwprintf (COM2, "IT'S A MOTHERFUCKING NAME SERVER!!!!!!!!\n\r");
+
   while (1) {
-    if (recieve(&tid, &msg, 5)) {
-      switch (msg[0]) {
-        case 'w':
-          len = itoa (lookup ((msg+1), reg), msg+1);
-          reply(&tid, msg+1, len);
-          break;
-        case 'r':
-          strcpy (reg[ind].name, msg + 1);
-          reg[ind].tid  = tid;
-          reply (&tid, 0, 0);
-          break;
-        default:
-          reply (&tid, 0, 0);
-          break;
-      }
-    }
-    else {
-      reply (&tid, 0, 0);
+    bwprintf (COM2, "Nameserv: waiting for packet.\r\n");
+    Receive (&tid, msg, 6);
+    bwprintf (COM2, "Nameserv: recieved, from %d,  packet:  %s\r\n", tid,msg);
+    switch (msg[0]) {
+      case 'w':
+        ans = lookup ((msg+1), reg, num);
+	bwprintf (COM2, "Nameserv: Going to reply with %d.\r\n", ans);
+        Reply(tid, (char*)&ans, 4);
+	bwprintf (COM2, "Nameserv: Reply sucessfull.\r\n");
+        break;
+      case 'r':
+        num ++;
+        bwprintf (COM2, "NAMES: registering %s to tid %d.\r\n", msg+1,tid);
+        strcpy (reg[ind].name, msg + 1);
+        reg[ind].tid  = tid;
+	Reply (tid, 0, 0);
+	bwprintf (COM2, "Nameserv: Reply sucessfull.\r\n");
+        break;
+      default: 
+        Reply (tid, 0, 0);
+        break;
     }
   }
 }

@@ -31,13 +31,12 @@ int _kReply(struct td *mytd, int tid, char *reply, int replylen,
   replybuf = tds[tid].replyq.msg;
   B = buflen = tds[tid].replyq.msglen;
   // should do it? What about replyer tid?
-
-  while (--buflen && *reply) {
+  int rl = replylen;
+  while (buflen-- && rl--) {
     *replybuf++ = *reply++;
   }
-  *replybuf = '\0'; // hopefully this does it?
 
-  bwprintf(COM2, "REPLY: Waking up %d.\r\n", tid); 
+//  bwprintf(COM2, "REPLY: Waking up %d.\r\n", tid); 
   tds[tid].state = READY;
   tds[tid].retval = replylen;
 
