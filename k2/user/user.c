@@ -83,6 +83,10 @@ void first_user_task()
   tids[3] = Create(SYSCALL_LOW, other_user_task);
   bwprintf(COM2, "Created: %d.\n", tids[3]);
 
+  bwputstr(COM2, "XXX: sending\n");
+  Send(0xfacedead, "haha", 5, "wut", 4);
+  bwputstr(COM2, "XXX: shouldn't get here...\n");
+
   bwputstr(COM2, "First: exiting\n");
   Exit();
 }

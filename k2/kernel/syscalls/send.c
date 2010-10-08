@@ -10,31 +10,28 @@
 #include "../switch.h"
 #include "ksyscall.h"
 
-int is_valid_tid(int tid);
-
 int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
-           int replylen, struct td *tds)
+           int replylen, struct td *tds, int current_tid)
 {
-  char *sentdata; // or a message structure?
-  int sentlen;
-
   if (Tid < 0) { // the only impossible TIDs?
     return -1;
   }
-  if (!is_valid_tid(Tid)) {
+  if (Tid >= current_tid) {
     return -2;
   }
 
-  // COPY DATA
-  sentdata = mytd->mq->data;
-  sentlen  = mytd->mq->mlen;
+  // Regardless of whether or not Receive() has been called, store the message
+  // in the recipient's message queue
   while (msglen--) {
-    *msg++ = *sentdata;
-  } // LOOKS CORRECT TO ME!!! >.<
-
-  if (!waiting_for_recv(Tid)) {
-    mytd->state = SEND_BLOCKED;
+    tds[Tid].messageq[tds[Tid].mq_index].msg = msg;
+    tds[Tid].messageq[tds[Tid].mq_index].msglen = msglen;
+    tds[Tid].mq_index = (tds[Tid].mq_index + 1) % MQSIZE;
   }
 
-  return sentlen;
+  if (tds[Tid].state != RECEIVE_BLOCKED) {
+    mytd->state = SEND_BLOCKED;
+    // what to do now?
+  }
+
+  return 0; // how to get replylen?
 }

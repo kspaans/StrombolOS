@@ -57,3 +57,14 @@ Exit:
 	mov	pc, lr
 	.size	Exit, .-Exit
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	.text
+	.align	2
+	.global	Send
+	.type	Send, %function
+Send:
+	stmfd   sp!, {lr}
+	swi	#5
+	ldmfd   sp!, {lr}
+	mov	pc, lr
+	.size	Exit, .-Exit
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

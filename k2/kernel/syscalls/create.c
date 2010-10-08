@@ -5,10 +5,12 @@
 int _kCreate(struct td *newtd, int priority, void (*code)(), int parenttid,
              int newtid, int *stack)
 {
+  int i;
+
   if (priority < 0 || priority > NUMPRIO) {
     return -1;
   }
-  if (newtid == MAXTASKS) { // Oh shit, this should be changed to make destroy() easier...
+  if (newtid == MAXTASKS) {
     return -2;
   }
 
@@ -20,6 +22,10 @@ int _kCreate(struct td *newtd, int priority, void (*code)(), int parenttid,
   newtd->retval   = 0;
   newtd->pc       = code;
   newtd->ptid     = parenttid;
+  newtd->mq_index = 0;
+  for (i = 0; i < MQSIZE; ++i) {
+    newtd->messageq[i].msglen = -1; // "not in use"
+  }
 
   newtd->stack    -= 16;
   newtd->stack[0]  = 16;                         // CPSR

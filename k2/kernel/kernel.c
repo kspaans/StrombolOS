@@ -26,6 +26,10 @@ void kinit(struct td *tds, int *s, void (*first)())
   tds[0].retval   = 88;
   tds[0].pc       = first;
   tds[0].ptid     = 0;
+  tds[0].mq_index = 0;
+  for (i = 0; i < MQSIZE; ++i) {
+    tds[0].messageq[i].msglen = -1; // "not in use"
+  }
 
  // bwprintf(COM2, "< init> Initializing %x through %x of user stack.\n", tds[0].stack - 15, tds[0].stack);
 
@@ -101,7 +105,7 @@ int main () {
 	newtid = current_tid++;
         req = _kCreate(&(tds[newtid]),
 	               cur->stack[1],        // PRIORITY 
-                       cur->stack[2],        // CODE
+                       (void *)cur->stack[2],        // CODE
                        cur->tid,
 		       newtid,               // NEW TID
 		       stacks[newtid]);
@@ -121,6 +125,9 @@ int main () {
       case 4:
         _kExit(cur);
         break;
+      case 5:
+	bwprintf(COM2, "\r\nXXX: woah user sent to tid %x\r\n", cur->stack[1]);
+	_kSend(cur, cur->tid, "test", 5, "buff", 5, tds, current_tid);
       default:
         req = 0; // ????????????? should probably just kill the proc and print an error?
     }
