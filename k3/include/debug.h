@@ -11,7 +11,7 @@
 // Nice lines of the form "file.c:## blah blah" -- but remember to include the
 //  appropriate format string
 #define DPRINT(...) if (DEBUG) {\
-  bwprintf(COM2, "%s:%s: ", __FILE__, __LINE__); \
+  bwprintf(COM2, "%s:%d: ", __FILE__, __LINE__); \
   bwprintf(COM2, __VA_ARGS__); }
 
 #endif/*__DEBUG_H__*/
