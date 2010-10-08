@@ -27,6 +27,7 @@ enum PRIORITY {
 struct mq {
   int msglen;
   char *msg;
+  int tid;
 };
 
 #define MQSIZE 10 // We can have at most this many tasks send to us at once
@@ -40,7 +41,8 @@ struct td {
   void *pc;               // entry point?
   int ptid;               // Task's Parent's TID
   struct mq messageq[MQSIZE]; // Pointer to the next unused slot in the MQ
-  int mq_index;           // tread the array like a circular buffer
+  int mq_next;            // next message in queue to be processed
+  int mq_last;            // free slot in the queue
 };
 
 int swtch(int arg);

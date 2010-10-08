@@ -68,13 +68,26 @@ void lol()
 
 void other_user_task();
 
+void fuckit()
+{
+  int i;
+  int tid = 0xB00B;
+  char blah[20];
+  bwputstr(COM2, "FUCKIT: Going to recieve\r\n");
+  i = Receive(&tid, blah, 20);
+  bwprintf(COM2, "FUCKIT:recv'd(%d) %s\r", i, blah);
+  Exit();
+}
+
 void first_user_task()
 {
   int tids[4];
+  int i;
+  char msg[4];
 
   //Create(IDLE, second);
 
-  tids[0] = Create(USER_LOW, other_user_task);
+/*  tids[0] = Create(USER_LOW, other_user_task);
   bwprintf(COM2, "Created: %d.\n", tids[0]);
   tids[1] = Create(USER_LOW, other_user_task);
   bwprintf(COM2, "Created: %d.\n", tids[1]);
@@ -82,12 +95,14 @@ void first_user_task()
   bwprintf(COM2, "Created: %d.\n", tids[2]);
   tids[3] = Create(SYSCALL_LOW, other_user_task);
   bwprintf(COM2, "Created: %d.\n", tids[3]);
+*/
+  bwprintf (COM2, "FIRST: creating fuckit\r\n");
+  i = Create(USER_LOW, fuckit);
+  bwprintf(COM2, "FIRST: Sending to %d\r\n", i);
+  Send(i, "haha", 5, msg, 4);
+  bwputstr(COM2, "FIRST: no longer send blocked...\r\n");
 
-  bwputstr(COM2, "XXX: sending\n");
-  Send(0xfacedead, "haha", 5, "wut", 4);
-  bwputstr(COM2, "XXX: shouldn't get here...\n");
-
-  bwputstr(COM2, "First: exiting\n");
+  bwputstr(COM2, "First: exiting\r\n");
   Exit();
 }
 

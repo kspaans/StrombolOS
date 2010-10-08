@@ -14,20 +14,37 @@ should be simple!
 #include "../switch.h"
 #include "ksyscall.h"
 
-int _kReceive(struct td *mytd, int *tid, char *msg, int msglen)
+int _kReceive(struct td *mytd, int *tid, char *msg, int msglen, struct td *tds)
 {
-  char *sentdata; // or a message structure?
+  char *sentdata;
   int sentlen;
+  bwputstr(COM2, "RECEIVE 0\r\n");
+ 
+  bwprintf(COM2, "RECEIVE: tid: %d next: %d last: %d\r\n", mytd->tid, mytd->mq_next, mytd->mq_last);
 
-  if (mytd->mq == NULL) {
-    mytd->status = RECEIVE_BLOCKED;
+if (mytd->mq_next == mytd->mq_last) {
+    mytd->state = RECEIVE_BLOCKED;
     /* ... do the proper scheduling stuff to block us ... call Pass() maybe? */
+    return 666;
   }
+  *tid = mytd->messageq[mytd->mq_next].tid;
 
-  sentdata = mytd->mq->data;
-  sentlen  = mytd->mq->mlen;
-  while (msglen--) {
-    *msg++ = *sentdata;
-  } // LOOKS CORRECT TO ME!!! >.<
+  bwputstr(COM2, "RECEIVE: 1\r\n");
+  sentdata = mytd->messageq[mytd->mq_next].msg;
+  bwputstr(COM2, "RECEIVE: 2\r\n");
+  sentlen  = mytd->messageq[mytd->mq_next].msglen;
+  bwputstr(COM2, "RECEIVE: 3\r\n");
+  while (msglen-- && *sentdata) {
+    *msg++ = *sentdata++;
+  } // What about null terminator?
+  *msg = '\0'; // hopefully this does it?
+
+  // "Clear" this message struct from the queue
+  mytd->mq_next = (mytd->mq_next + 1) % MQSIZE;
+  
+  // Sender is now REPLY_BLOCKED, waiting for someone to reply
+  tds[*tid].state = REPLY_BLOCKED;
+  
+  bwprintf (COM2, "RECEIVE: BITCH\r\n");
   return sentlen;
 }

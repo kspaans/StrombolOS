@@ -9,5 +9,7 @@ void _kPass(struct td *taskd);
 void _kExit(struct td *taskd);
 int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
            int replylen, struct td *tds, int current_tid);
+int _kReceive(struct td *mytd, int *tid, char *msg, int msglen,
+	      struct td *tds);
 
 #endif // KSYSCALLS__INCLUDED

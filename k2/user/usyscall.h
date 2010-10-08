@@ -9,5 +9,6 @@ void Exit();
 unsigned int Rand ();
 void Seed(unsigned int s);
 int Send(int Tid, char *msg, int msglen, char *relpy, int replylen);
+int Receive(int *tid, char *msg, int msglen);
 
 #endif // USYSCALL__INCLUDED

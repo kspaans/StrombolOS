@@ -22,15 +22,17 @@ int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
 
   // Regardless of whether or not Receive() has been called, store the message
   // in the recipient's message queue
-  while (msglen--) {
-    tds[Tid].messageq[tds[Tid].mq_index].msg = msg;
-    tds[Tid].messageq[tds[Tid].mq_index].msglen = msglen;
-    tds[Tid].mq_index = (tds[Tid].mq_index + 1) % MQSIZE;
-  }
+  tds[Tid].messageq[tds[Tid].mq_last].msg = msg;
+  tds[Tid].messageq[tds[Tid].mq_last].msglen = msglen;
+  tds[Tid].messageq[tds[Tid].mq_last].tid = mytd->tid;
+  tds[Tid].mq_last = (tds[Tid].mq_last + 1) % MQSIZE;
 
   if (tds[Tid].state != RECEIVE_BLOCKED) {
     mytd->state = SEND_BLOCKED;
-    // what to do now?
+  } 
+  else {
+    mytd->state = REPLY_BLOCKED;
+    tds[Tid].state = READY;
   }
 
   return 0; // how to get replylen?

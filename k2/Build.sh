@@ -13,7 +13,7 @@ LDFLAGS="-init main -Map build/kernel.map -N -T build/orex.ld \
 	"
 OBJS="build/kernel.o build/switch.o build/user.o build/usyscall.o \
       build/tasks.o build/create.o build/mytid.o build/myparenttid.o \
-      build/pass.o build/exit.o build/send.o \
+      build/pass.o build/exit.o build/send.o build/receive.o \
      "
 
 if [ `basename $PWD` != "k2" ]; then
@@ -57,8 +57,8 @@ as  ${ASFLAGS} -o build/send.o build/send.s || exit 1
 #gcc ${CFLAGS}  -o build/reply.s kernel/syscalls/reply.c || exit 1
 #as  ${ASFLAGS} -o build/reply.o build/reply.s || exit 1
 
-#gcc ${CFLAGS}  -o build/receive.s kernel/syscalls/receive.c || exit 1
-#as  ${ASFLAGS} -o build/receive.o build/receive.s || exit 1
+gcc ${CFLAGS}  -o build/receive.s kernel/syscalls/receive.c || exit 1
+as  ${ASFLAGS} -o build/receive.o build/receive.s || exit 1
 
 gcc ${CFLAGS}  -o build/mytid.s kernel/syscalls/mytid.c || exit 1
 as  ${ASFLAGS} -o build/mytid.o build/mytid.s || exit 1

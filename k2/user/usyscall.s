@@ -66,5 +66,16 @@ Send:
 	swi	#5
 	ldmfd   sp!, {lr}
 	mov	pc, lr
-	.size	Exit, .-Exit
+	.size	Send, .-Send
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	.text
+	.align	2
+	.global	Receive
+	.type	Receive, %function
+Receive:
+	stmfd   sp!, {lr}
+	swi	#6
+	ldmfd   sp!, {lr}
+	mov	pc, lr
+	.size	Receive, .-Receive
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

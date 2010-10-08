@@ -13,7 +13,7 @@ void initbuf (int *p, int n, int val) {
 
 void kinit(struct td *tds, int *s, void (*first)())
 {
-  int i;
+	// replace with kCreate????????????????????????
  // bwputstr(COM2, "< init> entering\n");
   install_handler();
  // bwputstr(COM2, "< init> installed exception handler\n");
@@ -26,10 +26,8 @@ void kinit(struct td *tds, int *s, void (*first)())
   tds[0].retval   = 88;
   tds[0].pc       = first;
   tds[0].ptid     = 0;
-  tds[0].mq_index = 0;
-  for (i = 0; i < MQSIZE; ++i) {
-    tds[0].messageq[i].msglen = -1; // "not in use"
-  }
+  tds[0].mq_next  = 0;
+  tds[0].mq_last  = 0;
 
  // bwprintf(COM2, "< init> Initializing %x through %x of user stack.\n", tds[0].stack - 15, tds[0].stack);
 
@@ -45,8 +43,8 @@ void kinit(struct td *tds, int *s, void (*first)())
   tds[0].stack[1] = tds[0].retval;             // register 0
   tds[0].stack[14] = (int)(tds[0].stack + 16); // register 13 (stack register)
   tds[0].stack[15] = (int)tds[0].pc;           // register 14 (link register)
-/*
-  bwputstr(COM2, "< init> Setup the initial state\n");
+
+/*  bwputstr(COM2, "< init> Setup the initial state\n");
 
   bwprintf(COM2, "< init> Using initial stack pointer: %x\n", (int)tds[0].stack);
   bwputstr(COM2, "< init> leaving\n");
@@ -126,8 +124,16 @@ int main () {
         _kExit(cur);
         break;
       case 5:
-	bwprintf(COM2, "\r\nXXX: woah user sent to tid %x\r\n", cur->stack[1]);
-	_kSend(cur, cur->tid, "test", 5, "buff", 5, tds, current_tid);
+	bwprintf(COM2, "KERNEL: user sent to tid %x\r\n", cur->stack[1]);
+	req = _kSend(cur, cur->stack[1], cur->stack[2], cur->stack[3], cur->stack[4], 5, tds, current_tid);
+	break;
+      case 6:
+	bwprintf(COM2, "KERNEL: user recieve, *tid %x\r\n", *((int *)(cur->stack[1])));
+	bwprintf(COM2, "KERNEL: user recv w/ char%x\r\n", (int)cur->stack[2]);
+	bwprintf(COM2, "KERNEL: user recv w/ len %x\r\n", cur->stack[3]);
+	req = _kReceive(cur, (int *)cur->stack[1], (char *)cur->stack[2], cur->stack[3], tds);
+	bwprintf(COM2, "KERNEL: DON'T GO BACK YOU FUCKFACE.");
+	break;
       default:
         req = 0; // ????????????? should probably just kill the proc and print an error?
     }
