@@ -1,5 +1,6 @@
 #include <bwio.h>
 #include <ts7200.h>
+#include <debug.h>
 #include "switch.h"
 #include "syscalls/ksyscall.h"
 #include "../user/usyscall.h"
@@ -14,10 +15,9 @@ void initbuf (int *p, int n, int val) {
 void kinit(struct td *tds, int *s, void (*first)())
 {
 	// replace with kCreate????????????????????????
- // bwputstr(COM2, "< init> entering\n");
+  DPRINT("entering\r\n");
   install_handler();
- // bwputstr(COM2, "< init> installed exception handler\n");
- // bwputstr(COM2, "< init> will initialize some space probably...\n");
+  DPRINT("installed exception handler\r\n");
   tds[0].tid      = 0;
   tds[0].stack    = s + 1024; // We are now pointing just below the stack
   tds[0].state    = READY;
@@ -28,6 +28,7 @@ void kinit(struct td *tds, int *s, void (*first)())
   tds[0].ptid     = 0;
   tds[0].mq_next  = 0;
   tds[0].mq_last  = 0;
+  DPRINT("initialized the first TD\r\n");
 
  // bwprintf(COM2, "< init> Initializing %x through %x of user stack.\n", tds[0].stack - 15, tds[0].stack);
 
@@ -44,11 +45,10 @@ void kinit(struct td *tds, int *s, void (*first)())
   tds[0].stack[14] = (int)(tds[0].stack + 16); // register 13 (stack register)
   tds[0].stack[15] = (int)tds[0].pc;           // register 14 (link register)
 
-/*  bwputstr(COM2, "< init> Setup the initial state\n");
-
-  bwprintf(COM2, "< init> Using initial stack pointer: %x\n", (int)tds[0].stack);
-  bwputstr(COM2, "< init> leaving\n");
-*/}
+  DPRINT("Setup the initial state\r\n");
+  DPRINT("Using initial stack pointer: %x\r\n", (int)tds[0].stack);
+  DPRINT("leaving\r\n");
+}
 
 
 int main () {
@@ -66,9 +66,9 @@ int main () {
 
   bwsetfifo (COM2, OFF);
 
-/*
-  bwputstr (COM2, "[2J< kernel> Hello, world!\n");
+  DPRINT("[2J< kernel> Hello, world!\r\n");
 
+/*
   bwputstr (COM2, "ustack1 is ");
   bwputr (COM2,(int)ustack1); 
   bwputstr (COM2, "\n");
@@ -150,5 +150,6 @@ int main () {
   //c += a;
   //bwprintf(COM2, "< kernel> Context arithmetic is %d\n", c);
  
+  DPRINT("Goodbye\r\n");
   return 0;
 }
