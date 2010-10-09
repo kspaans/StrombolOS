@@ -32,7 +32,7 @@ void rps_server() {
         else { bwprintf (COM2, "RPS_SERVER: Player 2 says %c.\r\n", m[0]); a2 = m[0]; }
         break;
       case 'Q':
-        bwprintf (COM2, "RPS_SERVER: %d quit.", tid);
+        bwprintf (COM2, "RPS_SERVER: %d quit.\r\n", tid);
         if (tid == p1) p1 = 0;
         else  p2 = 0; p1=0;p2=0;
         break;

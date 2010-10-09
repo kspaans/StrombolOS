@@ -6,6 +6,7 @@
 #include "../user/usyscall.h"
 #include "../user/user.h"
 #include "tasks.h"
+#include "../ktests/tests.h"
 
 void initbuf (int *p, int n, int val) {
   int *i;
@@ -82,7 +83,8 @@ int main () {
   a = 1; b = 2; c = 10;
 
 */
-  kinit(tds, stacks[0], &first_user_task);
+  //kinit(tds, stacks[0], &first_user_task);
+  kinit(tds, stacks[0], srr_tests);
  
  // a *= (c - b);
  // bwputstr(COM2, "< kernel> Jump!\n\n");

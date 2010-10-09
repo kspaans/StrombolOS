@@ -5,10 +5,11 @@
 #include "ksyscall.h"
 #include <bwio.h>
 #include <ts7200.h>
+#include <debug.h>
 
 void _kExit(struct td *taskd)
 {
-//  bwprintf (COM2, "TID %d EXITING\r\n", taskd->tid);
+  DPRINT("Exiting: taskd 0x%x, tid %d\r\n", taskd, taskd->tid);
   taskd->state = DEFUNCT;
   return;
 }

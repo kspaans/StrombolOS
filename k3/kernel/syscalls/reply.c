@@ -8,6 +8,7 @@
 
 #include <bwio.h>
 #include <ts7200.h>
+#include <debug.h>
 #include "../switch.h"
 #include "ksyscall.h"
 
@@ -16,6 +17,10 @@ int _kReply(struct td *mytd, int tid, char *reply, int replylen,
 {
   char *replybuf;
   int B, buflen;
+
+  DPRINT(">>> Entered with mytd 0x%x, tid %d, reply(0x%x)\'%s\', replylen %d, t"
+         "ds 0x%x, current_tid %d\r\n", mytd, tid, reply, reply, replylen, tds,
+         current_tid);
 
   if (tid < 0) {
     return -1;
@@ -35,7 +40,6 @@ int _kReply(struct td *mytd, int tid, char *reply, int replylen,
     *replybuf++ = *reply++;
   }
 
-//  bwprintf(COM2, "REPLY: Waking up %d.\r\n", tid); 
   tds[tid].state = READY;
   tds[tid].retval = replylen;
 
@@ -43,6 +47,6 @@ int _kReply(struct td *mytd, int tid, char *reply, int replylen,
     return -4;
   } 
 
-
+  DPRINT("<<< returning\r\n");
   return 0;
 }

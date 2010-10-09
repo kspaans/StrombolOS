@@ -11,6 +11,7 @@ should be simple!
 
 #include <bwio.h>
 #include <ts7200.h>
+#include <debug.h>
 #include "../switch.h"
 #include "ksyscall.h"
 
@@ -18,12 +19,12 @@ int _kReceive(struct td *mytd, int *tid, char *msg, int msglen, struct td *tds)
 {
   char *sentdata;
   int sentlen;
-//  bwputstr(COM2, "RECEIVE 0\r\n");
- 
-//  bwprintf(COM2, "RECEIVE: tid: %d next: %d last: %d\r\n", mytd->tid, mytd->mq_next, mytd->mq_last);
 
+  DPRINT(">>> Entered with mytd 0x%x, tid(0x%x) %d, msg(0x%x)\'%s\', msglen %d,"
+         "tds 0x%x\r\n", mytd, tid, *tid, msg, msg, msglen, tds);
+ 
   if (mytd->mq_next == mytd->mq_last) {
-//    bwprintf (COM2, "kReceive: BLOCKED\r\n");
+    DPRINT("||| Blocked!\r\n");
     mytd->state = RECEIVE_BLOCKED;
     mytd->fuckq.msg = msg;
     mytd->fuckq.msglen = msglen;
@@ -31,13 +32,11 @@ int _kReceive(struct td *mytd, int *tid, char *msg, int msglen, struct td *tds)
     /* ... do the proper scheduling stuff to block us ... call Pass() maybe? */
     return 666;
   }
+
   *tid = mytd->messageq[mytd->mq_next].tid;
-//  bwprintf (COM2, "kReceive: next: %d, last: %d\r\n",mytd->mq_next, mytd->mq_last);
-//  bwputstr(COM2, "RECEIVE: 1\r\n");
+  DPRINT("next %d, last %d\r\n", mytd->mq_next, mytd->mq_last);
   sentdata = mytd->messageq[mytd->mq_next].msg;
-//  bwputstr(COM2, "RECEIVE: 2\r\n");
   sentlen  = mytd->messageq[mytd->mq_next].msglen;
-//  bwputstr(COM2, "RECEIVE: 3\r\n");
   while (msglen-- && sentlen--) {
     *msg++ = *sentdata++;
   }
@@ -47,6 +46,6 @@ int _kReceive(struct td *mytd, int *tid, char *msg, int msglen, struct td *tds)
   // Sender is now REPLY_BLOCKED, waiting for someone to reply
   tds[*tid].state = REPLY_BLOCKED;
   
- // bwprintf (COM2, "RECEIVE: BITCH\r\n");
+  DPRINT("<<< returning\r\n");
   return mytd->messageq[mytd->mq_next].msglen;
 }

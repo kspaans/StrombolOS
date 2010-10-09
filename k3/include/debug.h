@@ -14,4 +14,10 @@
   bwprintf(COM2, "%s:%d: ", __FILE__, __LINE__); \
   bwprintf(COM2, __VA_ARGS__); }
 
+// A more verbose debug, in case we REALLY want it
+#define VERBOSE_DEBUG_MASK 0x2
+#define VDPRINT(...) if (DEBUG & VERBOSE_DEBUG_MASK) {\
+  bwprintf(COM2, "%s:%d: ", __FILE__, __LINE__); \
+  bwprintf(COM2, __VA_ARGS__); }
+
 #endif/*__DEBUG_H__*/

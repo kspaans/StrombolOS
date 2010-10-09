@@ -7,12 +7,17 @@
 
 #include <bwio.h>
 #include <ts7200.h>
+#include <debug.h>
 #include "../switch.h"
 #include "ksyscall.h"
 
 int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
            int replylen, struct td *tds, int current_tid)
 {
+  DPRINT(">>> Entered with mytd 0x%x, Tid %d, msg(0x%x)\'%s\', msglen %d, reply"
+         "(0x%x)\'%s\', replylen %d, tds 0x%x, current_tid %d\r\n", mytd, Tid,
+         msg, msg, msglen, reply, reply, replylen, tds, current_tid);
+
   if (Tid < 0) { // the only impossible TIDs?
     return -1;
   }
@@ -54,5 +59,6 @@ int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
   mytd->replyq.msglen = replylen;
   mytd->replyq.tid    = mytd->tid; /// Uhh, prolly not necessary????
 
+  DPRINT("<<< returning\r\n");
   return 0; // how to get replylen?
 }

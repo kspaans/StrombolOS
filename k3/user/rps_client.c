@@ -11,7 +11,8 @@ char crazy (int x ) {
   case 1: return 'P';
   case 2: return 'S';
   }
-  }
+  return '\0';
+}
 
 void rps_client () {
   int server = WhoIs ("RPS");

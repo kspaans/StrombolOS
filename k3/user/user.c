@@ -95,9 +95,9 @@ void fuckit()
 void rps_client();
 void first_user_task()
 {
-  int tids[4];
-  int i;
-  char msg[50];
+  //int tids[4];
+  //int i;
+  //char msg[50];
 
   Create (SYSCALL_HIGH, nameserv);
   //Pass();

@@ -2,6 +2,8 @@
 #include "../user/usyscall.h"
 #include <bwio.h>
 #include <ts7200.h>
+#include <debug.h>
+
 struct name {
   char name[5];
   int tid;
@@ -48,12 +50,11 @@ void nameserv () {
   
   struct name reg[100];
   int num = 0;
-//  bwprintf (COM2, "IT'S A MOTHERFUCKING NAME SERVER!!!!!!!!\n\r");
 
   while (1) {
-//    bwprintf (COM2, "Nameserv: waiting for packet.\r\n");
+    DPRINT("(()) Nameserver begining of loop...\r\n");
     Receive (&tid, msg, 6);
-  //  bwprintf (COM2, "Nameserv: recieved, from %d,  packet:  %s\r\n", tid,msg);
+    DPRINT("received from tid %d, message(0x%x) \'%s\'\r\n", tid, msg, msg);
     switch (msg[0]) {
       case 'w':
         ans = lookup ((msg+1), reg, num);
@@ -65,7 +66,7 @@ void nameserv () {
   //      bwprintf (COM2, "NAMES: registering %s to tid %d.\r\n", msg+1,tid);
         strcpy (reg[num].name, msg + 1);
         reg[num++].tid  = tid;
-	Reply (tid, 0, 0);
+	      Reply (tid, 0, 0);
 //	bwprintf (COM2, "Nameserv: Reply sucessfull.\r\n");
         break;
       default: 

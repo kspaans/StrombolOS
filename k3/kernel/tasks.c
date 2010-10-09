@@ -1,5 +1,6 @@
 #include <bwio.h>
 #include <ts7200.h>
+#include <debug.h>
 #include "switch.h"
 #include "tasks.h"
 
@@ -16,13 +17,13 @@ struct td *findtask (struct td *head, struct td *loop) {
         i->state == REPLY_BLOCKED ||
 	i->state == RECEIVE_BLOCKED)
       ++num_blocked;
-    if (i->state == READY) {
-//      bwprintf(COM2, "SCHEDULER: %d blocked tasks\r\n", num_blocked);
+    if (i->state == READY)
       return i;
-      }
     i = i->next;
   } while (i != fst);
-  //bwprintf(COM2, "\r\nSCHEDULER: %d blocked tasks\r\n", num_blocked);
+
+  VDPRINT("%d tasks in blocked state\r\n", num_blocked);
+
   return 0; // no ready task in this queue
 }
 
