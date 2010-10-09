@@ -19,6 +19,7 @@ int _kReceive(struct td *mytd, int *tid, char *msg, int msglen, struct td *tds)
 {
   char *sentdata;
   int sentlen;
+  int retval;
 
   DPRINT(">>> Entered with mytd 0x%x, tid(0x%x) %d, msg(0x%x)\'%s\', msglen %d,"
          "tds 0x%x\r\n", mytd, tid, *tid, msg, msg, msglen, tds);
@@ -29,14 +30,15 @@ int _kReceive(struct td *mytd, int *tid, char *msg, int msglen, struct td *tds)
     mytd->fuckq.msg = msg;
     mytd->fuckq.msglen = msglen;
     mytd->fuckq.tid = (int)tid;
-    /* ... do the proper scheduling stuff to block us ... call Pass() maybe? */
-    return 666;
+    return -1;
   }
 
   *tid = mytd->messageq[mytd->mq_next].tid;
   DPRINT("next %d, last %d\r\n", mytd->mq_next, mytd->mq_last);
   sentdata = mytd->messageq[mytd->mq_next].msg;
   sentlen  = mytd->messageq[mytd->mq_next].msglen;
+  retval = mytd->messageq[mytd->mq_next].msglen;
+  DPRINT("Taking from message queue 0x%x, len %d\r\n", sentdata, sentlen);
   while (msglen-- && sentlen--) {
     *msg++ = *sentdata++;
   }
@@ -47,5 +49,5 @@ int _kReceive(struct td *mytd, int *tid, char *msg, int msglen, struct td *tds)
   tds[*tid].state = REPLY_BLOCKED;
   
   DPRINT("<<< returning\r\n");
-  return mytd->messageq[mytd->mq_next].msglen;
+  return retval;
 }

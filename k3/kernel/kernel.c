@@ -15,7 +15,7 @@ void initbuf (int *p, int n, int val) {
 
 void kinit(struct td *tds, int *s, void (*first)())
 {
-	// replace with kCreate????????????????????????
+  // replace with kCreate????????????????????????
   DPRINT("entering\r\n");
   install_handler();
   DPRINT("installed exception handler\r\n");
@@ -61,13 +61,13 @@ int main () {
   struct taskq tasks;
 
   FOREACH(i, MAXTASKS) {
-    //bwprintf(COM2, "kernel init %d\n", i);
     initbuf(stacks[i], STACKSIZE, 0xDEADBEEF);
   }
 
   bwsetfifo (COM2, OFF);
 
-  DPRINT("[2J< kernel> Hello, world!\r\n");
+  DPRINT("[2J");
+  DPRINT("< kernel> Hello, world!\r\n");
 
 /*
   bwputstr (COM2, "ustack1 is ");
@@ -85,33 +85,26 @@ int main () {
 */
   //kinit(tds, stacks[0], &first_user_task);
   kinit(tds, stacks[0], srr_tests);
+  /*  Does not yet work, need to rejigger it  */
+  //_kCreate(&tds[0], SYSCALL_LOW, &srr_tests, 0, 0, stacks[0]);
  
  // a *= (c - b);
- // bwputstr(COM2, "< kernel> Jump!\n\n");
   inittasks (&tasks);
   addtask (&tds[0], &tasks);
   struct td *cur = schedule (&tds[0], &tasks);
   while (cur) {
     //cur = schedule (cur, tasks);
     req = cur->retval;
-    //bwputstr (COM2, "\tGOING TO USER NOW.\n");
     req = activate(cur, req);
-    //bwprintf (COM2, "AM KERNEL.\n\tMODE IS ");
-    //print_mode ();
-    //bwprintf (COM2, ".\n\tUSER ASKED %d.\n",req);
      
     switch (req) { // eventually should move into exception.c?
       case 0:
-	newtid = current_tid++;
-        req = _kCreate(&(tds[newtid]),
-	               cur->stack[1],        // PRIORITY 
-                       (void *)cur->stack[2],        // CODE
-                       cur->tid,
-		       newtid,               // NEW TID
-		       stacks[newtid]);
-	if (req >= 0) {
+        newtid = current_tid++;
+        req = _kCreate(&tds[newtid], cur->stack[1], (void *)cur->stack[2],
+                       cur->tid, newtid, stacks[newtid]);
+        if (req >= 0) {
           addtask(&(tds[newtid]), &tasks);
-	}
+        }
         break;
       case 1:
         req = _kMyTid(cur);
@@ -126,20 +119,16 @@ int main () {
         _kExit(cur);
         break;
       case 5:
-//	bwprintf(COM2, "KERNEL: user sent to tid %x\r\n", cur->stack[1]);
-	req = _kSend(cur, cur->stack[1], (char*)cur->stack[2], cur->stack[3], (char*)cur->stack[4], cur->stack[5], tds, current_tid);
-	break;
+        req = _kSend(cur, cur->stack[1], (char*)cur->stack[2], cur->stack[3],
+                     (char*)cur->stack[4], cur->stack[6], tds, current_tid);
+        break;
       case 6:
-//	bwprintf(COM2, "KERNEL: user recieve, *tid %x\r\n", *((int *)(cur->stack[1])));
-//	bwprintf(COM2, "KERNEL: user recv w/ char%x\r\n", (int)cur->stack[2]);
-//	bwprintf(COM2, "KERNEL: user recv w/ len %x\r\n", cur->stack[3]);
-	req = _kReceive(cur, (int *)cur->stack[1], (char *)cur->stack[2], cur->stack[3], tds);
-//	bwprintf(COM2, "KERNEL: DON'T GO BACK YOU FUCKFACE.\r\n");
-	break;
+        req = _kReceive(cur, (int *)cur->stack[1], (char *)cur->stack[2],
+                        cur->stack[3], tds);
+        break;
       case 7:
-//	bwprintf(COM2, "KERNEL: user reply, tid %x\r\n", cur->stack[1]);
-        req = _kReply(cur, cur->stack[1], (char *)cur->stack[2], cur->stack[3], tds, current_tid);
-//	bwprintf(COM2, "KERNEL: done replying\r\n");
+        req = _kReply(cur, cur->stack[1], (char *)cur->stack[2], cur->stack[3],
+                      tds, current_tid);
         break;
       default:
         req = 0; // ????????????? should probably just kill the proc and print an error?
@@ -148,9 +137,7 @@ int main () {
     cur = schedule (cur, &tasks);
   }
 
-  //bwprintf(COM2, "< kernel> Returned 0x%x from SWI, finally. It should be 0x0.\n", retval);
   //c += a;
-  //bwprintf(COM2, "< kernel> Context arithmetic is %d\n", c);
  
   DPRINT("Goodbye\r\n");
   return 0;

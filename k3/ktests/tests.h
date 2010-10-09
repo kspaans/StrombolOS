@@ -1,7 +1,8 @@
 #ifndef __TESTS_H__
 #define __TESTS_H__
 
-#define PANIC *((int *)0xFFFFFFFF) = 1
+#define PANIC {DPRINT("PANIC PANIC PANIC PANIC  PANIC PANIC PANIC PANIC\r\n"); \
+  *((int *)0xFFFFFFFF) = 1; }
 
 void srr_tests();
 void srr0();

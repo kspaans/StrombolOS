@@ -44,9 +44,7 @@ int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
 
   mytd->replyq.msg    = reply;
   mytd->replyq.msglen = replylen;
-  //bwprintf (COM2, "going to derefence %d, punk.\r\n\r\n\r\n", mytd
   *((int*)tds[Tid].fuckq.tid) = mytd->tid;
-//    bwprintf (COM2, "kSend: setting %d to READY.\r\n", Tid);
     return 0;
   }
 
@@ -55,6 +53,7 @@ int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
   tds[Tid].messageq[tds[Tid].mq_last].tid = mytd->tid;
   tds[Tid].mq_last = (tds[Tid].mq_last + 1) % MQSIZE;
   // Tell Reply() where to reply to
+  DPRINT("Using reply queue: 0x%x\r\n", &mytd->replyq);
   mytd->replyq.msg    = reply;
   mytd->replyq.msglen = replylen;
   mytd->replyq.tid    = mytd->tid; /// Uhh, prolly not necessary????
