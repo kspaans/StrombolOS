@@ -14,5 +14,6 @@ int Reply(int tid, char *reply, int replylen);
 int RegisterAs (char *name);
 int WhoIs (char *name);
 
+int Getc(int channel);
 
 #endif // USYSCALL__INCLUDED

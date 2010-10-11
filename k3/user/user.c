@@ -1,8 +1,11 @@
 #include <bwio.h>
+#include <ts7200.h>
+#include <debug.h>
 #include "../kernel/switch.h"
 #include "usyscall.h"
 #include "user.h"
 #include "../servers/servers.h"
+#include "../ktests/tests.h"
 
 void ipc1 () {
   bwprintf (COM2, "ipc1: I am %d\r\n", MyTid());
@@ -99,7 +102,6 @@ void first_user_task()
   //int i;
   //char msg[50];
 
-  Create (SYSCALL_HIGH, nameserv);
   //Pass();
   Create (SYSCALL_LOW, rps_server);
   Create (USER_HIGH, rps_client); 
@@ -142,7 +144,52 @@ void other_user_task()
   Exit();
 }
 
+/*
+ * The ``First'' user program.
+ * It will spawn necessary processes, and then become the idle task.
+ * Will need some hacks to be able to change our priority to IDLE.
+ */
+void idle_shell()
+{
+  int i, c;
 
+  /* smslant typeface from http://www.network-science.de/ascii/ */
+  bwputstr(COM2, "[2JWelcome to\r\n"
+  "+--------------------------------------------------+\r\n"
+  "|    ______                 __        ______  ____ |\r\n"
+  "|   / __/ /________  __ _  / /  ___  / / __ \\/ __/ |\r\n"
+  "|  _\\ \\/ __/ __/ _ \\/  ' \\/ _ \\/ _ \\/ / /_/ /\\ \\   |\r\n"
+  "| /___/\\__/_/  \\___/_/_/_/_.__/\\___/_/\\____/___/   |\r\n"
+  "|                          v0.0.3 (Techno Fitness) |\r\n"
+  "+--------------------------------------------------+\r\n\r\n");
 
+  i = Create (SYSCALL_HIGH, nameserv);
+  if (i != 1) PANIC;
+  bwputstr(COM2, " Created nameserver\r\n");
+  /* Other servers... */
 
+  bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests): ");
+  while (1) {
+    c = Getc(COM2);
+    if (c < 0) PANIC;
+    bwprintf(COM2, "%c", c);
+    switch (c) {
+      case '1':
+        i = Create(SYSCALL_LOW, &first_user_task);
+        if (i != 2) PANIC;
+        goto IDLE;
+      case '2':
+        i = Create(SYSCALL_LOW, &srr_tests);
+        if (i != 2) PANIC;
+        goto IDLE;
+      default:
+        bwputstr(COM2, " WUT\r\n");
+        break;
+    }
+  } IDLE:;
+  bwputstr(COM2, "\r\n");
 
+  /* Set priority to IDLE now */
+  //while (1);
+  Exit();
+}

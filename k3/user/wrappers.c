@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "usyscall.h"
 
+/*
 int WhoIs (char *name) {
   int rply;
   char msg[2+strlen(name)];
@@ -14,7 +15,17 @@ int WhoIs (char *name) {
   DPRINT("got reply %d\r\n", rply);
   return rply;
 }
+*/
+int WhoIs (char *name) {
+  int tid;
+  char msg[6];
+  msg[0] = 'w';
+  strcpy((msg+1), name);
+  Send (1, msg, 6, (char*)&tid, 4);
+  return tid; // fix
+}
 
+/*
 int RegisterAs (char *name) {
   char msg[2+strlen(name)];
   msg[0] = 'r';
@@ -22,4 +33,26 @@ int RegisterAs (char *name) {
   DPRINT("name '%s', sending message '%s'\r\n", name, msg);
   Send (1, msg, strlen(name)+2, 0, 0);
   return 0;
+}
+*/
+int RegisterAs (char *name) {
+  char msg[6];
+  msg[0] = 'r';
+  strcpy ((msg+1), name);
+//  bwprintf (COM2, "RegisterAs: Gonna send %s.\r\n",msg);
+  Send (1, msg, 6, 0, 0);
+//  bwprintf (COM2, "RegisterAs: Back.\r\n");
+  return 0; // fix
+}
+
+int Getc(int channel)
+{
+  /* To be implemented later
+  char c;
+  int i;
+
+  i = WhoIs("serial");
+  Send(1, );
+  */
+  return bwgetc(channel);
 }

@@ -19,7 +19,6 @@ void srr_tests()
   int i;
 
   DPRINT(">>> Entered\r\n");
-  Create(1, nameserv);
 
   FOREACH(i,10) {
     Create(4, srr0);

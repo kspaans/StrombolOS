@@ -83,8 +83,7 @@ int main () {
   a = 1; b = 2; c = 10;
 
 */
-  //kinit(tds, stacks[0], &first_user_task);
-  kinit(tds, stacks[0], srr_tests);
+  kinit(tds, stacks[0], &idle_shell);
   /*  Does not yet work, need to rejigger it  */
   //_kCreate(&tds[0], SYSCALL_LOW, &srr_tests, 0, 0, stacks[0]);
  

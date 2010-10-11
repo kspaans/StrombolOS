@@ -15,7 +15,7 @@ OBJS="build/kernel.o build/switch.o build/user.o build/usyscall.o \
       build/tasks.o build/create.o build/mytid.o build/myparenttid.o \
       build/pass.o build/exit.o build/send.o build/receive.o build/reply.o \
       build/names.o build/rps_server.o build/lib.o build/rps_client.o \
-      build/tests.o \
+      build/tests.o build/wrappers.o \
      "
 
 if [ `basename $PWD` != "k3" ]; then
@@ -33,6 +33,9 @@ as  ${ASFLAGS} -o build/user.o build/user.s || exit 1
  
 gcc ${CFLAGS}  -o build/lib.s user/lib.c || exit 1
 as  ${ASFLAGS} -o build/lib.o build/lib.s || exit 1
+
+gcc ${CFLAGS}  -o build/wrappers.s user/wrappers.c || exit 1
+as  ${ASFLAGS} -o build/wrappers.o build/wrappers.s || exit 1
 
 gcc ${CFLAGS}  -o build/rps_client.s user/rps_client.c || exit 1
 as  ${ASFLAGS} -o build/rps_client.o build/rps_client.s || exit 1
