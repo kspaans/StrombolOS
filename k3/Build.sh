@@ -15,7 +15,7 @@ OBJS="build/kernel.o build/switch.o build/user.o build/usyscall.o \
       build/tasks.o build/create.o build/mytid.o build/myparenttid.o \
       build/pass.o build/exit.o build/send.o build/receive.o build/reply.o \
       build/names.o build/rps_server.o build/lib.o build/rps_client.o \
-      build/tests.o build/wrappers.o build/clock_client.o\
+      build/tests.o build/wrappers.o build/clock_client.o build/clock.o \
      "
 
 if [ `basename $PWD` != "k3" ]; then
@@ -88,6 +88,9 @@ as  ${ASFLAGS} -o build/tests.o build/tests.s || exit 1
 
 gcc ${CFLAGS}  -o build/clock_client.s user/clock_client.c || exit 1
 as  ${ASFLAGS} -o build/clock_client.o build/clock_client.s || exit 1
+
+gcc ${CFLAGS}  -o build/clock.s servers/clock.c || exit 1
+as  ${ASFLAGS} -o build/clock.o build/clock.s || exit 1
 
 ld  ${LDFLAGS} -o build/StrombolOS.elf ${OBJS} -lbwio -lgcc
 ld  ${LDFLAGS} -o build/StrombolOS.elf ${OBJS} -lbwio -lgcc

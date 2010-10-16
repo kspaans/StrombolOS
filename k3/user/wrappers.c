@@ -3,6 +3,7 @@
 #include <debug.h>
 #include "lib.h"
 #include "usyscall.h"
+#include "../kernel/switch.h"
 
 /*
 int WhoIs (char *name) {
@@ -60,11 +61,32 @@ int Getc(int channel)
 int Delay(int ticks)
 {
   int clock_tid;
-  int r, ml = 0, rl = 0;
-  char *msg = (void *)0, *rpl = (void *)0;
+  int r;
+  char msg[5];
+  char *ip;
+
+  msg[0] = 'd';
+  ip = (char *)&ticks;
+  msg[1] = *ip++;
+  msg[2] = *ip++;
+  msg[3] = *ip++;
+  msg[4] = *ip++;
+  bwprintf(COM2, "Delayed with msg \'%x%x%x%x%x\'\r\n", msg[0], msg[1], msg[2],
+          msg[3], msg[4]);
 
   clock_tid = WhoIs("clock");
-  r = Send(clock_tid, msg, ml, rpl, rl); /* need to figure out "interface" to
-                                            clock server */
+  r = Send(clock_tid, "dticks", 5, NULL, 0);
+  /* XXX check return value XXX */
   return 0;
+}
+
+int Time()
+{
+  int clock_tid;
+  int time, r;
+
+  clock_tid = WhoIs("clock");
+  r = Send(clock_tid, "t", 1, (char *)&time, 4);
+  /* XXX check return value XXX */
+  return time;
 }

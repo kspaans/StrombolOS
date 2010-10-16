@@ -14,6 +14,7 @@ int Reply(int tid, char *reply, int replylen);
 int RegisterAs (char *name);
 int WhoIs (char *name);
 int Delay(int ticks);
+int Time();
 
 int Getc(int channel);
 

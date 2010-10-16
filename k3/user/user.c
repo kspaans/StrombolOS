@@ -167,6 +167,9 @@ void idle_shell()
   i = Create (SYSCALL_HIGH, nameserv);
   if (i != 1) PANIC;
   bwputstr(COM2, " Created nameserver\r\n");
+  i = Create (SYSCALL_HIGH, clckserv);
+  if (i != 2) PANIC;
+  bwputstr(COM2, " Created clockserver\r\n");
   /* Other servers... */
 
   bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock): ");
@@ -177,15 +180,12 @@ void idle_shell()
     switch (c) {
       case '1':
         i = Create(SYSCALL_LOW, &first_user_task);
-        if (i != 2) PANIC;
         goto IDLE;
       case '2':
         i = Create(SYSCALL_LOW, &srr_tests);
-        if (i != 2) PANIC;
         goto IDLE;
       case '3':
         i = Create(SYSCALL_LOW, &clock_fut);
-        if (i != 2) PANIC;
         goto IDLE;
       default:
         bwputstr(COM2, " WUT\r\n");
