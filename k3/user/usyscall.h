@@ -13,6 +13,7 @@ int Receive(int *tid, char *msg, int msglen);
 int Reply(int tid, char *reply, int replylen);
 int RegisterAs (char *name);
 int WhoIs (char *name);
+int Delay(int ticks);
 
 int Getc(int channel);
 

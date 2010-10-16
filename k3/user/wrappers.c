@@ -56,3 +56,15 @@ int Getc(int channel)
   */
   return bwgetc(channel);
 }
+
+int Delay(int ticks)
+{
+  int clock_tid;
+  int r, ml = 0, rl = 0;
+  char *msg = (void *)0, *rpl = (void *)0;
+
+  clock_tid = WhoIs("clock");
+  r = Send(clock_tid, msg, ml, rpl, rl); /* need to figure out "interface" to
+                                            clock server */
+  return 0;
+}

@@ -4,6 +4,7 @@
 #include "../kernel/switch.h"
 #include "usyscall.h"
 #include "user.h"
+#include "clock_client.h"
 #include "../servers/servers.h"
 #include "../ktests/tests.h"
 
@@ -168,7 +169,7 @@ void idle_shell()
   bwputstr(COM2, " Created nameserver\r\n");
   /* Other servers... */
 
-  bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests): ");
+  bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock): ");
   while (1) {
     c = Getc(COM2);
     if (c < 0) PANIC;
@@ -180,6 +181,10 @@ void idle_shell()
         goto IDLE;
       case '2':
         i = Create(SYSCALL_LOW, &srr_tests);
+        if (i != 2) PANIC;
+        goto IDLE;
+      case '3':
+        i = Create(SYSCALL_LOW, &clock_fut);
         if (i != 2) PANIC;
         goto IDLE;
       default:
