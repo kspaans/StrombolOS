@@ -63,7 +63,7 @@ void nameserv () {
 //	bwprintf (COM2, "Nameserv: Reply sucessfull.\r\n");
         break;
       case 'r':
-  //      bwprintf (COM2, "NAMES: registering %s to tid %d.\r\n", msg+1,tid);
+        DPRINT("NAMES: registering %s to tid %d.\r\n", msg + 1, tid);
         strcpy (reg[num].name, msg + 1);
         reg[num++].tid  = tid;
 	      Reply (tid, 0, 0);
