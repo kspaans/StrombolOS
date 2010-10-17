@@ -39,9 +39,7 @@ int main () {
   while (cur) {
     //cur = schedule (cur, tasks);
     req = cur->retval;
-DPRINTERR ("going.");
     req = activate(cur, req);
-DPRINTERR ("back.");
     switch (req) { // eventually should move into exception.c?
       case 0:
         newtid = current_tid++;

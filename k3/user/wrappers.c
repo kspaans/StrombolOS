@@ -55,7 +55,6 @@ int Getc(int channel)
   i = WhoIs("serial");
   Send(1, );
   */
-  DPRINTERR ("in getc\n");
   return bwgetc(channel);
 }
 
@@ -74,9 +73,8 @@ int Delay(int ticks)
   msg[2] = *ip++;
   msg[3] = *ip++;
   msg[4] = *ip++;
-  bwprintf(COM2, "Delayed tid %d with msg \'%x%x%x%x%x\' to server at tid "
-           "%d\r\n", MyTid(), msg[0], msg[1], msg[2], msg[3], msg[4],
-           clock_tid);
+  DPRINT("Delayed tid %d with msg \'%x%x%x%x%x\' to server at tid %d\r\n",
+         MyTid(), msg[0], msg[1], msg[2], msg[3], msg[4], clock_tid);
 
   r = Send(clock_tid, msg, 5, NULL, 0);
   /* XXX check return value XXX */

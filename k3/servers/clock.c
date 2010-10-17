@@ -53,13 +53,15 @@ void clckserv()
         ++ticks;
         while (delaysize > 0 && ticks > delay_list->time) {
           r = Reply(delay_list->tid, NULL, 0);
-          if (r != 0) PANIC;
+          if (r != 0) {
+            bwprintf(COM2, "WOAH, failed replying to Notifier: r = %d\r\n", r);
+            PANIC;
+          }
           delay_list = delay_list->next;
           --delaysize;
         }
         break;
       case 't':
-        r = Reply(tid, NULL, 0);
         /* or replybuf = sprintf("%d", ticks); */
         r = Reply(tid, (char *)(&ticks), 4); /* XXX is this unsafe? */
         if (r != 0) PANIC;

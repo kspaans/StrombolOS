@@ -153,24 +153,27 @@ void other_user_task()
 void idle_shell()
 {
   int i, c;
+  char spinner[4];
 
-  /* smslant typeface from http://www.network-science.de/ascii/ */
-//  i = Create (SYSCALL_HIGH, nameserv);
-//  bwprintf (COM2, "FOO: %u\n",i);
-  
+  spinner[0] = '|';
+  spinner[1] = '/';
+  spinner[2] = '-';
+  spinner[3] = '\\';
 
+  i = Create (SYSCALL_HIGH, nameserv);
 //  if (i != 1) PANIC;
-bwputstr(COM2, " Created nameserver\r\n");
-//  i = Create (SYSCALL_HIGH, clckserv);
+  bwputstr(COM2, " Created nameserver\r\n");
+  i = Create (SYSCALL_HIGH, clckserv);
 //  if (i != 2) PANIC;
   bwputstr(COM2, " Created clockserver\r\n");
   /* Other servers... */
+  /* Notifiers?       */
 
   bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock): ");
   while (1) {
     c = Getc(COM2);
-    //if (c < 0) PANIC;
-    bwprintf(COM2, "%c", c);
+    if (c < 0) PANIC;
+    bwprintf(COM2, "%c\r\n", c);
     switch (c) {
       case '1':
         i = Create(SYSCALL_LOW, &first_user_task);
@@ -186,9 +189,23 @@ bwputstr(COM2, " Created nameserver\r\n");
         break;
     }
   } IDLE:;
-  bwputstr(COM2, "\r\n");
 
   /* Set priority to IDLE now */
-  //while (1);
-  Exit();
+  i = 0;
+  c = 0;
+  FOREVER {
+  /*
+    if (i % 30000) {
+      bwprintf(COM2, "\b%c", spinner[c]);
+      c = (c + 1) % 4;
+    }
+    //if (i % 60000) {
+    //  bwprintf(COM2, "\r\n%d\r\n", Time());
+    //}
+    if (i == 0) {
+      //Send(2, "n", 1, NULL, 0); // SHIT, this makes us go to sleep, won't happen normally, but kind of bad now.
+    }
+    i = (i + 1) % 100000;
+  */
+  }
 }
