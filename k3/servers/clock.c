@@ -43,8 +43,6 @@ void clckserv()
   RegisterAs("clock");
 
   FOREVER {
-    bwputstr(COM2, "\t`'-,.Clock receiving.,-'`\r\n");
-    bwputstr(COM2, "TRALalALA\r\n");
     r = Receive(&tid, buf, BUFSIZE);
     DPRINT("received from tid %d, mesg: \'%c%c%c%c%c\r\r\n", tid, buf[0],
            buf[1], buf[2], buf[3], buf[4]);
@@ -53,6 +51,7 @@ void clckserv()
     if (r < 0 || r > BUFSIZE) PANIC;
     switch (buf[0]) {
       case 'n':
+bwprintf(COM2, "CLOCK: request type: \'n\'\r\n");
         r = Reply(tid, NULL, 0);
         if (r != 0) PANIC;
         ++ticks;
@@ -64,6 +63,8 @@ void clckserv()
         }
         break;
       case 't':
+bwprintf(COM2, "CLOCK: request type: \'t\'\r\n");
+        r = Reply(tid, NULL, 0);
         /* or replybuf = sprintf("%d", ticks); */
         r = Reply(tid, (char *)(&ticks), 4); /* XXX is this unsafe? */
         if (r != 0) PANIC;
@@ -75,6 +76,7 @@ void clckserv()
         ++delaysize;
         temp->tid = tid;
         temp->time = ticks + *((int *)(buf + 1));
+bwprintf(COM2, "CLOCK: request type: \'d\' delay %d\r\n", temp->time);
         /* Perform insertion sort of the new node into the list */
         if (delaysize == 1) {
           delay_list = temp;

@@ -8,3 +8,5 @@
 !k2/kernel/switch.s
 !k2/kernel/regdump.s
 !k2/kernel/usyscall.s
+!k3/kernel/switch.s
+!k3/kernel/usyscall.s

@@ -65,18 +65,21 @@ int Delay(int ticks)
   char msg[5];
   char *ip;
 
+  clock_tid = WhoIs("clock");
+
   msg[0] = 'd';
   ip = (char *)&ticks;
   msg[1] = *ip++;
   msg[2] = *ip++;
   msg[3] = *ip++;
   msg[4] = *ip++;
-  bwprintf(COM2, "Delayed with msg \'%x%x%x%x%x\'\r\n", msg[0], msg[1], msg[2],
-          msg[3], msg[4]);
+  bwprintf(COM2, "Delayed tid %d with msg \'%x%x%x%x%x\' to server at tid "
+           "%d\r\n", MyTid(), msg[0], msg[1], msg[2], msg[3], msg[4],
+           clock_tid);
 
-  clock_tid = WhoIs("clock");
-  r = Send(clock_tid, "dticks", 5, NULL, 0);
+  r = Send(clock_tid, msg, 5, NULL, 0);
   /* XXX check return value XXX */
+  bwprintf(COM2, "LOL!\r\n");
   return 0;
 }
 
