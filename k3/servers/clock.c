@@ -34,24 +34,20 @@ void clckserv()
   int ticks = 0;
   int r, tid = -1, delaysize = 0, delayindex = 0;
   char buf[BUFSIZE];
-  /* We can't have more than N tasks delaying 
-     But this will break pretty heavily if we have a long time waiter and then
-     lots of little waiters that gobble up the structures. */
   struct delay delaypool[MAXTASKS];
   struct delay *delay_list, *temp, *iter_node, *iter_prev;;
 
-  RegisterAs("clock");
+  RegisterAs("clck");
 
   FOREVER {
     r = Receive(&tid, buf, BUFSIZE);
-    DPRINT("received from tid %d, mesg: \'%c%c%c%c%c\r\r\n", tid, buf[0],
-           buf[1], buf[2], buf[3], buf[4]);
+    DPRINT("received from tid %d, return val %d, mesg: \'%c%c%c%c%c\r\r\n",
+           tid, r, buf[0], buf[1], buf[2], buf[3], buf[4]); // occasionally this buf has junk in it? Try to keep it terminated?
     /* Though r should never be -1, the way we wrote things */
     /* XXX TEST THIS XXX */
     if (r < 0 || r > BUFSIZE) PANIC;
     switch (buf[0]) {
       case 'n':
-bwprintf(COM2, "CLOCK: request type: \'n\'\r\n");
         r = Reply(tid, NULL, 0);
         if (r != 0) PANIC;
         ++ticks;
@@ -63,7 +59,6 @@ bwprintf(COM2, "CLOCK: request type: \'n\'\r\n");
         }
         break;
       case 't':
-bwprintf(COM2, "CLOCK: request type: \'t\'\r\n");
         r = Reply(tid, NULL, 0);
         /* or replybuf = sprintf("%d", ticks); */
         r = Reply(tid, (char *)(&ticks), 4); /* XXX is this unsafe? */
@@ -76,24 +71,29 @@ bwprintf(COM2, "CLOCK: request type: \'t\'\r\n");
         ++delaysize;
         temp->tid = tid;
         temp->time = ticks + *((int *)(buf + 1));
-bwprintf(COM2, "CLOCK: request type: \'d\' delay %d\r\n", temp->time);
         /* Perform insertion sort of the new node into the list */
         if (delaysize == 1) {
+          DPRINT("easy case, the delay list is empty\r\n");
           delay_list = temp;
           delay_list->next = NULL;
         }
         else {
+          DPRINT("hard case, the delay list needs insertion sort!\r\n");
           iter_node = delay_list;
           iter_prev = NULL;
           while (iter_node != NULL) {
+            DPRINT("Our time %d vs their time %d, their next %x\r\n",
+                   temp->time, iter_node->time, iter_node->next);
             if (iter_node->time > temp->time) {
               temp->next = iter_node;
               if (iter_prev) iter_prev->next = delay_list;
               break;
             }
             else if (iter_node->next == NULL) {
+              DPRINT("Special case! Insert at the end of the list\r\n");
               iter_node->next = temp;
               temp->next = NULL; /* special case, but meh this works */
+              break;
             }
             else {
               iter_prev = iter_node;
