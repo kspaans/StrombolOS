@@ -5,4 +5,6 @@ void nameserv();
 void clckserv();
 void rps_server();
 
+void notifier_clock();
+
 #endif // SERVERS__INCLUDED

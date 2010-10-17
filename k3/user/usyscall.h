@@ -15,6 +15,7 @@ int RegisterAs (char *name);
 int WhoIs (char *name);
 int Delay(int ticks);
 int Time();
+int AwaitEvent(int event);
 
 int Getc(int channel);
 

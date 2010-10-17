@@ -92,3 +92,14 @@ Reply:
 	mov	pc, lr
 	.size	Reply, .-Reply
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	.text
+	.align	2
+	.global	AwaitEvent
+	.type	AwaitEvent, %function
+AwaitEvent:
+	stmfd   sp!, {lr}
+	swi	#8
+	ldmfd   sp!, {lr}
+	mov	pc, lr
+	.size	AwaitEvent, .-AwaitEvent
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
