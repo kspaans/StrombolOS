@@ -82,3 +82,19 @@
 #define UART_HDLCSTS_OFFSET	0x21c
 
 
+// Vectored Interrupt Controller
+#define VIC1BASE		0x800B0000
+#define VIC2BASE		0x800C0000
+
+#define INTSEL_OFFSET		0xC
+#define INTEN_OFFSET		0x10
+	#define TC1OI_MASK	0x10
+#define INTENCL_OFFSET  	0x14
+#define SOFTINT_OFFSET  	0x18
+#define SOFTINTCL_OFFSET 	0x1C
+#define VECTADDR_OFFSET		0x30
+#define DEFVECTADDR_OFFSET	0x34
+
+#define TIMER1ADDR_OFFSET	0x110
+#define TIMER1CTRL_OFFSET	0x210
+        #define INTEN_MASK	0x20

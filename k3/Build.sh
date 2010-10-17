@@ -11,7 +11,7 @@ ASFLAGS="-mcpu=arm920t -mapcs-32"
 LDFLAGS="-init main -Map build/kernel.map -N -T build/orex.ld \
          -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -Llib \
 	"
-OBJS="build/kernel.o build/switch.o build/user.o build/usyscall.o \
+OBJS="build/kernel.o build/switch.o build/user.o build/usyscall.o build/boot.o \
       build/tasks.o build/create.o build/mytid.o build/myparenttid.o \
       build/pass.o build/exit.o build/send.o build/receive.o build/reply.o \
       build/names.o build/rps_server.o build/lib.o build/rps_client.o \
@@ -27,6 +27,9 @@ if [ ! -d "build" ]; then
 fi
 
 # Could probably improve this with for loops
+
+gcc ${CFLAGS}  -o build/boot.s kernel/boot.c || exit 1
+as  ${ASFLAGS} -o build/boot.o build/boot.s  || exit 1
 
 gcc ${CFLAGS}  -o build/user.s user/user.c || exit 1
 as  ${ASFLAGS} -o build/user.o build/user.s || exit 1

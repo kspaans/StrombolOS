@@ -155,27 +155,21 @@ void idle_shell()
   int i, c;
 
   /* smslant typeface from http://www.network-science.de/ascii/ */
-  bwputstr(COM2, "[2JWelcome to\r\n"
-  "+--------------------------------------------------+\r\n"
-  "|    ______                 __        ______  ____ |\r\n"
-  "|   / __/ /________  __ _  / /  ___  / / __ \\/ __/ |\r\n"
-  "|  _\\ \\/ __/ __/ _ \\/  ' \\/ _ \\/ _ \\/ / /_/ /\\ \\   |\r\n"
-  "| /___/\\__/_/  \\___/_/_/_/_.__/\\___/_/\\____/___/   |\r\n"
-  "|                          v0.0.3 (Techno Fitness) |\r\n"
-  "+--------------------------------------------------+\r\n\r\n");
+//  i = Create (SYSCALL_HIGH, nameserv);
+//  bwprintf (COM2, "FOO: %u\n",i);
+  
 
-  i = Create (SYSCALL_HIGH, nameserv);
-  if (i != 1) PANIC;
-  bwputstr(COM2, " Created nameserver\r\n");
-  i = Create (SYSCALL_HIGH, clckserv);
-  if (i != 2) PANIC;
+//  if (i != 1) PANIC;
+bwputstr(COM2, " Created nameserver\r\n");
+//  i = Create (SYSCALL_HIGH, clckserv);
+//  if (i != 2) PANIC;
   bwputstr(COM2, " Created clockserver\r\n");
   /* Other servers... */
 
   bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock): ");
   while (1) {
     c = Getc(COM2);
-    if (c < 0) PANIC;
+    //if (c < 0) PANIC;
     bwprintf(COM2, "%c", c);
     switch (c) {
       case '1':

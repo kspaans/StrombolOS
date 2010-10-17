@@ -7,50 +7,13 @@
 #include "../user/user.h"
 #include "tasks.h"
 #include "../ktests/tests.h"
+#include "boot.h"
 
+typedef unsigned int uint;
 void initbuf (int *p, int n, int val) {
   int *i;
   for (i = p; i<p+n; *(i++) = val);
 }
-
-void kinit(struct td *tds, int *s, void (*first)())
-{
-  // replace with kCreate????????????????????????
-  DPRINT("entering\r\n");
-  install_handler();
-  DPRINT("installed exception handler\r\n");
-  tds[0].tid      = 0;
-  tds[0].stack    = s + 1024; // We are now pointing just below the stack
-  tds[0].state    = READY;
-  tds[0].priority = SYSCALL_LOW;
-  tds[0].next     = NULL;
-  tds[0].retval   = 88;
-  tds[0].pc       = first;
-  tds[0].ptid     = 0;
-  tds[0].mq_next  = 0;
-  tds[0].mq_last  = 0;
-  DPRINT("initialized the first TD\r\n");
-
- // bwprintf(COM2, "< init> Initializing %x through %x of user stack.\n", tds[0].stack - 15, tds[0].stack);
-
-  tds[0].stack -= 16;
-  initbuf(tds[0].stack, 16, 0x00FACE00);
-  /*
-  for (i=-1; i<16; i++) {
-    bwputr (COM2, tds[0].stack[i]);
-    bwputstr (COM2, "\n");
-  }
-  */
-  tds[0].stack[0] = 16;                        // CPSR
-  tds[0].stack[1] = tds[0].retval;             // register 0
-  tds[0].stack[14] = (int)(tds[0].stack + 16); // register 13 (stack register)
-  tds[0].stack[15] = (int)tds[0].pc;           // register 14 (link register)
-
-  DPRINT("Setup the initial state\r\n");
-  DPRINT("Using initial stack pointer: %x\r\n", (int)tds[0].stack);
-  DPRINT("leaving\r\n");
-}
-
 
 int main () {
   int req = 1;
@@ -68,34 +31,17 @@ int main () {
 
   DPRINT("[2J");
   DPRINT("< kernel> Hello, world!\r\n");
+  bootstrap (&tds[0], idle_shell, &stacks[0]);
 
-/*
-  bwputstr (COM2, "ustack1 is ");
-  bwputr (COM2,(int)ustack1); 
-  bwputstr (COM2, "\n");
-  bwprintf(COM2, "ustack1+1023 is %x\n", (int)(ustack1 + 1023));
-  bwputstr (COM2, "ustack2 is ");
-  bwputr (COM2,(int)ustack2); 
-  bwputstr (COM2, "\n");
-  bwprintf(COM2, "ustack2+1023 is %x\n", (int)(ustack2 + 1023));
-  bwprintf(COM2, "tds is %x\n", (int)tds);
-
-  a = 1; b = 2; c = 10;
-
-*/
-  kinit(tds, stacks[0], &idle_shell);
-  /*  Does not yet work, need to rejigger it  */
-  //_kCreate(&tds[0], SYSCALL_LOW, &srr_tests, 0, 0, stacks[0]);
- 
- // a *= (c - b);
   inittasks (&tasks);
   addtask (&tds[0], &tasks);
   struct td *cur = schedule (&tds[0], &tasks);
   while (cur) {
     //cur = schedule (cur, tasks);
     req = cur->retval;
+DPRINTERR ("going.");
     req = activate(cur, req);
-     
+DPRINTERR ("back.");
     switch (req) { // eventually should move into exception.c?
       case 0:
         newtid = current_tid++;

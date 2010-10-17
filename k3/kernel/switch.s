@@ -88,17 +88,15 @@ activate:
 	.global	install_handler
 	.type	install_handler, %function
 install_handler:
-	@ args = 0, pretend = 0, frame = 4
-	@ frame_needed = 0, uses_anonymous_args = 0
-	@ link register save eliminated.
 	stmfd	sp!, {r0, r1}
-	MOV	r1, #0x28
-	ldr	r0, .L1
-	STR	r0, [r1]
+	ldr	r0, .L1		@ r0 <- address of interrupt handler
+	mov	r1, #0x28	@ Install for swi
+	str	r0, [r1]	@ ...
+        mov	r1, #0x38	@ Install for hw interrupts
+	str	r0, [r1]	@ ...
 	ldmfd	sp!, {r0, r1}
 	mov	pc, lr
 	.align 2
 .L1:
 	.word	.HANDLE
 	.size	install_handler, .-install_handler
-	.ident	"GCC: (GNU) 4.0.2"

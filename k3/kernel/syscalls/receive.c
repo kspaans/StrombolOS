@@ -30,7 +30,7 @@ int _kReceive(struct td *mytd, int *tid, char *msg, int msglen, struct td *tds)
     mytd->fuckq.msg = msg;
     mytd->fuckq.msglen = msglen;
     mytd->fuckq.tid = (int)tid;
-    return -1;
+    return msglen;
   }
 
   *tid = mytd->messageq[mytd->mq_next].tid;

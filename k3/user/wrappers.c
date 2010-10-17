@@ -55,6 +55,7 @@ int Getc(int channel)
   i = WhoIs("serial");
   Send(1, );
   */
+  DPRINTERR ("in getc\n");
   return bwgetc(channel);
 }
 
@@ -65,7 +66,7 @@ int Delay(int ticks)
   char msg[5];
   char *ip;
 
-  clock_tid = WhoIs("clock");
+  clock_tid = WhoIs("clck");
 
   msg[0] = 'd';
   ip = (char *)&ticks;
@@ -88,7 +89,7 @@ int Time()
   int clock_tid;
   int time, r;
 
-  clock_tid = WhoIs("clock");
+  clock_tid = WhoIs("clck");
   r = Send(clock_tid, "t", 1, (char *)&time, 4);
   /* XXX check return value XXX */
   return time;
