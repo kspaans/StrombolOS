@@ -102,6 +102,7 @@ activate:
 	movs	pc, lr			@ Return to user code in user mode.
 .IRQ:
 	str	r0, .SCRATCH		@ Save r0.
+	str	lr, .SCRATCH2		@ Sneak lr_irq through
 	mrs	r0, SPSR		@ Get user SPSR
 	str	r0, .IRQMAGICBIT	@ Put the user's state into the SPSR - this indicates that an interrupt happened.
 	mrs	r0, CPSR		@ Load the CPSR.
@@ -109,24 +110,27 @@ activate:
 	msr	CPSR_c, r0		@ Install CPSR.
 	ldr	r0, .IRQMAGICBIT	@ Retrieve the user's CPU state.
 	msr	SPSR_cxsf, r0		@ SPSR_irq is now copied over to SPSR_svc. 
-	ldr	r0, .SCRATCH		@ Restore r0. Fall through into swi handler code.
+	ldr	lr, .SCRATCH2		@ Restore lr.
+	ldr	r0, .SCRATCH		@ Restore r0. Fall through into swi handler code
 .HANDLE:
 	str	r0, .SCRATCH		@ r0 used as a scratch register; put argument in storage.
 	ldr	r0, .USERREG		@ Get address of user regs.
 	str	lr, [r0, #-4]		@ Store the re-entry point in the TD.
-	stmea	r0, {r0 - r14}^		@ Save user state, r0 dirty, but it doesn't matter because we are sticking a return val there later.
-@ r0 cannot be dirty!
-	ldr r2, .SCRATCH
-	str r2, [r0]
+	stmea	r0, {r0 - r14}^		@ Save user state, r0 dirty.
+	ldr r2, .SCRATCH		@ Get back r0
+	str r2, [r0]			@ Undirty it.
 	mrs	r1, SPSR		@ Load user CPU state into r1 (don't need to worry about it being dirty; user state already saved.)
 	str	r1, [r0, #-8]		@ Save SPSR onto user stack
+	ldr	r0, .IRQMAGICBIT	@ Get the IRQMagicBit - 0 if we are handling a syscall, otherwise IRQ.
+	mov	r2, #0			@ Now clear the IRQMagicBit
+	str	r2, .IRQMAGICBIT	@ ...
 	ldmfd	sp, {r1 - r14}		@ Restore kernel state. (Think about sp that was saved -> works. && r0 not restored on purpose.)
-	ldr	r0, .IRQMAGICBIT		@ Get the users argument back. @@@ NO, shouldn't this be the syscall num?
 	mov	pc, lr			@ Go to kernel.
 	.align 2
 .IRQMAGICBIT: .word 0
 .SCRATCH:     .word 0
 .USERREG:     .word 0
+.SCRATCH2:    .word 0
 	.size	activate, .-activate
 	.text
 	.align	2

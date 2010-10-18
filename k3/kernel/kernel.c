@@ -60,9 +60,21 @@ int main () {
   while (cur) {
     bwprintf (COM2, "Going to execute %d\n", cur->tid);
     req = activate(&cur->trap, cur->SPSR, cur->entry);
-    req = *((int*)cur->entry-1)&0xFFFF;
-    bwprintf (COM2, "Req is: %d\n", req);
+    if (req) {
+      req = 1234; 
+      DPRINTOK ("YAY!!!!!! IRQ!!!!!\n"); 
+      bwprintf (COM2, "VIC1IRQSTATUS = %d\n", *(int*)VIC1BASE);
+      *(int*)(TIMER1_BASE+CLR_OFFSET) = 0; // clear interrupt
+      bwprintf (COM2, "VIC1IRQSTATUS = %d\n", *(int*)VIC1BASE);
+    }
+    else {
+      req = *((int*)cur->entry-1)&0xFFFF;
+    }
+  //  bwprintf (COM2, "Req is: %d\n", req);
     switch (req) {
+      case 1234:
+	goto doneinterrupt;
+        break;
       case 0:
         newtid = current_tid++;
         req = _kCreate(&tds[newtid], cur->trap.r0, (void *)cur->trap.r1,
@@ -101,6 +113,7 @@ int main () {
 	while(1);
     }
     cur->trap.r0 = req;
+doneinterrupt:
     cur = schedule (cur, &tasks);
   }
 
