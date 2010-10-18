@@ -116,10 +116,12 @@ activate:
 	str	lr, [r0, #-4]		@ Store the re-entry point in the TD.
 	stmea	r0, {r0 - r14}^		@ Save user state, r0 dirty, but it doesn't matter because we are sticking a return val there later.
 @ r0 cannot be dirty!
+	ldr r2, .SCRATCH
+	str r2, [r0]
 	mrs	r1, SPSR		@ Load user CPU state into r1 (don't need to worry about it being dirty; user state already saved.)
 	str	r1, [r0, #-8]		@ Save SPSR onto user stack
 	ldmfd	sp, {r1 - r14}		@ Restore kernel state. (Think about sp that was saved -> works. && r0 not restored on purpose.)
-	ldr	r0, .SCRATCH		@ Get the users argument back. @@@ NO, shouldn't this be the syscall num?
+	ldr	r0, .IRQMAGICBIT		@ Get the users argument back. @@@ NO, shouldn't this be the syscall num?
 	mov	pc, lr			@ Go to kernel.
 	.align 2
 .IRQMAGICBIT: .word 0

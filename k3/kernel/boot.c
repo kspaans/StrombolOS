@@ -41,7 +41,7 @@ void bootstrap (struct td *tds, void (*f)(), int *stacks) {
   DPRINTOK ("Interrupt handler installed.\n");
   enable_timer ();
   //enable_interrupts (); 
-  _kCreate(tds, SYSCALL_LOW, f, 0, 0, stacks);
+  _kCreate(tds, IDLE, f, 0, 0, stacks);
   DPRINTOK ("First user task created.\n");
   DPRINTOK ("Booting complete.\n");
 }

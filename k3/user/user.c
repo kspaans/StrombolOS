@@ -167,20 +167,15 @@ void idle_shell()
   spinner[2] = '-';
   spinner[3] = '\\';
 
-  bwprintf (COM2, "going to call create NO WAIT PASS.\n");
+  //bwprintf (COM2, "going to call create NO WAIT PASS.\n");
   i = Create (SYSCALL_HIGH, nameserv);
-  Pass();
-  Pass();
-  Pass();
-  int shit = MyTid ();
-  bwprintf (COM2, "[32mMY TID IS %d[m\n", shit);
-  bwprintf (COM2, "back from create. congratulations!\n");
+  //int shit = MyTid ();
+  //bwprintf (COM2, "[32mMY TID IS %d[m\n", shit);
+  //bwprintf (COM2, "back from create. congratulations!\n");
 
   
-//  if (i != 1) PANIC;
   bwputstr(COM2, " Created nameserver\r\n");
   i = Create (SYSCALL_HIGH, clckserv);
-//  if (i != 2) PANIC;
   bwputstr(COM2, " Created clockserver\r\n");
   /* Other servers... */
   //Create(INTERRUPT, notifier_clock); // is this the correct priority?
@@ -207,6 +202,7 @@ void idle_shell()
 
   i = 0;
   c = 0;
+  Exit();
   FOREVER {
   /*
     if (i % 30000) {
