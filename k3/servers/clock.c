@@ -35,21 +35,27 @@ void clckserv()
   int r, tid = -1, delaysize = 0, delayindex = 0;
   char buf[BUFSIZE];
   struct delay delaypool[MAXTASKS];
-  struct delay *delay_list, *temp, *iter_node, *iter_prev;;
+  struct delay *delay_list = NULL, *temp, *iter_node, *iter_prev;;
 
   RegisterAs("clck");
 
   FOREVER {
+    //DPRINTOK("Go clock server!\r\n");
     r = Receive(&tid, buf, BUFSIZE);
     // occasionally this buf has junk in it? Try to keep it terminated?
     DPRINT("received from tid %d, return val %d, mesg: \'%c%c%c%c%c\r\r\n",
-           tid, r, buf[0], buf[1], buf[2], buf[3], buf[4]);
+           tid, r, buf[0], buf[1], buf[2], buf[3], buf[4]); // truncated mesg,
+          // plus return val of 5 when it should be 1?
     if (r < 0 || r > BUFSIZE) PANIC;
     switch (buf[0]) {
       case 'n':
         r = Reply(tid, NULL, 0);
-        if (r != 0) PANIC;
+        //bwputstr(COM2, "LALA\r\n");
+        if (r != 0) { bwputstr(COM2, "haha\r\n");PANIC; }
         ++ticks;
+  bwprintf (COM2, "[45m[s[1;25HSilly time = %d[K[m[u",ticks);
+  //      bwprintf(COM2, "[s[1;100H[2K[15D%d[u", ticks);
+        //DPRINTOK("Clock tick!\r\n");
         while (delay_list && ticks > delay_list->time) {
           DPRINT("Finding a delayer to wake... size of list %d\r\n", delaysize);
           /*
@@ -62,7 +68,7 @@ void clckserv()
           }
           DPRINT("  NULL\r\n");
           */
-          r = Reply(delay_list->tid, NULL, 0);
+          r = Reply(delay_list->tid, NULL, 0); // error in here
           if (r != 0) {
             DPRINTERR("WOAH, failed replying to Notifier: r = %d, the del was "
                       "%x\r\n", r, delay_list);
@@ -72,6 +78,7 @@ void clckserv()
           --delaysize;
           DPRINT("Replied, size of list is now %d\r\n", delaysize);
         }
+        //bwputstr(COM2, "LALA3\r\n");
         break;
       case 't':
         r = Reply(tid, (char *)(&ticks), 4); /* XXX is this unsafe? */
@@ -82,7 +89,7 @@ void clckserv()
         temp = &delaypool[delayindex];
         delayindex = (delayindex + 1) % MAXTASKS;
         ++delaysize;
-        DPRINT("Adding delayer, size of the list is now %d\r\n", delaysize);
+        DPRINT("Adding delayer %d, size of the list is now %d\r\n", tid, delaysize);
         temp->tid = tid;
         temp->time = ticks + *((int *)(buf + 1));
         /* Perform insertion sort of the new node into the list */

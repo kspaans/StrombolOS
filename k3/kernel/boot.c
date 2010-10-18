@@ -22,10 +22,9 @@ void enable_interrupts () {
 }
 
 void bootstrap (struct td *tds, void (*f)(), int *stacks) {
-  bwprintf (COM2, "[2J"); // Clear screen
-  bwprintf (COM2, "[2;r"); // Set scroll region
-  bwprintf (COM2, "[;H"); // Move cursor to top
-  bwprintf (COM2, "[45m   Heya[J[m[2;1H");
+  bwprintf (COM2, "[s[2J[2;1000r[;H[45mThis is a taskbar."
+      "[K[m[u");
+  bwprintf(COM2, "[?25l[2;1H");
   bwputstr(COM2, "Welcome to\r\n"
   "+--------------------------------------------------+\r\n"
   "|    ______                 __        ______  ____ |\r\n"
@@ -35,12 +34,11 @@ void bootstrap (struct td *tds, void (*f)(), int *stacks) {
   "|                          v0.0.3 (Techno Fitness) |\r\n"
   "+--------------------------------------------------+\r\n\r\n");
 
-
   DPRINTFUNC ("bootstrap");
   install_handler ();
   DPRINTOK ("Interrupt handler installed.\n");
   enable_timer ();
-  enable_interrupts (); 
+  enable_interrupts ();
   _kCreate(tds, IDLE, f, 0, 0, stacks);
   DPRINTOK ("First user task created.\n");
   DPRINTOK ("Booting complete.\n");

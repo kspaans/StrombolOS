@@ -52,7 +52,8 @@ Exit:
 	.global	Send
 	.type	Send, %function
 Send:
-        swp     r4, r4, [sp]
+	swp     r4, r4, [sp]
+	swp     r4, r4, [sp]
 	swi	#5
 	swp     r4, r4, [sp]
 	mov	pc, lr

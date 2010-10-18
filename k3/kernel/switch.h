@@ -62,6 +62,7 @@ void install_handler();
 
 #define MAXTASKS 50           // Should do for now.
 #define STACKSIZE 1024        // Probably a bit much?
+#define NUMEVENTS 1           // Will change in K4
 
 #define FOREVER for(;;)
 #define FOREACH(i,n) for(i = 0; i < n; ++i)

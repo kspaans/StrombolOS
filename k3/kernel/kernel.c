@@ -42,9 +42,13 @@ int main () {
   struct td tds[MAXTASKS];
   int stacks[MAXTASKS][STACKSIZE];
   struct taskq tasks;
+  struct td *eventq[NUMEVENTS];
 
   FOREACH(i, MAXTASKS) {
     initbuf(stacks[i], STACKSIZE, 0xDEADBEEF);
+  }
+  FOREACH(i, NUMEVENTS) {
+    eventq[i] = NULL;
   }
 
   bwsetfifo (COM2, OFF);
@@ -58,23 +62,27 @@ int main () {
   struct td *cur = schedule (&tds[0], &tasks);
 
   while (cur) {
- //   bwprintf (COM2, "Going to execute %d\n", cur->tid);
+    //bwprintf (COM2, "Going to execute %d:%x:lr%x\n", cur->tid, cur->entry,
+    //          cur->trap.r14);
     req = activate(&cur->trap, cur->SPSR, cur->entry);
     if (req) {
       req = 1234; 
-//      DPRINTOK ("YAY!!!!!! IRQ!!!!!\n"); 
-//      bwprintf (COM2, "VIC1IRQSTATUS = %d\n", *(int*)VIC1BASE);
+      //DPRINTOK ("YAY!!!!!! IRQ!!!!!\n"); 
+      //bwprintf (COM2, "VIC1IRQSTATUS = %d\n", *(int*)VIC1BASE);
       *(int*)(TIMER1_BASE+CLR_OFFSET) = 0; // clear interrupt
-//      bwprintf (COM2, "VIC1IRQSTATUS = %d\n", *(int*)VIC1BASE);
+      //DPRINTOK("Int cleared\r\n");
+      //bwprintf (COM2, "VIC1IRQSTATUS = %d\n", *(int*)VIC1BASE);
     }
     else {
       req = *((int*)cur->entry-1)&0xFFFF;
     }
-  //  bwprintf (COM2, "Req is: %d\n", req);
+    //bwprintf (COM2, "Req is: %d\n", req);
     switch (req) {
       case 1234:
-	
-	goto doneinterrupt;
+        /* Handle Timer1 AKA event "0", wakeup the waiter and clear the queue */
+        eventq[0]->state = READY;
+        eventq[0] = (void *)0;
+        goto doneinterrupt;
         break;
       case 0:
         newtid = current_tid++;
@@ -86,7 +94,6 @@ int main () {
         break;
       case 1:
         req = _kMyTid(cur);
-	DPRINTERR ("BACK FROM kMYTID\n");
         break;
       case 2:
         req = _kMyParentTid(cur);
@@ -109,9 +116,13 @@ int main () {
         req = _kReply(cur, cur->trap.r0, (char *)cur->trap.r1, cur->trap.r2,
                       tds, current_tid);
         break;
+      case 8:
+        req = _kAwaitEvent(cur, cur->trap.r0, eventq);
+        //bwputstr(COM2, "WOOOOOO\r\n");
+        break;
       default:
-	DPRINTERR ("UNKNOWN SYSCALL.\n");
-	while(1);
+        DPRINTERR ("UNKNOWN SYSCALL.\n");
+        while(1);
     }
     cur->trap.r0 = req;
 doneinterrupt:

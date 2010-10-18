@@ -16,7 +16,7 @@ OBJS="build/kernel.o build/switch.o build/user.o build/usyscall.o build/boot.o \
       build/pass.o build/exit.o build/send.o build/receive.o build/reply.o \
       build/names.o build/rps_server.o build/lib.o build/rps_client.o \
       build/tests.o build/wrappers.o build/clock_client.o build/clock.o \
-      build/notifier_clock.o \
+      build/notifier_clock.o build/awaitevent.o \
      "
 
 if [ `basename $PWD` != "k3" ]; then
@@ -86,6 +86,9 @@ as  ${ASFLAGS} -o build/mytid.o build/mytid.s || exit 1
 
 gcc ${CFLAGS}  -o build/myparenttid.s kernel/syscalls/myparenttid.c || exit 1
 as  ${ASFLAGS} -o build/myparenttid.o build/myparenttid.s || exit 1
+
+gcc ${CFLAGS}  -o build/awaitevent.s kernel/syscalls/awaitevent.c || exit 1
+as  ${ASFLAGS} -o build/awaitevent.o build/awaitevent.s || exit 1
 
 gcc ${CFLAGS}  -o build/tests.s ktests/tests.c || exit 1
 as  ${ASFLAGS} -o build/tests.o build/tests.s || exit 1

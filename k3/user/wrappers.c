@@ -62,11 +62,12 @@ int Getc(int channel)
 int Delay(int ticks)
 {
   int clock_tid;
-  int r;
+  int r, t = MyTid();
   char msg[5];
   char *ip;
 
   clock_tid = WhoIs("clck");
+  clock_tid = 2;
 
   msg[0] = 'd';
   ip = (char *)&ticks;
@@ -77,6 +78,7 @@ int Delay(int ticks)
   DPRINT("Delayed tid %d with msg \'%x%x%x%x%x\' to server at tid %d\r\n",
          MyTid(), msg[0], msg[1], msg[2], msg[3], msg[4], clock_tid);
 
+  //if (t == 5) { bwputstr(COM2, "YAYA\r\n"); }
   r = Send(clock_tid, msg, 5, NULL, 0);
   if (r < 0) {
     DPRINTERR("Send() from inside Delay() failed with retval %d\r\n", r);

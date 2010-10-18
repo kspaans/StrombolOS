@@ -153,12 +153,6 @@ void other_user_task()
  */
 void idle_shell()
 {
-
-  print_regs();
-  bwputstr (COM2, "\nin user: ");
-  print_mode();
-  bwputstr (COM2, " ok???\n\n");
-
   int i, c;
   char spinner[4];
 
@@ -178,7 +172,8 @@ void idle_shell()
   i = Create (SYSCALL_HIGH, clckserv);
   bwputstr(COM2, " Created clockserver\r\n");
   /* Other servers... */
-  //Create(INTERRUPT, notifier_clock); // is this the correct priority?
+  Create(SYSCALL_HIGH, notifier_clock);
+  bwputstr(COM2, " Created clock notifier\r\n");
 
   bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock): ");
   while (1) {
@@ -202,7 +197,6 @@ void idle_shell()
 
   i = 0;
   c = 0;
-  Exit();
   FOREVER {
   /*
     if (i % 30000) {
@@ -217,5 +211,6 @@ void idle_shell()
     }
     i = (i + 1) % 100000;
   */
+    //bwputc(COM2, '.');
   }
 }

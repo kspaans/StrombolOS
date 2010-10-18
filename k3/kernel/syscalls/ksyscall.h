@@ -13,5 +13,6 @@ int _kReceive(struct td *mytd, int *tid, char *msg, int msglen,
 	      struct td *tds);
 int _kReply(struct td *mytd, int tid, char *reply, int replylen,
             struct td *tds, int current_tid);
+int _kAwaitEvent(struct td *mytd, int tid, struct td *eventq[]);
 
 #endif // KSYSCALLS__INCLUDED

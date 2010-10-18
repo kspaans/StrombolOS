@@ -4,6 +4,7 @@
 #include "servers.h"
 #include "../kernel/switch.h"
 #include "../user/usyscall.h"
+#include "../ktests/tests.h"
 
 /*
  * Notifier task for the clock server -- Awaits the "timer 1" event. When the
@@ -16,15 +17,18 @@ void notifier_clock()
 
   ctid = WhoIs("clck");
   FOREVER {
-    /*AwaitEvent(TIMER1_EVENT_ID);*/ // We'll let the notifier handle hardware
-                                     // rather than the kernel IRQ handler
-    for (r = 0; r < 500000; ++r) {}
-    bwputc(COM2, '.');
-    /*r = Send(ctid, "n", 1, NULL, 0);
+    //DPRINTOK("Clock Notifier Awaiting Event!\r\n");
+    r = AwaitEvent(0);
+    if (r != 0) {
+      DPRINTERR("Could not awaitevent(): %d\r\n", r);
+      PANIC;
+    }
+    //DPRINTOK("gogogo\r\n");
+    r = Send(ctid, "n", 1, NULL, 0);
     if (r != 0) {
       DPRINTFUNC("notifier_clock()");
-      bwprintf(COM2, "Woah, got a bad return value, %d, when sending to ClockSe"
+      DPRINTERR("Woah, got a bad return value, %d, when sending to ClockSe"
                "rv\r\n", r);
-    }*/
+    }
   }
 }
