@@ -16,9 +16,7 @@ Create:
 	.global	MyTid
 	.type	MyTid, %function
 MyTid:
-	stmfd   sp!, {lr}
 	swi	#1
-	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	MyTid, .-MyTid
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -27,9 +25,7 @@ MyTid:
 	.global	MyParentTid
 	.type	MyParentTid, %function
 MyParentTid:
-	stmfd   sp!, {lr}
 	swi	#2
-	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	MyParentTid, .-MyParentTid
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -47,9 +43,7 @@ Pass:
 	.global	Exit
 	.type	Exit, %function
 Exit:
-	stmfd   sp!, {lr}
 	swi	#4
-	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	Exit, .-Exit
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -59,10 +53,8 @@ Exit:
 	.type	Send, %function
 Send:
         swp     r4, r4, [sp]
-	stmfd   sp!, {lr}
 	swi	#5
-	ldmfd   sp!, {lr}
-	swp     r5, r5, [sp]
+	swp     r4, r4, [sp]
 	mov	pc, lr
 	.size	Send, .-Send
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -71,9 +63,7 @@ Send:
 	.global	Receive
 	.type	Receive, %function
 Receive:
-	stmfd   sp!, {lr}
 	swi	#6
-	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	Receive, .-Receive
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -82,9 +72,7 @@ Receive:
 	.global	Reply
 	.type	Reply, %function
 Reply:
-	stmfd   sp!, {lr}
 	swi	#7
-	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	Reply, .-Reply
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -93,9 +81,7 @@ Reply:
 	.global	AwaitEvent
 	.type	AwaitEvent, %function
 AwaitEvent:
-	stmfd   sp!, {lr}
 	swi	#8
-	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	AwaitEvent, .-AwaitEvent
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

@@ -58,14 +58,14 @@ int main () {
   struct td *cur = schedule (&tds[0], &tasks);
 
   while (cur) {
-    bwprintf (COM2, "Going to execute %d\n", cur->tid);
+ //   bwprintf (COM2, "Going to execute %d\n", cur->tid);
     req = activate(&cur->trap, cur->SPSR, cur->entry);
     if (req) {
       req = 1234; 
-      DPRINTOK ("YAY!!!!!! IRQ!!!!!\n"); 
-      bwprintf (COM2, "VIC1IRQSTATUS = %d\n", *(int*)VIC1BASE);
+//      DPRINTOK ("YAY!!!!!! IRQ!!!!!\n"); 
+//      bwprintf (COM2, "VIC1IRQSTATUS = %d\n", *(int*)VIC1BASE);
       *(int*)(TIMER1_BASE+CLR_OFFSET) = 0; // clear interrupt
-      bwprintf (COM2, "VIC1IRQSTATUS = %d\n", *(int*)VIC1BASE);
+//      bwprintf (COM2, "VIC1IRQSTATUS = %d\n", *(int*)VIC1BASE);
     }
     else {
       req = *((int*)cur->entry-1)&0xFFFF;
@@ -73,6 +73,7 @@ int main () {
   //  bwprintf (COM2, "Req is: %d\n", req);
     switch (req) {
       case 1234:
+	
 	goto doneinterrupt;
         break;
       case 0:

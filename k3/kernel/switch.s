@@ -112,6 +112,7 @@ activate:
 	msr	SPSR_cxsf, r0		@ SPSR_irq is now copied over to SPSR_svc. 
 	ldr	lr, .SCRATCH2		@ Restore lr.
 	ldr	r0, .SCRATCH		@ Restore r0. Fall through into swi handler code
+	sub	lr, lr, #4		@ unfuck
 .HANDLE:
 	str	r0, .SCRATCH		@ r0 used as a scratch register; put argument in storage.
 	ldr	r0, .USERREG		@ Get address of user regs.

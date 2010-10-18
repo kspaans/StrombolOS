@@ -8,7 +8,7 @@
 typedef unsigned int uint; 
 
 void enable_timer () {
-  *(uint*)(TIMER1_BASE+LDR_OFFSET)  = 10000;		       // Trigger interrupt every 0.1s
+  *(uint*)(TIMER1_BASE+LDR_OFFSET)  = 100;		       // Trigger interrupt every 0.1s
   *(uint*)(TIMER1_BASE+CRTL_OFFSET) = ENABLE_MASK | MODE_MASK; // Run at 2kHz, periodic mode.
   *(uint*)(TIMER1_BASE+CLR_OFFSET)   = 1;                       // Initially clear the timer. Necessary?
   DPRINTOK ("Timer 1 enabled.\n");
