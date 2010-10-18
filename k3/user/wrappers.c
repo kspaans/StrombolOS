@@ -55,7 +55,6 @@ int Getc(int channel)
   i = WhoIs("serial");
   Send(1, );
   */
-  DPRINTERR ("in getc\n");
   return bwgetc(channel);
 }
 

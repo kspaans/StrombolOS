@@ -42,7 +42,8 @@ int _kReply(struct td *mytd, int tid, char *reply, int replylen,
   }
 
   tds[tid].state = READY;
-  tds[tid].retval = replylen;
+  tds[tid].trap.r0 = replylen;
+//  tds[tid].retval = replylen;
 
   if (B < replylen) {
     DPRINT("<<< returning ERROR -4: %d < %d\r\n", B, replylen);

@@ -30,15 +30,21 @@ struct mq {
   int tid;
 };
 
+struct trapframe {
+  int r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14;  
+};
+
+
 #define MQSIZE 10 // We can have at most this many tasks send to us at once
 struct td {
   int tid;                // Task ID
+  int SPSR;               // Saved cpu state.
+  void *entry;	  // Where to re-enter the user program.	
+  struct trapframe trap;  // Saved registers
   int *stack;             // memory, user's state
   enum STATE state;       // to be impl'd
   enum PRIORITY priority; // Task's priority --  NOT NEEDED?
   struct td *next;        // next td
-  int retval;             // saved return value
-  void *pc;               // entry point?
   int ptid;               // Task's Parent's TID
   struct mq messageq[MQSIZE]; // Pointer to the next unused slot in the MQ
   int mq_next;            // next message in queue to be processed
@@ -49,7 +55,8 @@ struct td {
 
 int swtch(int arg);
 void print_mode();
-int activate(struct td *t, int retval);
+void print_regs();
+int activate(struct trapframe *t, int SPSR, void (*entry)());
 void install_handler();
 
 #define MAXTASKS 50           // Should do for now.

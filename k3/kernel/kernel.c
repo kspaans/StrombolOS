@@ -37,22 +37,29 @@ int main () {
   addtask (&tds[0], &tasks);
   struct td *cur = schedule (&tds[0], &tasks);
   while (cur) {
-    //cur = schedule (cur, tasks);
-    req = cur->retval;
-DPRINTERR ("going.");
-    req = activate(cur, req);
-DPRINTERR ("back.");
+   // bwprintf (COM2, "Registers before user mode: ");
+   // print_regs();
+   // bwprintf (COM2, "\n");
+    bwprintf (COM2, "Going to address %d for user %d\n\n", cur->entry, (int)(cur-&tds[0]));
+    req = activate(&cur->trap, cur->SPSR, cur->entry);
+    req = *((int*)cur->entry-1)&0xFFFF;
+    bwprintf (COM2, "got back req=%d", req);
+    //bwprintf (COM2, "Registers after user mode: ");
+   // print_regs();
+    bwprintf (COM2, "\n");
     switch (req) { // eventually should move into exception.c?
       case 0:
         newtid = current_tid++;
-        req = _kCreate(&tds[newtid], cur->stack[1], (void *)cur->stack[2],
+        req = _kCreate(&tds[newtid], cur->trap.r0, (void *)cur->trap.r1,
                        cur->tid, newtid, stacks[newtid]);
+	DPRINTERR ("BACK FROM _kCREATE\n");
         if (req >= 0) {
           addtask(&(tds[newtid]), &tasks);
         }
         break;
       case 1:
         req = _kMyTid(cur);
+	DPRINTERR ("BACK FROM kMYTID\n");
         break;
       case 2:
         req = _kMyParentTid(cur);
@@ -64,21 +71,23 @@ DPRINTERR ("back.");
         _kExit(cur);
         break;
       case 5:
-        req = _kSend(cur, cur->stack[1], (char*)cur->stack[2], cur->stack[3],
-                     (char*)cur->stack[4], cur->stack[6], tds, current_tid);
+        req = _kSend(cur, cur->trap.r0, (char*)cur->trap.r1, cur->trap.r2,
+                     (char*)cur->trap.r3, cur->trap.r4, tds, current_tid);
         break;
       case 6:
-        req = _kReceive(cur, (int *)cur->stack[1], (char *)cur->stack[2],
-                        cur->stack[3], tds);
+        req = _kReceive(cur, (int *)cur->trap.r0, (char *)cur->trap.r1,
+                        cur->trap.r2, tds);
         break;
       case 7:
-        req = _kReply(cur, cur->stack[1], (char *)cur->stack[2], cur->stack[3],
+        req = _kReply(cur, cur->trap.r0, (char *)cur->trap.r1, cur->trap.r2,
                       tds, current_tid);
         break;
       default:
-        req = 0; // ????????????? should probably just kill the proc and print an error?
+	DPRINTERR ("UNKNOWN SYSCALL.\n");
+	while(1);
     }
-    cur->retval = req;
+    bwprintf (COM2, "handled?\n");
+    cur->trap.r0 = req;
     cur = schedule (cur, &tasks);
   }
 

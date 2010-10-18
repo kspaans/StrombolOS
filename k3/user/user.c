@@ -26,6 +26,7 @@ void second () {
 
 void first()
 {
+  asm ("mov r0, #1\n\tmov r1, #0xFA\n\tbl bwputr(PLT)");
   bwprintf (COM2, "I AM FIRST USER.\n\tMODE IS ");
   print_mode ();
   bwputstr (COM2, ".\n\tCREATE???\n");
@@ -152,16 +153,21 @@ void other_user_task()
  */
 void idle_shell()
 {
+  bwputstr (COM2, "\nin user: ");
+  print_mode();
+  bwputstr (COM2, " ok???\n\n");
+
   int i, c;
 
-  /* smslant typeface from http://www.network-science.de/ascii/ */
-//  i = Create (SYSCALL_HIGH, nameserv);
-//  bwprintf (COM2, "FOO: %u\n",i);
-  
+  bwprintf (COM2, "going to call create\n");
+  i = Create (SYSCALL_HIGH, nameserv);
+  bwprintf (COM2, "back from create\n");
+
+
 
 //  if (i != 1) PANIC;
 bwputstr(COM2, " Created nameserver\r\n");
-//  i = Create (SYSCALL_HIGH, clckserv);
+  i = Create (SYSCALL_HIGH, clckserv);
 //  if (i != 2) PANIC;
   bwputstr(COM2, " Created clockserver\r\n");
   /* Other servers... */
