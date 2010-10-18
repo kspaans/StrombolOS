@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "usyscall.h"
 #include "../kernel/switch.h"
+#include "../ktests/tests.h"
 
 /*
 int WhoIs (char *name) {
@@ -77,8 +78,10 @@ int Delay(int ticks)
          MyTid(), msg[0], msg[1], msg[2], msg[3], msg[4], clock_tid);
 
   r = Send(clock_tid, msg, 5, NULL, 0);
-  /* XXX check return value XXX */
-  bwprintf(COM2, "LOL!\r\n");
+  if (r < 0) {
+    DPRINTERR("Send() from inside Delay() failed with retval %d\r\n", r);
+    PANIC;
+  }
   return 0;
 }
 

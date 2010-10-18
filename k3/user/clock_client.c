@@ -4,6 +4,7 @@
 #include "usyscall.h"
 #include "clock_client.h"
 #include "../kernel/switch.h"
+#include "../servers/servers.h"
 
 /*
  * OK, so assignment K3 says that this should be the ``first user task'', close
@@ -39,6 +40,7 @@ void clock_fut()
     /* check return value ... */
   }
   DPRINT("--- Parent %d exiting!\r\n", MyTid());
+  //Create(USER_LOW, notifier_clock);
   Exit();
 }
 
@@ -60,8 +62,12 @@ void clock_client()
   DPRINT(".%d.%d.%d.Child %d delay for %d ticks %d times\r\n", MyTid(),
          MyTid(), MyTid(), MyTid(), replybuf[0], replybuf[1]);
   FOREACH(i, replybuf[1]) {
+    DPRINT("TID %d loop %d of %d\r\n", MyTid(), i, replybuf[1]);
+    //if (MyTid() == 4) DPRINTOK("Child %d returned from delay of %d\r\n", MyTid(), replybuf[0]);
     r = Delay(replybuf[0]);
+    DPRINT("Child %d returned from delay of %d\r\n", MyTid(), replybuf[0]);
     /* lol it should be zero */
   }
+  DPRINTOK("================= TRALALALA%d ======================\r\n", MyTid());
   Exit();
 }

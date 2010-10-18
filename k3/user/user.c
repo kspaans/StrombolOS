@@ -167,7 +167,7 @@ void idle_shell()
 //  if (i != 2) PANIC;
   bwputstr(COM2, " Created clockserver\r\n");
   /* Other servers... */
-  /* Notifiers?       */
+  //Create(INTERRUPT, notifier_clock); // is this the correct priority?
 
   bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock): ");
   while (1) {
@@ -190,7 +190,6 @@ void idle_shell()
     }
   } IDLE:;
 
-  /* Set priority to IDLE now */
   i = 0;
   c = 0;
   FOREVER {

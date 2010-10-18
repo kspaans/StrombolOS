@@ -15,7 +15,7 @@ struct td *findtask (struct td *head, struct td *loop) {
     if (i==0) i = loop;
     if (i->state == SEND_BLOCKED ||
         i->state == REPLY_BLOCKED ||
-	i->state == RECEIVE_BLOCKED)
+        i->state == RECEIVE_BLOCKED)
       ++num_blocked;
     if (i->state == READY)
       return i;

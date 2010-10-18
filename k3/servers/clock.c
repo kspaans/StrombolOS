@@ -41,28 +41,39 @@ void clckserv()
 
   FOREVER {
     r = Receive(&tid, buf, BUFSIZE);
+    // occasionally this buf has junk in it? Try to keep it terminated?
     DPRINT("received from tid %d, return val %d, mesg: \'%c%c%c%c%c\r\r\n",
-           tid, r, buf[0], buf[1], buf[2], buf[3], buf[4]); // occasionally this buf has junk in it? Try to keep it terminated?
-    /* Though r should never be -1, the way we wrote things */
-    /* XXX TEST THIS XXX */
+           tid, r, buf[0], buf[1], buf[2], buf[3], buf[4]);
     if (r < 0 || r > BUFSIZE) PANIC;
     switch (buf[0]) {
       case 'n':
         r = Reply(tid, NULL, 0);
         if (r != 0) PANIC;
         ++ticks;
-        while (delaysize > 0 && ticks > delay_list->time) {
+        while (delay_list && ticks > delay_list->time) {
+          DPRINT("Finding a delayer to wake... size of list %d\r\n", delaysize);
+          /*
+          for (temp = delay_list; temp != NULL; temp = temp->next) {
+            DPRINTOK("  {time %d, tid %d} ->\r\n", temp->time, temp->tid);
+            if (temp == temp->next) {
+              bwputstr(COM2, "AHHHHH 1-node linked list loop\r\n");
+              PANIC;
+            }
+          }
+          DPRINT("  NULL\r\n");
+          */
           r = Reply(delay_list->tid, NULL, 0);
           if (r != 0) {
-            bwprintf(COM2, "WOAH, failed replying to Notifier: r = %d\r\n", r);
+            DPRINTERR("WOAH, failed replying to Notifier: r = %d, the del was "
+                      "%x\r\n", r, delay_list);
             PANIC;
           }
           delay_list = delay_list->next;
           --delaysize;
+          DPRINT("Replied, size of list is now %d\r\n", delaysize);
         }
         break;
       case 't':
-        /* or replybuf = sprintf("%d", ticks); */
         r = Reply(tid, (char *)(&ticks), 4); /* XXX is this unsafe? */
         if (r != 0) PANIC;
         break;
@@ -71,6 +82,7 @@ void clckserv()
         temp = &delaypool[delayindex];
         delayindex = (delayindex + 1) % MAXTASKS;
         ++delaysize;
+        DPRINT("Adding delayer, size of the list is now %d\r\n", delaysize);
         temp->tid = tid;
         temp->time = ticks + *((int *)(buf + 1));
         /* Perform insertion sort of the new node into the list */
@@ -88,7 +100,12 @@ void clckserv()
                    temp->time, iter_node->time, iter_node->next);
             if (iter_node->time > temp->time) {
               temp->next = iter_node;
-              if (iter_prev) iter_prev->next = delay_list;
+              if (iter_prev) {
+                iter_prev->next = temp;
+              }
+              else {
+                delay_list = temp;
+              }
               break;
             }
             else if (iter_node->next == NULL) {
