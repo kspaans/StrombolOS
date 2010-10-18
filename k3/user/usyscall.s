@@ -38,9 +38,7 @@ MyParentTid:
 	.global	Pass
 	.type	Pass, %function
 Pass:
-	stmfd   sp!, {lr}
 	swi	#3
-	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	Pass, .-Pass
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

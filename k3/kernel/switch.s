@@ -114,7 +114,7 @@ activate:
 	str	r0, .SCRATCH		@ r0 used as a scratch register; put argument in storage.
 	ldr	r0, .USERREG		@ Get address of user regs.
 	str	lr, [r0, #-4]		@ Store the re-entry point in the TD.
-	stmfa	r0, {r0 - r14}^		@ Save user state, r0 dirty, but it doesn't matter because we are sticking a return val there later.
+	stmea	r0, {r0 - r14}^		@ Save user state, r0 dirty, but it doesn't matter because we are sticking a return val there later.
 @ r0 cannot be dirty!
 	mrs	r1, SPSR		@ Load user CPU state into r1 (don't need to worry about it being dirty; user state already saved.)
 	str	r1, [r0, #-8]		@ Save SPSR onto user stack

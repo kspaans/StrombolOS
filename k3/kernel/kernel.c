@@ -15,6 +15,26 @@ void initbuf (int *p, int n, int val) {
   for (i = p; i<p+n; *(i++) = val);
 }
 
+void printtrap (struct trapframe *t) {
+  bwprintf (COM2, "User trap frame:\n");
+  bwprintf (COM2, "\tr0 = %x\n"
+                  "\tr1 = %x\n"
+                  "\tr2 = %x\n"
+                  "\tr3 = %x\n"
+                  "\tr4 = %x\n"
+                  "\tr5 = %x\n"
+                  "\tr6 = %x\n"
+                  "\tr7 = %x\n"
+                  "\tr8 = %x\n"
+                  "\tr9 = %x\n"
+                  "\tr10 = %x\n"
+                  "\tr11 = %x\n"
+                  "\tr12 = %x\n"
+                  "\tr13 = %x\n"
+                  "\tr14 = %x\n\n",
+		t->r0,t->r1,t->r2,t->r3,t->r4,t->r5,t->r6,t->r7,t->r8,t->r9,t->r10,t->r11,t->r12,t->r13,t->r14);
+}
+
 int main () {
   int req = 1;
   int i, newtid;
@@ -36,23 +56,17 @@ int main () {
   inittasks (&tasks);
   addtask (&tds[0], &tasks);
   struct td *cur = schedule (&tds[0], &tasks);
+
   while (cur) {
-   // bwprintf (COM2, "Registers before user mode: ");
-   // print_regs();
-   // bwprintf (COM2, "\n");
-    bwprintf (COM2, "Going to address %d for user %d\n\n", cur->entry, (int)(cur-&tds[0]));
+    bwprintf (COM2, "Going to execute %d\n", cur->tid);
     req = activate(&cur->trap, cur->SPSR, cur->entry);
     req = *((int*)cur->entry-1)&0xFFFF;
-    bwprintf (COM2, "got back req=%d", req);
-    //bwprintf (COM2, "Registers after user mode: ");
-   // print_regs();
-    bwprintf (COM2, "\n");
-    switch (req) { // eventually should move into exception.c?
+    bwprintf (COM2, "Req is: %d\n", req);
+    switch (req) {
       case 0:
         newtid = current_tid++;
         req = _kCreate(&tds[newtid], cur->trap.r0, (void *)cur->trap.r1,
                        cur->tid, newtid, stacks[newtid]);
-	DPRINTERR ("BACK FROM _kCREATE\n");
         if (req >= 0) {
           addtask(&(tds[newtid]), &tasks);
         }
@@ -86,7 +100,6 @@ int main () {
 	DPRINTERR ("UNKNOWN SYSCALL.\n");
 	while(1);
     }
-    bwprintf (COM2, "handled?\n");
     cur->trap.r0 = req;
     cur = schedule (cur, &tasks);
   }

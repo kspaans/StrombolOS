@@ -153,18 +153,24 @@ void other_user_task()
  */
 void idle_shell()
 {
+
+  print_regs();
   bwputstr (COM2, "\nin user: ");
   print_mode();
   bwputstr (COM2, " ok???\n\n");
 
   int i, c;
 
-  bwprintf (COM2, "going to call create\n");
+  bwprintf (COM2, "going to call create NO WAIT PASS.\n");
   i = Create (SYSCALL_HIGH, nameserv);
-  bwprintf (COM2, "back from create\n");
+  Pass();
+  Pass();
+  Pass();
+  int shit = MyTid ();
+  bwprintf (COM2, "[32mMY TID IS %d[m\n", shit);
+  bwprintf (COM2, "back from create. congratulations!\n");
 
-
-
+  
 //  if (i != 1) PANIC;
 bwputstr(COM2, " Created nameserver\r\n");
   i = Create (SYSCALL_HIGH, clckserv);
@@ -176,7 +182,7 @@ bwputstr(COM2, " Created nameserver\r\n");
   while (1) {
     c = Getc(COM2);
     //if (c < 0) PANIC;
-    bwprintf(COM2, "%c", c);
+    bwprintf(COM2, "%c\n", c);
     switch (c) {
       case '1':
         i = Create(SYSCALL_LOW, &first_user_task);
