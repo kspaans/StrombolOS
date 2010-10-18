@@ -26,6 +26,7 @@ void second () {
 
 void first()
 {
+  asm ("mov r0, #1\n\tmov r1, #0xFA\n\tbl bwputr(PLT)");
   bwprintf (COM2, "I AM FIRST USER.\n\tMODE IS ");
   print_mode ();
   bwputstr (COM2, ".\n\tCREATE???\n");
@@ -152,6 +153,12 @@ void other_user_task()
  */
 void idle_shell()
 {
+
+  print_regs();
+  bwputstr (COM2, "\nin user: ");
+  print_mode();
+  bwputstr (COM2, " ok???\n\n");
+
   int i, c;
   char spinner[4];
 
@@ -160,7 +167,16 @@ void idle_shell()
   spinner[2] = '-';
   spinner[3] = '\\';
 
+  bwprintf (COM2, "going to call create NO WAIT PASS.\n");
   i = Create (SYSCALL_HIGH, nameserv);
+  Pass();
+  Pass();
+  Pass();
+  int shit = MyTid ();
+  bwprintf (COM2, "[32mMY TID IS %d[m\n", shit);
+  bwprintf (COM2, "back from create. congratulations!\n");
+
+  
 //  if (i != 1) PANIC;
   bwputstr(COM2, " Created nameserver\r\n");
   i = Create (SYSCALL_HIGH, clckserv);
@@ -172,7 +188,6 @@ void idle_shell()
   bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock): ");
   while (1) {
     c = Getc(COM2);
-    if (c < 0) PANIC;
     bwprintf(COM2, "%c\r\n", c);
     switch (c) {
       case '1':

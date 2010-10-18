@@ -40,7 +40,7 @@ void bootstrap (struct td *tds, void (*f)(), int *stacks) {
   install_handler ();
   DPRINTOK ("Interrupt handler installed.\n");
   enable_timer ();
-  enable_interrupts (); 
+  //enable_interrupts (); 
   _kCreate(tds, SYSCALL_LOW, f, 0, 0, stacks);
   DPRINTOK ("First user task created.\n");
   DPRINTOK ("Booting complete.\n");

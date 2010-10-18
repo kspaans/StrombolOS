@@ -7,9 +7,7 @@
 	.global	Create
 	.type	Create, %function
 Create:
-	stmfd   sp!, {lr}
 	swi	#0
-	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	Create, .-Create
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -40,9 +38,7 @@ MyParentTid:
 	.global	Pass
 	.type	Pass, %function
 Pass:
-	stmfd   sp!, {lr}
 	swi	#3
-	ldmfd   sp!, {lr}
 	mov	pc, lr
 	.size	Pass, .-Pass
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -62,7 +58,7 @@ Exit:
 	.global	Send
 	.type	Send, %function
 Send:
-        swp     r5, r5, [sp]
+        swp     r4, r4, [sp]
 	stmfd   sp!, {lr}
 	swi	#5
 	ldmfd   sp!, {lr}
