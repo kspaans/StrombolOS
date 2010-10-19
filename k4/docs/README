@@ -1,0 +1,6 @@
+To launch the executable from RedBoot, type "l ARM/StrombolOS/k1" and type 
+"g" after it loads.
+
+It is strongly suggested that the ts7200 be reset before running this kernel 
+incase someone else's kernel trashed the system.
+
