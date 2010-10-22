@@ -19,7 +19,7 @@ OBJS="build/kernel.o build/switch.o build/user.o build/usyscall.o build/boot.o \
       build/notifier_clock.o build/awaitevent.o \
      "
 
-if [ `basename $PWD` != "k3" ]; then
+if [ `basename $PWD` != "k4" ]; then
 	cd ..
 fi
 
