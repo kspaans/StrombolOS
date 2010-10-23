@@ -35,6 +35,20 @@ void printtrap (struct trapframe *t) {
 		t->r0,t->r1,t->r2,t->r3,t->r4,t->r5,t->r6,t->r7,t->r8,t->r9,t->r10,t->r11,t->r12,t->r13,t->r14);
 }
 
+struct accounting_data {
+  int interrupts;
+  int creates;
+  int awaitevents;
+  int passes;
+  int sends;
+  int replies;
+  int receives;
+  int exits;
+  int mytids;
+  int myparenttids;
+  // and so on, including other things??????
+};
+
 int main () {
   int req = 1;
   int i, newtid;
@@ -43,6 +57,18 @@ int main () {
   int stacks[MAXTASKS][STACKSIZE];
   struct taskq tasks;
   struct td *eventq[NUMEVENTS];
+  struct accounting_data counters;
+
+  counters.interrupts   = 0;
+  counters.creates      = 0;
+  counters.awaitevents  = 0;
+  counters.passes       = 0;
+  counters.sends        = 0;
+  counters.replies      = 0;
+  counters.receives     = 0;
+  counters.exits        = 0;
+  counters.mytids       = 0;
+  counters.myparenttids = 0;
 
   FOREACH(i, MAXTASKS) {
     initbuf(stacks[i], STACKSIZE, 0xDEADBEEF);
@@ -82,6 +108,8 @@ int main () {
         /* Handle Timer1 AKA event "0", wakeup the waiter and clear the queue */
         eventq[0]->state = READY;
         eventq[0] = (void *)0;
+        ++counters.interrupts; // Is it worth doing preincr? Is the assembly any
+                              // different?
         goto doneinterrupt;
         break;
       case 0:
@@ -91,34 +119,43 @@ int main () {
         if (req >= 0) {
           addtask(&(tds[newtid]), &tasks);
         }
+        ++counters.creates;
         break;
       case 1:
         req = _kMyTid(cur);
+        ++counters.mytids;
         break;
       case 2:
         req = _kMyParentTid(cur);
+        ++counters.myparenttids;
         break;
       case 3:
         _kPass(cur);
+        ++counters.passes;
         break;
       case 4:
         _kExit(cur);
+        ++counters.exits;
         break;
       case 5:
         req = _kSend(cur, cur->trap.r0, (char*)cur->trap.r1, cur->trap.r2,
                      (char*)cur->trap.r3, cur->trap.r4, tds, current_tid);
+      ++counters.sends;
         break;
       case 6:
         req = _kReceive(cur, (int *)cur->trap.r0, (char *)cur->trap.r1,
                         cur->trap.r2, tds);
+        ++counters.receives;
         break;
       case 7:
         req = _kReply(cur, cur->trap.r0, (char *)cur->trap.r1, cur->trap.r2,
                       tds, current_tid);
+        ++counters.replies;
         break;
       case 8:
         req = _kAwaitEvent(cur, cur->trap.r0, eventq);
         //bwputstr(COM2, "WOOOOOO\r\n");
+        ++counters.awaitevents;
         break;
       default:
         DPRINTERR ("UNKNOWN SYSCALL.\n");
@@ -129,7 +166,20 @@ doneinterrupt:
     cur = schedule (cur, &tasks);
   }
 
-  //c += a;
+  DPRINTOK("+----------------------------------+\r\n");
+  DPRINTOK("| INTERRUPT AND SYSCALL STATISTICS |\r\n");
+  DPRINTOK("|  Interrupts  %d\t                |\r\n", counters.interrupts);
+  DPRINTOK("|  Create      %d\t\t                |\r\n", counters.creates);
+  DPRINTOK("|  Exit        %d\t\t                |\r\n", counters.exits);
+  DPRINTOK("|  Send        %d                |\r\n", counters.sends);
+  DPRINTOK("|  Receive     %d                |\r\n", counters.receives);
+  DPRINTOK("|  Reply       %d                |\r\n", counters.replies);
+  DPRINTOK("|  AwaitEvent  %d                |\r\n", counters.awaitevents);
+  DPRINTOK("|  Pass        %d\t\t                |\r\n", counters.passes);
+  DPRINTOK("|  MyTid       %d\t\t                |\r\n", counters.mytids);
+  DPRINTOK("|  MyParentTid %d\t\t                |\r\n", counters.myparenttids);
+  DPRINTOK("+----------------------------------+\r\n");
+
  
   DPRINT("Goodbye\r\n");
   return 0;

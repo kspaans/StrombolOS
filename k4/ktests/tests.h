@@ -8,5 +8,6 @@ void srr_tests();
 void srr0();
 void srr1();
 void returny();
+void send_tests();
 
 #endif/*__TESTS_H__*/

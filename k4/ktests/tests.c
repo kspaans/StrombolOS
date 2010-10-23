@@ -105,3 +105,16 @@ void returny()
   Pass();
   Pass();
 }
+
+/******************************************************************************/
+
+/*
+ * Test many concurrent sends. This is the parent task. It will spawn roughly N
+ * children, who will all send to it the square of their TIDs. This task will
+ * receive and reply in a loop until everything is done. Hopefully this will
+ * trip some synchronization or scheduler bugs.
+ */
+void send_tests()
+{
+  Exit();
+}

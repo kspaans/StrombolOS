@@ -174,12 +174,11 @@ void idle_shell()
   /* Other servers... */
   Create(SYSCALL_HIGH, notifier_clock);
   bwputstr(COM2, " Created clock notifier\r\n");
-bwputstr (COM2, "\n\n\tPress [6many[25m key to continue...\r\n\r\n\r\n");
-  //bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock): ");
+  bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock, 4:send"
+                 "_tests): ");
   while (1) {
     c = Getc(COM2);
-    c = '3'; //hacks
-    //bwprintf(COM2, "%c\r\n", c);
+    bwprintf(COM2, "%c\r\n", c);
     switch (c) {
       case '1':
         i = Create(SYSCALL_LOW, &first_user_task);
@@ -189,6 +188,9 @@ bwputstr (COM2, "\n\n\tPress [6many[25m key to continue...\r\n\r\n\r\n");
         goto IDLE;
       case '3':
         i = Create(SYSCALL_LOW, &clock_fut);
+        goto IDLE;
+      case '4':
+        i = Create(SYSCALL_LOW, &send_tests);
         goto IDLE;
       default:
         bwputstr(COM2, " WUT\r\n");
