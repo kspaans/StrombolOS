@@ -14,10 +14,13 @@ void enable_timer () {
   DPRINTOK ("Timer 1 enabled.\n");
 }
 
+void enable_uart () {
+  *(uint*)(UART1_BASE+UART_CTLR_OFFSET) = UARTEN_MASK | MSIEN_MASK | RIEN_MASK | TIEN_MASK | RTIEN_MASK;    
+}
 void enable_interrupts () {
   *(uint*)(VIC1BASE+INTSEL_OFFSET)     &= 0;          // Use IRQ mode
   *(uint*)(VIC1BASE+TIMER1CTRL_OFFSET)  = 0x20;       // Enable the timer
-  *(uint*)(VIC1BASE+INTEN_OFFSET)       = TC1OI_MASK; // ... enable the timer? what is difference
+  *(uint*)(VIC1BASE+INTEN_OFFSET)       = TC1OI_MASK | UART1RXINTR1_MASK; // ... enable the timer? what is difference
   DPRINTOK ("Interrupts enabled!\n");
 }
 
@@ -38,6 +41,7 @@ void bootstrap (struct td *tds, void (*f)(), int *stacks) {
   install_handler ();
   DPRINTOK ("Interrupt handler installed.\n");
   enable_timer ();
+  enable_uart ();
   enable_interrupts ();
   _kCreate(tds, IDLE, f, 0, 0, stacks);
   DPRINTOK ("First user task created.\n");
