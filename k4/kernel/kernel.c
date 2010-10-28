@@ -58,6 +58,7 @@ int main () {
   struct taskq tasks;
   struct td *eventq[NUMEVENTS];
   struct accounting_data counters;
+  uint irqstatus;
 
   counters.interrupts   = 0;
   counters.creates      = 0;
@@ -77,6 +78,8 @@ int main () {
     eventq[i] = NULL;
   }
 
+  bwsetspeed (COM1,  2400);
+  bwsetfifo (COM1, OFF);
   bwsetfifo (COM2, OFF);
 
   DPRINT("[2J");
@@ -92,10 +95,11 @@ int main () {
     //          cur->trap.r14);
     req = activate(&cur->trap, cur->SPSR, cur->entry);
     if (req) {
-      req = 1234; 
+      req = 1234;
+      //DPRINTOK ("IRQ: ");
+      //bwprintf (COM2, "%d\n", *(int*)(VIC1BASE+IRQSTATUS_OFFSET)); 
       //DPRINTOK ("YAY!!!!!! IRQ!!!!!\n"); 
       //bwprintf (COM2, "VIC1IRQSTATUS = %d\n", *(int*)VIC1BASE);
-      *(int*)(TIMER1_BASE+CLR_OFFSET) = 0; // clear interrupt
       //DPRINTOK("Int cleared\r\n");
       //bwprintf (COM2, "VIC1IRQSTATUS = %d\n", *(int*)VIC1BASE);
     }
@@ -105,11 +109,23 @@ int main () {
     //bwprintf (COM2, "Req is: %d\n", req);
     switch (req) {
       case 1234:
-        /* Handle Timer1 AKA event "0", wakeup the waiter and clear the queue */
-        eventq[0]->state = READY;
-        eventq[0] = (void *)0;
-        ++counters.interrupts; // Is it worth doing preincr? Is the assembly any
-                              // different?
+        irqstatus = *(int*)(VIC1BASE+IRQSTATUS_OFFSET);
+        if (irqstatus & UART1RXINTR1_MASK) {
+          DPRINTERR ("FUCK A UART INTERRUPT!!!!!\n");
+          bwprintf (COM2, "got %x\n", *(char*)(UART1_BASE+UART_DATA_OFFSET));
+        }
+        else if (irqstatus & TC1OI_MASK) {  // Timer 1 tick
+          /* Handle Timer1 AKA event "0", wakeup the waiter and clear the queue */
+          *(int*)(TIMER1_BASE+CLR_OFFSET) = 0; // clear interrupt
+          eventq[0]->state = READY;
+          eventq[0] = (void *)0;
+        }
+        else {
+          DPRINTERR ("UNKNOWN INTERRUPT! HOW DID THIS HAPPEN??\n");
+          bwprintf (COM2, "\tIT WAS %x\n\tDYING!!!\n", irqstatus);
+          while(1);
+        }
+        ++counters.interrupts;
         goto doneinterrupt;
         break;
       case 0:
