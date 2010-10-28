@@ -32,18 +32,19 @@ int _kReply(struct td *mytd, int tid, char *reply, int replylen,
     return -3;
   }
   // We know the sender is waiting, to reply to them
-  DPRINT("Using reply queue: 0x%x\r\n", &tds[tid].replyq);
+  //DPRINTOK("<<<REPLY>>>Using reply queue: 0x%x, msg 0x%x\r\n", &tds[tid].replyq,
+  //         tds[tid].replyq.msg);
   replybuf = tds[tid].replyq.msg;
   B = buflen = tds[tid].replyq.msglen;
   // should do it? What about replyer tid?
   int rl = replylen;
+  //DPRINTOK("<<<REPLY>>>buflen: 0x%x, replylen 0x%x\r\n", buflen, rl);
   while (buflen-- && rl--) {
     *replybuf++ = *reply++;
   }
 
   tds[tid].state = READY;
   tds[tid].trap.r0 = replylen;
-//  tds[tid].retval = replylen;
 
   if (B < replylen) {
     DPRINT("<<< returning ERROR -4: %d < %d\r\n", B, replylen);

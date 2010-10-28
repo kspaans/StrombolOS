@@ -66,7 +66,7 @@ void clock_client()
   FOREACH(i, replybuf[1]) {
     DPRINTOK("TID %d loop %d of %d\r\n", mytid, i, replybuf[1]);
     r = Delay(replybuf[0]);
-    DPRINT("Child %d returned from delay of %d\r\n", mytid, replybuf[0]);
+    DPRINTOK("Child %d returned from delay of %d\r\n", mytid, replybuf[0]);
     /* lol it should be zero */
   }
   DPRINTOK("================= %d Exiting =================\r\n", mytid);

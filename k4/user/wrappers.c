@@ -23,7 +23,9 @@ int WhoIs (char *name) {
   char msg[6];
   msg[0] = 'w';
   strcpy((msg+1), name);
+  //DPRINTOK("WHOIS from client %d, msg %s\r\n", MyTid(), msg);
   Send (1, msg, 6, (char*)&tid, 4);
+  //DPRINTOK("WHOIS answer %d to client %d\r\n", tid, MyTid());
   return tid; // fix
 }
 
@@ -62,7 +64,7 @@ int Getc(int channel)
 int Delay(int ticks)
 {
   int clock_tid;
-  int r, t = MyTid();
+  int r;
   char msg[5];
   char *ip;
 

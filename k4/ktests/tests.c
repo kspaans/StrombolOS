@@ -13,20 +13,58 @@
 /*
  * Some simple functional tests to try and find edge cases
  * Should return if good, and PANIC otherwise
+ * Don't forget to synchronize with the children to make sure everything happens
+ * in the correct order.
  */
 void srr_tests()
 {
-  int i;
+  int i, tida, tidb, sender_tid1, sender_tid2;
 
   DPRINT(">>> Entered\r\n");
 
   FOREACH(i,10) {
-    Create(4, srr0);
-    Create(4, srr1);
+    tida = Create(4, srr0);
+    tidb = Create(4, srr1);
+
+    if (Receive(&sender_tid1, NULL, 0) != 0) PANIC;
+    if (Receive(&sender_tid2, NULL, 0) != 0) PANIC;
+    DPRINTOK("Parent %d Received from both children in order: %d then %d\r\n",
+             MyTid(), sender_tid1, sender_tid2);
+    if (Reply(sender_tid1, NULL, 0)    != 0) PANIC;
+    if (Reply(sender_tid2, NULL, 0)    != 0) PANIC;
+    DPRINTOK("LOL1\r\n");
+
+    if (Send(tida, NULL, 0, NULL, 0) != 0) {
+      DPRINTERR("Synch with child tid %d failed?\r\n", tida);
+      PANIC;
+    }
+    DPRINTOK("LOL2\r\n");
+    if (Send(tidb, NULL, 0, NULL, 0) != 0) {
+      DPRINTERR("Synch with child tid %d failed?\r\n", tidb);
+      PANIC;
+    }
+    DPRINTOK("srr_tests: loop %d complete\r\n", i);
   }
   FOREACH(i,10) {
-    Create(4, srr1);
-    Create(4, srr0);
+    tida = Create(4, srr1);
+    tidb = Create(4, srr0);
+
+    if (Receive(&sender_tid1, NULL, 0) != 0) PANIC;
+    if (Receive(&sender_tid2, NULL, 0) != 0) PANIC;
+    DPRINTOK("Parent2 %d Received from both children in order: %d then %d\r\n",
+             MyTid(), sender_tid1, sender_tid2);
+    if (Reply(sender_tid1, NULL, 0)    != 0) PANIC; // Wake sender first
+    if (Reply(sender_tid2, NULL, 0)    != 0) PANIC;
+
+    if (Send(tidb, NULL, 0, NULL, 0) != 0) {
+      DPRINTERR("Synch with child tid %d failed?\r\n", tida);
+      PANIC;
+    }
+    if (Send(tida, NULL, 0, NULL, 0) != 0) {
+      DPRINTERR("Synch with child tid %d failed?\r\n", tidb);
+      PANIC;
+    }
+    DPRINTOK("srr_tests: loop %d complete\r\n", i);
   }
 
   DPRINT("<<< Exited\r\n");
@@ -43,17 +81,38 @@ void srr0()
     testbuf[i] = i % 256;
   }
 
+  /*
+   * Register, then synch with parent to make sure that our partner has also
+   * registered.
+   */
   RegisterAs("srr0");
+  if (Send(MyParentTid(), NULL, 0, NULL, 0) != 0) PANIC;
+  DPRINTOK("wut\r\n");
   partner = WhoIs("srr1");
-  DPRINT("%d's partner is %d\r\n", MyTid(), partner);
+  DPRINTOK("SRR0: %d's partner is %d\r\n", MyTid(), partner);
 
   i = Send(partner, testbuf, 1024, replyb, 1024);
   DPRINT("%d's return value from SEND is %d\r\n", MyTid(), i);
-  if (i != 88) PANIC;
+  if (i != 88) {
+    DPRINTERR("Send returned %d instead of 88?\r\n");
+    PANIC;
+  }
   FOREACH(i, 88) {
-    if (replyb[i] != ((i % 2) ? 8 : 88)) PANIC;
+    if (replyb[i] != ((i % 2) ? 8 : 88)) {
+      DPRINTERR("Reply value in buf[%d] contains %d instead of %d?\r\n", i,
+                replyb[i], (i % 2) ? 8 : 88);
+      PANIC;
+    }
   }
 
+  if (Receive(&i, NULL, 0) != 0) {
+    DPRINTERR("Child %d's receive failed\r\n", MyTid());
+    PANIC;
+  }
+  if (Reply(i, NULL, 0)    != 0) {
+    DPRINTERR("Child %d's reply failed\r\n", MyTid());
+    PANIC;
+  }
   Exit();
 }
 
@@ -63,13 +122,17 @@ void srr1()
   char testbuf[1024];
   char repl[88];
 
+  /*
+   * Register, then synch with parent to make sure that our partner has also
+   * registered.
+   */
   RegisterAs("srr1");
-  Pass();
+  if (Send(MyParentTid(), NULL, 0, NULL, 0) != 0) PANIC;
   partner = WhoIs("srr0");
-  DPRINT("%d's partner is %d\r\n", MyTid(), partner);
+  DPRINTOK("SRR1: %d's partner is %d\r\n", MyTid(), partner);
 
   ret = Receive(&partner, testbuf, 1024); // error with return value
-  DPRINT("%d received from %d, value %d\r\n", MyTid(), partner, ret);
+  DPRINTOK("%d received from %d, value %d\r\n", MyTid(), partner, ret);
   if (ret != 1024) PANIC;
   FOREACH(i, 1024) {
     if (testbuf[i] != i % 256) PANIC;
@@ -82,6 +145,14 @@ void srr1()
   DPRINT("Got %d from Reply()\r\n", ret);
   if (ret != 0) PANIC;
 
+  if (Receive(&i, NULL, 0) != 0) {
+    DPRINTERR("Child %d's receive failed\r\n", MyTid());
+    PANIC;
+  }
+  if (Reply(i, NULL, 0)    != 0) {
+    DPRINTERR("Child %d's reply failed\r\n", MyTid());
+    PANIC;
+  }
   Exit();
 }
 
@@ -116,5 +187,21 @@ void returny()
  */
 void send_tests()
 {
+  int sender_tid = -88;
+  int children[5];
+  int i;
+  int sent_message_size;
+  char buf[100];
+
+  FOREACH(i, 5) {
+    children[i] = 0;
+    //children[i] = create(4, &send_t_client);
+  }
+
+
+  FOREACH(i, 25) {
+    sent_message_size = Receive(&sender_tid, buf, 100);
+  }
+
   Exit();
 }

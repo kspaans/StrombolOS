@@ -154,7 +154,6 @@ int main () {
         break;
       case 8:
         req = _kAwaitEvent(cur, cur->trap.r0, eventq);
-        //bwputstr(COM2, "WOOOOOO\r\n");
         ++counters.awaitevents;
         break;
       default:

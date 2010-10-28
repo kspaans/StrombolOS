@@ -32,12 +32,17 @@ int itoa (int x, char *res) {
   return i;
 }
 
+/* returns the index of the found name */
 int lookup (char *name, struct name *reg,int num) {
   int i;
+  //DPRINTOK("LOOKUP, looking up num %d name %s\r\n", num, reg);
   for (i = 0; i < num; i++) {
-    if (!strcmp(name, reg[i].name)) {//bwprintf (COM2, "yup\r\n");
-    return reg[i].tid; }
-    else { //bwprintf (COM2, "nope\r\n"); }
+    if (!strcmp(name, reg[i].name)) {
+      //bwprintf (COM2, "yup\r\n");
+      return i;
+    }
+    else {
+      //bwprintf (COM2, "nope\r\n");
     }
   }
   return -1;
@@ -58,16 +63,24 @@ void nameserv () {
     switch (msg[0]) {
       case 'w':
         ans = lookup ((msg+1), reg, num);
-//	bwprintf (COM2, "Nameserv:lookup gave %d.\r\n", ans);
-        Reply(tid, (char*)&ans, 4);
-//	bwprintf (COM2, "Nameserv: Reply sucessfull.\r\n");
+        //DPRINTOK ("Nameserv:lookup gave %d.\r\n", ans);
+        Reply(tid, (char*)(&(reg[ans].tid)), 4);
+        //DPRINTOK ("Nameserv: Reply sucessfull.\r\n");
         break;
       case 'r':
-        DPRINT("NAMES: registering %s to tid %d.\r\n", msg + 1, tid);
-        strcpy (reg[num].name, msg + 1);
-        reg[num++].tid  = tid;
-	      Reply (tid, 0, 0);
-//	bwprintf (COM2, "Nameserv: Reply sucessfull.\r\n");
+        //DPRINTOK("NAMES: registering %s to tid %d.\r\n", msg + 1, tid);
+        // Has the name been registered before?
+        ans = lookup((msg + 1), reg, num);
+        if (ans != -1) {
+          reg[ans].tid = tid;
+          //DPRINTOK("NAMES: overwriting entry %d with tid %d\r\n", ans, tid);
+        }
+        else {
+          strcpy (reg[num].name, msg + 1);
+          reg[num++].tid  = tid;
+        }
+        Reply (tid, 0, 0);
+        //DPRINTOK ("Nameserv: Reply sucessfull.\r\n");
         break;
       default: 
         Reply (tid, 0, 0);

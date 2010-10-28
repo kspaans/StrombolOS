@@ -15,7 +15,8 @@ struct td *findtask (struct td *head, struct td *loop) {
     if (i==0) i = loop;
     if (i->state == SEND_BLOCKED ||
         i->state == REPLY_BLOCKED ||
-        i->state == RECEIVE_BLOCKED)
+        i->state == RECEIVE_BLOCKED ||
+        i->state == EVENT_BLOCKED)
       ++num_blocked;
     if (i->state == READY)
       return i;
@@ -24,7 +25,12 @@ struct td *findtask (struct td *head, struct td *loop) {
 
   VDPRINT("%d tasks in blocked state\r\n", num_blocked);
 
-  return 0; // no ready task in this queue
+  if (num_blocked == 0) {
+    return (void *)-1; // No tasks at all
+  }
+  else {
+    return 0; // no ready task in this queue
+  }
 }
 
 void inittasks (struct taskq *q) {
@@ -42,15 +48,28 @@ void addtask (struct td *nt, struct taskq *tasks) {
 struct td *schedule (struct td *cur, struct taskq *tasks) {
   struct td *nxt;
   int i;
+  int flag_usertasksexist = 0; // Ugh, I don't like flag variables could probably
+                               // restructure the scheduler better
   if (cur->state == ACTIVE) cur->state = READY;
   for (i = 0; i < NUMPRIO; i++) {
     nxt = findtask (tasks->p[i], tasks->head[i]);
-    if (nxt) {
+    //if (nxt == (void *)-1) DPRINTERR("NO TASKS IN PRIORITY QUEUE %d\r\n", i);
+    if (nxt != 0 && nxt != (void *)-1) {
       nxt->state = ACTIVE;
       tasks->p[i] = nxt;
-      return nxt;
+      if (i == NUMPRIO - 1 && flag_usertasksexist == 0) {
+        DPRINTOK("All tasks have exited.\r\n");
+        return 0;
+      }
+      else {
+        //DPRINTERR("Running IDLE task: i = %d, flag = %d\r\n", i,
+        //          flag_usertasksexist);
+        return nxt;
+      }
+    }
+    if (nxt != (void *)-1 && i > 2) {
+      flag_usertasksexist = 1;
     }
   }
   return 0; // NO TASKS LEFT
 }
-
