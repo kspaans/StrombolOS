@@ -21,6 +21,13 @@ enum PRIORITY {
   IDLE         = 5,
 };
 
+#define NUMEVENTS 3
+enum EVENT {
+  TIMER1  = 0,
+  UART1RX = 1,
+  UART1TX = 2,
+};
+
 /*
  * Playing fast and loose with memory, a bunch of these represent the message
  * queue of the task -- pointing into the sender's memory
@@ -62,7 +69,6 @@ void install_handler();
 
 #define MAXTASKS 50           // Should do for now.
 #define STACKSIZE 1024        // Probably a bit much?
-#define NUMEVENTS 1           // Will change in K4
 
 #define FOREVER for(;;)
 #define FOREACH(i,n) for(i = 0; i < n; ++i)

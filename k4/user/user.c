@@ -8,78 +8,11 @@
 #include "../servers/servers.h"
 #include "../ktests/tests.h"
 
-void ipc1 () {
-  bwprintf (COM2, "ipc1: I am %d\r\n", MyTid());
-  bwprintf (COM2, "ipc1: Registering as LOL\r\n");
-  RegisterAs ("LOL"); RegisterAs ("POO");
-  bwprintf (COM2, "ipc1: Registration complete.\r\n");
-  bwprintf (COM2, "ipc1: WhoIs(\"LOL\") = %d\r\n",WhoIs("LOL"));
-  bwprintf (COM2, "ipc1: Exiting.\r\n");
-  bwprintf (COM2, "ipc1: WhoIs(\"POO\") = %d\r\n",WhoIs("POO"));
-  Exit();
-}
-
-void second () {
-  bwputstr(COM2, "I AM IDLE\n");
-  while (1) {}
-}
-
-void first()
+void trains()
 {
-  asm ("mov r0, #1\n\tmov r1, #0xFA\n\tbl bwputr(PLT)");
-  bwprintf (COM2, "I AM FIRST USER.\n\tMODE IS ");
-  print_mode ();
-  bwputstr (COM2, ".\n\tCREATE???\n");
-  //int z = Create (0xABCDEF01, (void*)0x10FEDCBA);
-  int z = Create (3, second);
-  int i=0,j=0,k=0;
-  while (1) {
-    bwprintf (COM2, "I AM FIRST USER.\n\tKERNEL SAID %d\n\tMODE IS ",z);
-    print_mode ();
-    bwputstr (COM2, ".\n\tPASS??\n");
-    i++;
-    if (i>10) j++;
-    if (j>10) k++;
-    i %= 11; j %= 11;
-//    bwprintf (COM2, "(i,j,k) = (%d,%d,%d)\n",i,j,k);
-    Pass();
-    bwprintf (COM2, "I AM FIRST USER.\n\tMODE IS ");
-    print_mode ();
-    bwputstr (COM2, ".\n\tEXIT????\n");
-    Exit();
-  }
+  DPRINTOK("Hi, I'm the train controller!\r\n");
 
-//  int i = 0xFFFFF;
-  int r;
-  while (i--) {
-    bwprintf(COM2, "Hey, I'm a user(%d)!\n", i);
-    r = swtch(i);
-    bwprintf(COM2, "And the kernel gave me %d!\n", r);
-    for (r = 0; r < 500000; ++r);
-  }
-  bwputstr (COM2, "CPU Mode: ");
-  print_mode();
-  bwputstr (COM2, "\n\n");
-  int x = 42;
-  int b[5];
-  b[0] = 0xDEADBEEF;
-  b[1] = 0xDEADBEEF;
-  b[2] = 0xDEADBEEF;
-  b[3] = 0xDEADBEEF;
-  b[4] = 0xDEADBEEF;
-  bwprintf (COM2, "x is %d\n", x);
-  i = 5; while (i--) { bwprintf (COM2, "b[%d] = ", i); bwputr(COM2, b[i]); bwputstr (COM2, "\n");}
-  b[2] -= x;
-  b[3]--;
-  bwputstr (COM2, "now b[2] = b[2] - x  and b[3] = b[3] - 1...\n");
-  i = 5; while (i--) { bwprintf (COM2, "b[%d] = ", i); bwputr(COM2, b[i]); bwputstr (COM2, "\n");}
-}
-
-void lol()
-{
-  int i;
-  bwprintf(COM2, "HAHA! I'm a new user task and my tid is '%d'\n", MyTid());
-  for(i = 0; i < 50000; ++i);
+  DPRINTOK("Goodbye.\r\n");
   Exit();
 }
 
@@ -104,7 +37,6 @@ void first_user_task()
   //int i;
   //char msg[50];
 
-  //Pass();
   Create (SYSCALL_LOW, rps_server);
   Create (USER_HIGH, rps_client); 
   Create (USER_HIGH, rps_client); 
@@ -113,9 +45,6 @@ void first_user_task()
   Create (USER_HIGH, rps_client); 
   Create (USER_HIGH, rps_client); 
   Create (USER_HIGH, rps_client); 
- // Pass();
-  //Create (SYSCALL_LOW, rps_client);
-  //Create(IDLE, second);
 
 /*  tids[0] = Create(USER_LOW, other_user_task);
   bwprintf(COM2, "Created: %d.\n", tids[0]);
@@ -161,21 +90,15 @@ void idle_shell()
   spinner[2] = '-';
   spinner[3] = '\\';
 
-  //bwprintf (COM2, "going to call create NO WAIT PASS.\n");
-  i = Create (SYSCALL_HIGH, nameserv);
-  //int shit = MyTid ();
-  //bwprintf (COM2, "[32mMY TID IS %d[m\n", shit);
-  //bwprintf (COM2, "back from create. congratulations!\n");
-
-  
+  i = Create (SYSCALL_HIGH, &nameserv);
   bwputstr(COM2, " Created nameserver\r\n");
-  i = Create (SYSCALL_HIGH, clckserv);
+  i = Create (SYSCALL_HIGH, &clckserv);
   bwputstr(COM2, " Created clockserver\r\n");
+  i = Create(SYSCALL_HIGH, &uart1serv);
+  bwputstr(COM2, " Created UART1server\r\n");
   /* Other servers... */
-  Create(SYSCALL_HIGH, notifier_clock);
-  bwputstr(COM2, " Created clock notifier\r\n");
   bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock, 4:send"
-                 "_tests): ");
+                 "_tests, 5:TRAIN_CONTROLLER): ");
   while (1) {
     c = Getc(COM2);
     bwprintf(COM2, "%c\r\n", c);
@@ -192,28 +115,14 @@ void idle_shell()
       case '4':
         i = Create(SYSCALL_LOW, &send_tests);
         goto IDLE;
+      case '5':
+        if (Create(USER_HIGH, &trains) < 0) PANIC; // What priority to use?
+        goto IDLE;
       default:
         bwputstr(COM2, " WUT\r\n");
         break;
     }
   } IDLE:;
 
-  i = 0;
-  c = 0;
-  FOREVER {
-  /*
-    if (i % 30000) {
-      bwprintf(COM2, "\b%c", spinner[c]);
-      c = (c + 1) % 4;
-    }
-    //if (i % 60000) {
-    //  bwprintf(COM2, "\r\n%d\r\n", Time());
-    //}
-    if (i == 0) {
-      //Send(2, "n", 1, NULL, 0); // SHIT, this makes us go to sleep, won't happen normally, but kind of bad now.
-    }
-    i = (i + 1) % 100000;
-  */
-    //bwputc(COM2, '.');
-  }
+  FOREVER {}
 }

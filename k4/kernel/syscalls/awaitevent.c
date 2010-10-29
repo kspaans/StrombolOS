@@ -14,7 +14,7 @@ int _kAwaitEvent(struct td *mytd, int event, struct td *eventq[])
 {
   DPRINT(">>> Entered with mytd 0x%x, event %d\r\n", mytd, event);
 
-  if (event != 0) { // To be changed in K4
+  if (event < 0 || event >= NUMEVENTS) {
     return -1;
   }
   if (eventq[event]) {

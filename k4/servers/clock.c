@@ -1,6 +1,7 @@
 #include <bwio.h>
 #include <ts7200.h>
 #include <debug.h>
+#include "servers.h"
 #include "../user/usyscall.h"
 #include "../ktests/tests.h"  // PANIC
 #include "../kernel/switch.h" // FOREVER, NULL
@@ -38,6 +39,7 @@ void clckserv()
   struct delay *delay_list = NULL, *temp, *iter_node, *iter_prev;;
 
   RegisterAs("clck");
+  if (Create(INTERRUPT, &notifier_clock) < 0)   PANIC;
 
   FOREVER {
     //DPRINTOK("Go clock server!\r\n");
