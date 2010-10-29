@@ -16,7 +16,7 @@ OBJS="build/kernel.o build/switch.o build/user.o build/usyscall.o build/boot.o \
       build/pass.o build/exit.o build/send.o build/receive.o build/reply.o \
       build/names.o build/rps_server.o build/lib.o build/rps_client.o \
       build/tests.o build/wrappers.o build/clock_client.o build/clock.o \
-      build/uart1.o \
+      build/uart1.o build/trains_ui.o \
       build/notifier_clock.o build/awaitevent.o build/notifier_uart1rx.o \
      "
 
@@ -108,6 +108,9 @@ as  ${ASFLAGS} -o build/notifier_clock.o build/notifier_clock.s || exit 1
 
 gcc ${CFLAGS}  -o build/notifier_uart1rx.s servers/notifier_uart1rx.c || exit 1
 as  ${ASFLAGS} -o build/notifier_uart1rx.o build/notifier_uart1rx.s || exit 1
+
+gcc ${CFLAGS}  -o build/trains_ui.s user/trains_ui.c || exit 1
+as  ${ASFLAGS} -o build/trains_ui.o build/trains_ui.s || exit 1
 
 ld  ${LDFLAGS} -o build/StrombolOS.elf ${OBJS} -lbwio -lgcc
 

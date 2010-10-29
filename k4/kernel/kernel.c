@@ -111,12 +111,13 @@ int main () {
       case 1234:
         irqstatus = *(int*)(VIC1BASE+IRQSTATUS_OFFSET);
         if (irqstatus & UART1RXINTR1_MASK) {
-          /*
           eventq[UART1RX]->state = READY;
+          eventq[UART1RX]->trap.r0 = *(char *)(UART1_BASE + UART_DATA_OFFSET);
           eventq[UART1RX] = (void *)0;
-          */
+          /*
           DPRINTERR ("FUCK A UART INTERRUPT!!!!!\n");
           bwprintf (COM2, "got %x\n", *(char*)(UART1_BASE+UART_DATA_OFFSET));
+          */
         }
         else if (irqstatus & TC1OI_MASK) {  // Timer 1 tick
           /* Handle Timer1 AKA event "0", wakeup the waiter and clear the queue */

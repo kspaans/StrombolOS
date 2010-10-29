@@ -57,7 +57,7 @@ struct td *schedule (struct td *cur, struct taskq *tasks) {
     if (nxt != 0 && nxt != (void *)-1) {
       nxt->state = ACTIVE;
       tasks->p[i] = nxt;
-      if (i == NUMPRIO - 1 && flag_usertasksexist == 0) {
+      if (i == NUMPRIO - 1 && flag_usertasksexist == 0) { // LOOK FOR DEFUNCT TASKS
         DPRINTOK("All tasks have exited.\r\n");
         return 0;
       }
