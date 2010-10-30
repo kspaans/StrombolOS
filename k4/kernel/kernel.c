@@ -94,41 +94,26 @@ int main () {
     //bwprintf (COM2, "Going to execute %d:%x:lr%x\n", cur->tid, cur->entry,
     //          cur->trap.r14);
     req = activate(&cur->trap, cur->SPSR, cur->entry);
-    if (req) {
+    if (req) 
       req = 1234;
-      //DPRINTOK ("IRQ: ");
-      //bwprintf (COM2, "%d\n", *(int*)(VIC1BASE+IRQSTATUS_OFFSET)); 
-      //DPRINTOK ("YAY!!!!!! IRQ!!!!!\n"); 
-      //bwprintf (COM2, "VIC1IRQSTATUS = %d\n", *(int*)VIC1BASE);
-      //DPRINTOK("Int cleared\r\n");
-      //bwprintf (COM2, "VIC1IRQSTATUS = %d\n", *(int*)VIC1BASE);
-    }
-    else {
+    else 
       req = *((int*)cur->entry-1)&0xFFFF;
-    }
-    //bwprintf (COM2, "Req is: %d\n", req);
+    
     switch (req) {
       case 1234:
         irqstatus = *(int*)(VIC1BASE+IRQSTATUS_OFFSET);
-        if (irqstatus & UART1RXINTR1_MASK) {
-          /*
-          eventq[UART1RX]->state = READY;
-          eventq[UART1RX] = (void *)0;
-          */
-          DPRINTERR ("FUCK A UART INTERRUPT!!!!!\n");
-          bwprintf (COM2, "got %x\n", *(char*)(UART1_BASE+UART_DATA_OFFSET));
-        }
-        else if (irqstatus & TC1OI_MASK) {  // Timer 1 tick
-          /* Handle Timer1 AKA event "0", wakeup the waiter and clear the queue */
-          *(int*)(TIMER1_BASE+CLR_OFFSET) = 0; // clear interrupt
-          eventq[TIMER1]->state = READY;
-          eventq[TIMER1] = (void *)0;
-        }
+        if      (irqstatus & UART1RXINTR1_MASK)   i = UART1RX;
+        else if (irqstatus & UART2RXINTR1_MASK)   i = UART2RX;
+        else if (irqstatus & UART1TXINTR1_MASK)   i = UART1TX;
+        else if (irqstatus & UART2TXINTR1_MASK)   i = UART2TX;           
+        else if (irqstatus & TC1OI_MASK)          i = TIMER1;
         else {
           DPRINTERR ("UNKNOWN INTERRUPT! HOW DID THIS HAPPEN??\n");
           bwprintf (COM2, "\tIT WAS %x\n\tDYING!!!\n", irqstatus);
           while(1);
         }
+        eventq[i]->state = READY;
+        eventq[i] = (void *)0;
         ++counters.interrupts;
         goto doneinterrupt;
         break;

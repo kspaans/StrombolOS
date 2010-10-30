@@ -21,11 +21,13 @@ enum PRIORITY {
   IDLE         = 5,
 };
 
-#define NUMEVENTS 3
+#define NUMEVENTS 5
 enum EVENT {
   TIMER1  = 0,
   UART1RX = 1,
   UART1TX = 2,
+  UART2RX = 3,
+  UART2TX = 4
 };
 
 /*

@@ -17,13 +17,12 @@ void notifier_clock()
 
   ctid = WhoIs("clck");
   FOREVER {
-    //DPRINTOK("Clock Notifier Awaiting Event!\r\n");
     r = AwaitEvent(TIMER1);
     if (r != 0) {
       DPRINTERR("Could not awaitevent(): %d\r\n", r);
       PANIC;
     }
-    //DPRINTOK("gogogo\r\n");
+    *(int*)(TIMER1_BASE+CLR_OFFSET) = 0; // Clear interrupt
     r = Send(ctid, "n", 1, NULL, 0);
     if (r != 0) {
       DPRINTFUNC("notifier_clock()");
