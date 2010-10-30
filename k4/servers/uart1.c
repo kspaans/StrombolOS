@@ -24,9 +24,20 @@ void uart1serv()
   int r;
   int rxtid, txtid, client_tid;
   char buf[BUFSIZE];
+  /* We can receive a max of 64-bits from the controller at once, so have a
+   * buffer of twice that size. The queue is controlled by head and tail, items
+   * are removed from the head of the queue and removed from the tail.
+   * XXX, ugh this should be moved into a library...
+   */
+  char input_queue[16];
+  int head = 0, tail = 0;
+  int reader_queue[2]; // their TIDs
+
+  reader_queue[0] = 0;
+  reader_queue[1] = 0;
 
   RegisterAs("com1");
-  rxtid =  Create(INTERRUPT, notifier_uart1rx);
+  rxtid = Create(INTERRUPT, notifier_uart1rx);
   if (rxtid < 0) PANIC;
   //txtid = Create(INTERRUPT, notifier_uart1tx);
   //if (rxtid < 0) PANIC;
@@ -34,7 +45,7 @@ void uart1serv()
   FOREVER {
     r = Receive(&client_tid, buf, BUFSIZE);
     DPRINTOK("UART1: received from client tid %d, mesg of size %d, first char"
-             "%c\r\n", client_tid, r, buf[0]);
+             " %c\r\n", client_tid, r, buf[0]);
     if (r < 0 || r > BUFSIZE) PANIC;
 
     switch (buf[0]) {
@@ -45,21 +56,30 @@ void uart1serv()
           PANIC;
         }
         if (Reply(rxtid, NULL, 0) != 0) PANIC;
-        //enqueue(buf[0]);
+        /* Too bad if we overrun the circular buffer. It should be big enough */
+        input_queue[tail++] = buf[1];
+
+        if (reader_queue[0]) { // someone is waiting
+          if (Reply(reader_queue[0], &input_queue[head++], 1) != 0) PANIC;
+        }
         break;
       case 'g':
-        /** Probably want a courier or two between the train RX ans us **/
-        // So what if no char is ready yet? We want to sleep the client, and
-        // somehow wait for next char, while still responding to ther clients
-        // Luckily we shouldn't have to worry about a floor of clients getc'ing
-        // from us -- in fact we may even want to not really use getc, and
-        // warehouse instead
-        //
-        //if (Reply(client_tid, dequeue(), 1) != 0) PANIC;
+        if (head == tail) { // circular buffer is empty
+          reader_queue[0] = client_tid;
+        }
+        else {
+          r = Reply(client_tid, &input_queue[head++], 1);
+          //r = Reply(reader_queue[0], &input_queue[head++], 1);
+          if (r != 0) {
+            DPRINTERR("UART1: reply failed with %d retval to client tid %d\r\n",
+                      r, reader_queue[0]);
+            PANIC;
+          }
+        }
         break;
       case 'p':
         //if (Reply(txtid, "putchar plz") != 0) PANIC;
-        bwputc(COM1, buf[1]);
+        bwputc(COM1, buf[1]); // will fuck up the ctrlr???
         if (Reply(client_tid, NULL, 0) != 0) PANIC;
         break;
       default:

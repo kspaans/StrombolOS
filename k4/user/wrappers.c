@@ -51,14 +51,24 @@ int RegisterAs (char *name) {
 
 int Getc(int channel)
 {
-  /* To be implemented later
   char c;
-  int i;
+  char buf = 'g';
+  int tid1, tid2;
 
-  i = WhoIs("serial");
-  Send(1, );
-  */
-  return bwgetc(channel);
+  tid1 = WhoIs("com1");
+  //tid2 = WhoIs("com2");
+  if (channel) { // COM2
+    if (Send(tid1, &buf, 1, &c, 1) != 1) PANIC;
+  }
+  else {
+    //if (Send(tid2, &buf, 1, &c, 1) != 1) PANIC;
+  }
+  return c;
+}
+
+int Putc(int channel, char ch)
+{
+  return 0;
 }
 
 int Delay(int ticks)

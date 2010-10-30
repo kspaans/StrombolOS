@@ -8,14 +8,6 @@
 #include "../servers/servers.h"
 #include "../ktests/tests.h"
 
-void trains()
-{
-  DPRINTOK("Hi, I'm the train controller!\r\n");
-
-  DPRINTOK("Goodbye.\r\n");
-  Exit();
-}
-
 void other_user_task();
 
 void fuckit()
@@ -100,7 +92,7 @@ void idle_shell()
   bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock, 4:send"
                  "_tests, 5:TRAIN_CONTROLLER): ");
   while (1) {
-    c = Getc(COM2);
+    c = bwgetc(COM2);//Getc(COM2);
     bwprintf(COM2, "%c\r\n", c);
     switch (c) {
       case '1':

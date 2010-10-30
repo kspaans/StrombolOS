@@ -18,5 +18,6 @@ int Time();
 int AwaitEvent(int event);
 
 int Getc(int channel);
+int Putc(int channel, char ch);
 
 #endif // USYSCALL__INCLUDED
