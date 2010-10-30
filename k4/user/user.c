@@ -90,7 +90,8 @@ void idle_shell()
   bwputstr(COM2, " Created UART1server\r\n");
   /* Other servers... */
   bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock, 4:send"
-                 "_tests, 5:TRAIN_CONTROLLER): ");
+                 "_tests,\r\n"
+                 "  5:TRAIN_CONTROLLER, 6:timings): ");
   while (1) {
     c = bwgetc(COM2);//Getc(COM2);
     bwprintf(COM2, "%c\r\n", c);
@@ -109,6 +110,9 @@ void idle_shell()
         goto IDLE;
       case '5':
         if (Create(USER_HIGH, &trains) < 0) PANIC; // What priority to use?
+        goto IDLE;
+      case '6':
+        if (Create(USER_HIGH, &timings) < 0) PANIC;
         goto IDLE;
       default:
         bwputstr(COM2, " WUT\r\n");

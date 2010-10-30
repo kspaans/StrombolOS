@@ -14,6 +14,7 @@
 int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
            int replylen, struct td *tds, int current_tid)
 {
+  int original_message_length = msglen;
   DPRINT(">>> Entered with mytd 0x%x, Tid %d, msg(0x%x)\'%s\', msglen %d, reply"
          "(0x%x)\'%s\', replylen %d, tds 0x%x, current_tid %d\r\n", mytd, Tid,
          msg, msg, msglen, reply, reply, replylen, tds, current_tid);
@@ -42,9 +43,10 @@ int _kSend(struct td *mytd, int Tid, char *msg, int msglen, char *reply,
       *sendbuf++ = *msg++;
     }
 
-  mytd->replyq.msg    = reply;
-  mytd->replyq.msglen = replylen;
-  *((int*)tds[Tid].fuckq.tid) = mytd->tid;
+    mytd->replyq.msg    = reply;
+    mytd->replyq.msglen = replylen;
+    *((int*)tds[Tid].fuckq.tid) = mytd->tid;
+    tds[Tid].trap.r0 = original_message_length;
     return 0;
   }
 

@@ -30,14 +30,14 @@ int _kReceive(struct td *mytd, int *tid, char *msg, int msglen, struct td *tds)
     mytd->fuckq.msg = msg;
     mytd->fuckq.msglen = msglen;
     mytd->fuckq.tid = (int)tid;
-    return msglen; // or -1 if truncated?
+    return -666; // This value gets overwritten by _kSend();
   }
 
   *tid = mytd->messageq[mytd->mq_next].tid;
   DPRINT("next %d, last %d\r\n", mytd->mq_next, mytd->mq_last);
   sentdata = mytd->messageq[mytd->mq_next].msg;
   sentlen  = mytd->messageq[mytd->mq_next].msglen;
-  retval = mytd->messageq[mytd->mq_next].msglen;
+  retval   = mytd->messageq[mytd->mq_next].msglen;
   DPRINT("Taking from message queue 0x%x, len %d\r\n", sentdata, sentlen);
   while (msglen-- && sentlen--) {
     *msg++ = *sentdata++;

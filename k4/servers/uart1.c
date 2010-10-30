@@ -15,7 +15,6 @@ digraph uart1serv {
   // a -> b [label="Sends To"];
   uart1rx -> uart1serv;
   uart1tx -> uart1serv;
-  // XXX couriers!
   user_wrappers -> uart1serv;
 }
  */
