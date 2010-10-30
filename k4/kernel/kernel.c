@@ -102,7 +102,6 @@ int main () {
     switch (req) {
       case 1234:
         irqstatus = *(int*)(VIC1BASE+IRQSTATUS_OFFSET);
-<<<<<<< HEAD:k4/kernel/kernel.c
         if      (irqstatus & UART1RXINTR1_MASK)   i = UART1RX;
         else if (irqstatus & UART2RXINTR1_MASK)   i = UART2RX;
         else if (irqstatus & UART1TXINTR1_MASK)   i = UART1TX;

@@ -18,7 +18,8 @@ void notifier_uart1rx()
 
   tid = WhoIs("com1");
   FOREVER {
-    r = AwaitEvent(UART1RX);
+    AwaitEvent(UART1RX);
+    r = *(char*)(UART1_BASE+UART_DATA_OFFSET); 
     if (r < 0) {
       DPRINTERR("Could not awaitevent(): %d\r\n", r);
       PANIC;
