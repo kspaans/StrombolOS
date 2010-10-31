@@ -8,6 +8,7 @@
 
 #define BUFSIZE 2
 #define QUEUESIZE 128
+#define OQUEUESIZE 512
 
 typedef unsigned int uint;
 /*
@@ -24,10 +25,24 @@ digraph uart1serv {
   user_wrappers -> uart1serv;
 }
  */
+
+int transmit (char *q, int head, int tail, int *cts) {
+  int nh = (head+1) % OQUEUESIZE;
+  if (*cts) {
+    *cts = 0; // will no longer be cts
+    *(uint*)(UART1_BASE+UART_DATA_OFFSET) = q[head];
+    return nh;
+  }
+  else {
+    DPRINTERR ("Can't trans\n");
+    return head;
+  }
+}
+
 void uart1serv()
 {
   int r;
-  
+  int cts = 1;
   int rxtid;
   int txtid;
   int client_tid;
@@ -40,6 +55,8 @@ void uart1serv()
   char input_queue[QUEUESIZE];
   int head = 0, tail = 0;
   int reader_queue[2]; // their TIDs
+  char output_queue[OQUEUESIZE];
+  int ohead = 0, otail = 0;
 
   reader_queue[0] = 0;
   reader_queue[1] = 0;
@@ -49,11 +66,8 @@ void uart1serv()
   if (rxtid < 0) PANIC;
   txtid = Create(INTERRUPT, notifier_uart1tx);
   if (txtid < 0) PANIC;
-  bwprintf (COM2, "\n\n\n\nONLY GET HERE ONCE.\n\n");
-
 
   *(uint*)(VIC2BASE+INTEN_OFFSET)       = UART1_MASK;
-
 
   FOREVER {
     r = Receive(&client_tid, buf, BUFSIZE);
@@ -62,7 +76,7 @@ void uart1serv()
     if (r < 0 || r > BUFSIZE) PANIC;
 
     switch (buf[0]) {
-      case 'r':
+      case 'r': // from rxtd
         if (client_tid != rxtid) {
           DPRINTERR("UART1: WTF notifier didn't send us this RX, %d did\r\n",
                     client_tid);
@@ -78,7 +92,7 @@ void uart1serv()
           head = (head + 1) % QUEUESIZE;
         }
         break;
-      case 'g':
+      case 'g': // from getc client
         if (head == tail) { // circular buffer is empty
           reader_queue[0] = client_tid;
         }
@@ -93,13 +107,22 @@ void uart1serv()
           }
         }
         break;
-      case 'p':
+      case 't': // from txtd
+        cts = !cts;
+        if (head != tail) {
+          head = transmit (output_queue, head, tail, &cts);
+        }
+        if (Reply(txtid, NULL, 0) != 0) PANIC;
+        break;
+      case 'p': // from putc client
         //if (Reply(txtid, "putchar plz") != 0) PANIC;
-        bwputc(COM1, buf[1]); // will fuck up the ctrlr???
+        output_queue[tail] = buf[1];
+        tail = (tail + 1) % OQUEUESIZE;
+        head = transmit (output_queue, head, tail, &cts);
         if (Reply(client_tid, NULL, 0) != 0) PANIC;
         break;
       default:
-        PANIC;
+        DPRINTERR ("unknown message to uart1 server.\n");  
     }
   }
 }

@@ -68,6 +68,21 @@ int Getc(int channel)
 
 int Putc(int channel, char ch)
 {
+  char msg[2];
+  msg[0] = 'p';
+  msg[1] = ch;
+  int tid;
+  switch (channel) {
+    case COM1:
+      tid = WhoIs ("com1"); // TODO replace this with a hardcoded value.
+      if(Send (tid, &msg, 2, NULL, 0) != 0) PANIC;
+      break;
+    case COM2:
+      DPRINTERR ("COM2 Putc not implemented.\n");
+      break;
+    default:
+      PANIC;
+  }
   return 0;
 }
 

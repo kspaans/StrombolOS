@@ -15,6 +15,15 @@ void trains()
 
   DPRINTOK("Hi, I'm the train controller!\r\n");
 
+
+  while(1) {
+    DPRINTOK ("Start!\n");
+    Putc (COM1, 0x60);
+//    Delay (20);
+    DPRINTOK ("Stop!\n");
+    Putc (COM1, 0x61);
+//    Delay (20);
+  }
   while ((c = bwgetc(COM2)) != 0) {
     switch (c) {
       case 'q':
