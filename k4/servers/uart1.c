@@ -9,6 +9,7 @@
 #define BUFSIZE 2
 #define QUEUESIZE 128
 
+typedef unsigned int uint;
 /*
  * SERIAL UART SERVER PROTOCOL
  * read   "r#" | notifier read a byte from the UART
@@ -27,11 +28,9 @@ void uart1serv()
 {
   int r;
   
-  int yo1=1234;
   int rxtid;
   int txtid;
   int client_tid;
-  int yo2 = 4321;
   char buf[BUFSIZE];
   /* We can receive a max of 64-bits from the controller at once, so have a
    * buffer of twice that size. The queue is controlled by head and tail, items
@@ -48,8 +47,13 @@ void uart1serv()
   RegisterAs("com1");
   rxtid = Create(INTERRUPT, notifier_uart1rx);
   if (rxtid < 0) PANIC;
-  //txtid = Create(INTERRUPT, notifier_uart1tx);
-  //if (rxtid < 0) PANIC;
+  txtid = Create(INTERRUPT, notifier_uart1tx);
+  if (txtid < 0) PANIC;
+  bwprintf (COM2, "\n\n\n\nONLY GET HERE ONCE.\n\n");
+
+
+  *(uint*)(VIC2BASE+INTEN_OFFSET)       = UART1_MASK;
+
 
   FOREVER {
     r = Receive(&client_tid, buf, BUFSIZE);
@@ -57,7 +61,6 @@ void uart1serv()
   //           " %c\r\n", client_tid, r, buf[0]);
     if (r < 0 || r > BUFSIZE) PANIC;
 
-    bwprintf (COM2, "yo1 = %d, yo2 = %d\n", yo1, yo2);
     switch (buf[0]) {
       case 'r':
         if (client_tid != rxtid) {

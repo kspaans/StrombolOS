@@ -37,7 +37,7 @@ void first_user_task()
   Create (USER_HIGH, rps_client); 
   Create (USER_HIGH, rps_client); 
   Create (USER_HIGH, rps_client); 
-
+ 
 /*  tids[0] = Create(USER_LOW, other_user_task);
   bwprintf(COM2, "Created: %d.\n", tids[0]);
   tids[1] = Create(USER_LOW, other_user_task);
@@ -81,7 +81,6 @@ void idle_shell()
   spinner[1] = '/';
   spinner[2] = '-';
   spinner[3] = '\\';
-
   i = Create (SYSCALL_HIGH, &nameserv);
   bwputstr(COM2, " Created nameserver\r\n");
   i = Create (SYSCALL_HIGH, &clckserv);

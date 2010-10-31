@@ -58,7 +58,7 @@ int main () {
   struct taskq tasks;
   struct td *eventq[NUMEVENTS];
   struct accounting_data counters;
-  uint irqstatus;
+  uint irqstatus,irqstatus2;
 
   //asm("MOV\tr0, #0x1000\n\t"
   //    "MRC\tp15, 0, r1, c1, c0\n\t"
@@ -110,14 +110,23 @@ int main () {
     switch (req) {
       case 1234:
         irqstatus = *(int*)(VIC1BASE+IRQSTATUS_OFFSET);
-        if      (irqstatus & UART1RXINTR1_MASK)   i = UART1RX;
-        else if (irqstatus & UART2RXINTR1_MASK)   i = UART2RX;
-        else if (irqstatus & UART1TXINTR1_MASK)   i = UART1TX;
-        else if (irqstatus & UART2TXINTR1_MASK)   i = UART2TX;           
-        else if (irqstatus & TC1OI_MASK)          i = TIMER1;
+        irqstatus2 = *(int*)(VIC2BASE+IRQSTATUS_OFFSET);
+        if      (irqstatus  & UART1RXINTR1_MASK)  i = UART1RX;
+        else if (irqstatus  & UART2RXINTR1_MASK)  i = UART2RX;
+        else if (irqstatus2 & UART1_MASK)         i = UART1TRANS;
+        else if (irqstatus2 & UART2_MASK)         i = UART2TRANS;
+        else if (irqstatus  & TC1OI_MASK)         i = TIMER1;
         else {
           DPRINTERR ("UNKNOWN INTERRUPT! HOW DID THIS HAPPEN??\n");
-          bwprintf (COM2, "\tIT WAS %x\n\tDYING!!!\n", irqstatus);
+          bwprintf (COM2, "\tIT WAS %x and %x\n\tDYING!!!\n", irqstatus,irqstatus2);
+          while(1);
+        }
+        if (eventq[i] == 0) {
+          DPRINTERR ("BAD THING 1 HAPPENED, DYING.\n");
+          while(1);
+        }
+        if (eventq[i]->state != EVENT_BLOCKED) {
+          DPRINTERR ("BAD THING 2 HAPPENED, DYING.\n");
           while(1);
         }
         eventq[i]->state = READY;
