@@ -29,29 +29,29 @@ void timings()
     *(int *)(TIMER2_BASE + CRTL_OFFSET) = ENABLE_MASK | CLKSEL_MASK; // Set to 508KHz, free-running mode and GO!
 
     //asm("MOV r0, #5\n\tMOV r1, #0\n\tSWI #0\n\t"); // Create();
-    //asm("SWI #1\n\t"); // MyTid();
+    asm("SWI #1\n\t"); // MyTid();
     //asm("SWI #2\n\t"); // MyParentTid();
     //asm("SWI #3\n\t"); // Pass();
     //asm("SWI #4\n\t"); // Exit(); can't test this!
     //asm("SWI #5\n\t"); // Send();
     //asm("SWI #6\n\t"); // Receive();
     //asm("SWI #7\n\t"); // Reply();
-    s = Create(USER_LOW, &sender);
-    r = Create(USER_LOW, &receiver);
-    Receive(&child, NULL, 0);
-    Send(s, NULL, 0, NULL, 0);
-    Reply(child, NULL, 0);
-    Receive(&child, NULL, 0);
-    Reply(child, NULL, 0);
-    Receive(&child, NULL, 0);
-    Reply(child, NULL, 0);
+    //s = Create(USER_LOW, &sender);
+    //r = Create(USER_LOW, &receiver);
+    //Receive(&child, NULL, 0);
+    //Send(s, NULL, 0, NULL, 0);
+    //Reply(child, NULL, 0);
+    //Receive(&child, NULL, 0);
+    //Reply(child, NULL, 0);
+    //Receive(&child, NULL, 0);
+    //Reply(child, NULL, 0);
     //asm("SWI #8\n\t"); // AwaitEvent(); also hard to test?
     end_time = *timer_value_addr;
 
     // Disable the clock again
     *(int *)(TIMER2_BASE + CRTL_OFFSET) = 0;
 
-    //bwprintf(COM2, "Syscall took %d 508KHz ticks\r\n", start_time - end_time);
+    bwprintf(COM2, "Syscall took %d 508KHz ticks\r\n", start_time - end_time);
   }
 
   Exit();

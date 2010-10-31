@@ -60,6 +60,14 @@ int main () {
   struct accounting_data counters;
   uint irqstatus;
 
+  //asm("MOV\tr0, #0x1000\n\t"
+  //    "MRC\tp15, 0, r1, c1, c0\n\t"
+  //    "ORR\tr1, r0, r1\n\t"
+  //    //"MOV\tr0, #1\n\t"
+  //    //"BL \tbwputr(PLT)\n\t"
+  //    "MCR\tp15, 0, r1, c1, c0\n\t"
+  //   );
+
   counters.interrupts   = 0;
   counters.creates      = 0;
   counters.awaitevents  = 0;
