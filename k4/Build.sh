@@ -117,9 +117,6 @@ as  ${ASFLAGS} -o build/notifier_uart1tx.o build/notifier_uart1tx.s || exit 1
 gcc ${CFLAGS}  -o build/notifier_uart1rx.s servers/notifier_uart1rx.c || exit 1
 as  ${ASFLAGS} -o build/notifier_uart1rx.o build/notifier_uart1rx.s || exit 1
 
-gcc ${CFLAGS}  -o build/notifier_uart1tx.s servers/notifier_uart1tx.c || exit 1
-as  ${ASFLAGS} -o build/notifier_uart1tx.o build/notifier_uart1tx.s || exit 1
-
 gcc ${CFLAGS}  -o build/notifier_uart2rx.s servers/notifier_uart2rx.c || exit 1
 as  ${ASFLAGS} -o build/notifier_uart2rx.o build/notifier_uart2rx.s || exit 1
 
