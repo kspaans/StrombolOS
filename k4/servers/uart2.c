@@ -18,46 +18,36 @@
  * DOT:
 digraph uart1serv {
   // a -> b [label="Sends To"];
-  uart1rx -> uart1serv;
-  uart1tx -> uart1serv;
-  user_wrappers -> uart1serv;
+  uart2rx -> uart2serv;
+  uart2tx -> uart2serv; // Will probably need a courier.
+  user_wrappers -> uart2serv;
 }
  */
-void uart1serv()
+void uart2serv()
 {
   int r;
   
-  int yo1=1234;
   int rxtid;
   int txtid;
   int client_tid;
-  int yo2 = 4321;
   char buf[BUFSIZE];
-  /* We can receive a max of 64-bits from the controller at once, so have a
-   * buffer of twice that size. The queue is controlled by head and tail, items
-   * are removed from the head of the queue and removed from the tail.
-   * XXX, ugh this should be moved into a library...
-   */
   char input_queue[QUEUESIZE];
   int head = 0, tail = 0;
   int reader_queue[2]; // their TIDs
 
   reader_queue[0] = 0;
-  reader_queue[1] = 0;
+  reader_queue[1] = 0; // XXX FIXME dead code
 
-  RegisterAs("com1");
-  rxtid = Create(INTERRUPT, notifier_uart1rx);
+  RegisterAs("com2");
+  rxtid = Create(INTERRUPT, notifier_uart2rx);
   if (rxtid < 0) PANIC;
-  //txtid = Create(INTERRUPT, notifier_uart1tx);
-  //if (rxtid < 0) PANIC;
+  txtid = Create(INTERRUPT, notifier_uart2tx);
+  if (txtid < 0) PANIC;
 
   FOREVER {
     r = Receive(&client_tid, buf, BUFSIZE);
-//    DPRINTOK("UART1: received from client tid %d, mesg of size %d, first char"
-  //           " %c\r\n", client_tid, r, buf[0]);
     if (r < 0 || r > BUFSIZE) PANIC;
 
-    bwprintf (COM2, "yo1 = %d, yo2 = %d\n", yo1, yo2);
     switch (buf[0]) {
       case 'r':
         if (client_tid != rxtid) {
@@ -82,7 +72,6 @@ void uart1serv()
         else {
           r = Reply(client_tid, &input_queue[head], 1);
           head = (head + 1) % QUEUESIZE;
-          //r = Reply(reader_queue[0], &input_queue[head++], 1);
           if (r != 0) {
             DPRINTERR("UART1: reply failed with %d retval to client tid %d\r\n",
                       r, reader_queue[0]);
@@ -92,7 +81,7 @@ void uart1serv()
         break;
       case 'p':
         //if (Reply(txtid, "putchar plz") != 0) PANIC;
-        bwputc(COM1, buf[1]); // will fuck up the ctrlr???
+        bwputc(COM2, buf[1]); // will fuck up the ctrlr???
         if (Reply(client_tid, NULL, 0) != 0) PANIC;
         break;
       default:

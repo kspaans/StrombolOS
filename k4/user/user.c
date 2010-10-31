@@ -88,6 +88,8 @@ void idle_shell()
   bwputstr(COM2, " Created clockserver\r\n");
   i = Create(SYSCALL_HIGH, &uart1serv);
   bwputstr(COM2, " Created UART1server\r\n");
+  i = Create(SYSCALL_HIGH, &uart2serv);
+  bwputstr(COM2, " Created UART2server\r\n");
   /* Other servers... */
   bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock, 4:send"
                  "_tests,\r\n"
