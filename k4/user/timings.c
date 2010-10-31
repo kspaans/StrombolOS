@@ -63,17 +63,19 @@ void sender()
   int *timer_value_addr = (int *)(TIMER2_BASE + VAL_OFFSET);
   int end_time;
   int recipient;
-  char buf[64];
+  char buf[4];
+  int i;
 
   Receive(&recipient, NULL, 0);
   Reply(recipient, NULL, 0);
   recipient = WhoIs("zyx");
-  bwprintf(COM2, "Sending to receiver with TID %d\r\n", recipient);
+  //bwprintf(COM2, "Sending to receiver with TID %d\r\n", recipient);
 
+  FOREACH(i, 200) {
   *(int *)(TIMER2_BASE + LDR_OFFSET)  = 0xFFFF;      // Load the initial count
   *(int *)(TIMER2_BASE + CRTL_OFFSET) = ENABLE_MASK | CLKSEL_MASK; // Set to 508KHz, free-running mode and GO!
 
-  Send(recipient, buf, 64, buf, 64);
+  Send(recipient, buf, 4, buf, 4);
 
   end_time = *timer_value_addr;
 
@@ -81,6 +83,7 @@ void sender()
   *(int *)(TIMER2_BASE + CRTL_OFFSET) = 0;
 
   bwprintf(COM2, "SRR, 4 bytes, took %d 508KHz ticks\r\n", start_time - end_time);
+  }
 
   Send(MyParentTid(), NULL, 0, NULL, 0);
   Exit();
@@ -89,14 +92,17 @@ void sender()
 void receiver()
 {
   int sender;
-  char buf[64];
+  char buf[4];
+  int i;
 
-  bwprintf(COM2, "receiver's TID is %d\r\n", MyTid());
+  //bwprintf(COM2, "receiver's TID is %d\r\n", MyTid());
   RegisterAs("zyx");
   Send(MyParentTid(), NULL, 0, NULL, 0);
 
-  Receive(&sender, buf, 64);
-  Reply(sender, buf, 64);
+  FOREACH(i, 200) {
+  Receive(&sender, buf, 4);
+  Reply(sender, buf, 4);
+  }
 
   Send(MyParentTid(), NULL, 0, NULL, 0);
   Exit();
