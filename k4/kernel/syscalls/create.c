@@ -34,7 +34,7 @@ int _kCreate(struct td *newtd, int priority, void (*code)(), int parenttid,
   newtd->mq_last   = 0;
 
   if (priority == INTERRUPT) 
-    newtd->SPSR    = 223; // System mode, interrupts off.
+    newtd->SPSR    = 208; // User mode, interrupts off.
   else
     newtd->SPSR	   = 16; // User mode, interrupts on.
 
