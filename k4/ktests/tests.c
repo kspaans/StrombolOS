@@ -179,29 +179,55 @@ void returny()
 
 /******************************************************************************/
 
+void send_t_client();
 /*
  * Test many concurrent sends. This is the parent task. It will spawn roughly N
  * children, who will all send to it the square of their TIDs. This task will
  * receive and reply in a loop until everything is done. Hopefully this will
  * trip some synchronization or scheduler bugs.
  */
+#define NUMSCLIENTS 19
 void send_tests()
 {
   int sender_tid = -88;
-  int children[5];
+  int children[NUMSCLIENTS];
   int i;
   int sent_message_size;
   char buf[100];
 
-  FOREACH(i, 5) {
-    children[i] = 0;
-    //children[i] = create(4, &send_t_client);
+  FOREACH(i, NUMSCLIENTS) {
+    children[i] = Create(4, &send_t_client);
   }
 
-
-  FOREACH(i, 25) {
+  FOREACH(i, NUMSCLIENTS * 50) {
     sent_message_size = Receive(&sender_tid, buf, 100);
+    if (sent_message_size != 4) {
+      DPRINTERR("Check0\r\n");
+      PANIC;
+    }
+    if (*((int *)(buf)) != sender_tid * sender_tid) {
+      DPRINTERR("Check1\r\n");
+      PANIC;
+    }
+    Reply(sender_tid, NULL, 0);
+  }
+  DPRINTOK("Done!\r\n");
+
+  Exit();
+}
+
+void send_t_client()
+{
+  int ptid = MyParentTid();
+  int msg = MyTid();
+  int i;
+
+  msg *= msg;
+
+  FOREACH(i, 50) {
+    Send(ptid, (char *)(&msg), 4, NULL, 0);
   }
 
+  DPRINTOK("Send_Client done!\r\n");
   Exit();
 }
