@@ -9,6 +9,7 @@
 #define BUFSIZE 2
 #define QUEUESIZE 128
 
+typedef unsigned int uint;
 /*
  * SERIAL UART SERVER PROTOCOL // share with uart2.c?
  * DOT:
@@ -43,7 +44,12 @@ void uart1serv()
 
   RegisterAs("com1");
   rxtid = Create(INTERRUPT, notifier_uart1rx);
+  txtid = Create(INTERRUPT, notifier_uart1tx);
   bwprintf (COM2, "\n\n\n\nONLY GET HERE ONCE.\n\n");
+
+
+  *(uint*)(VIC2BASE+INTEN_OFFSET)       = UART1_MASK;
+
   if (rxtid < 0) PANIC;
   //txtid = Create(INTERRUPT, notifier_uart1tx);
   //if (rxtid < 0) PANIC;
@@ -54,40 +60,9 @@ void uart1serv()
   //           " %c\r\n", client_tid, r, buf[0]);
     if (r < 0 || r > BUFSIZE) PANIC;
 
-    bwprintf (COM2, "yo1 = %d, yo2 = %d\n", yo1, yo2);
     switch (buf[0]) {
       case 'r':
         if (client_tid != rxtid) {
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
-          bwprintf (COM2, "client_tid = %d, rxtid = %d\n", client_tid, rxtid);
           DPRINTERR("UART1: WTF notifier didn't send us this RX, %d did\r\n",
                     client_tid);
           PANIC;

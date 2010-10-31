@@ -25,9 +25,9 @@ enum PRIORITY {
 enum EVENT {
   TIMER1  = 0,
   UART1RX = 1,
-  UART1TX = 2,
-  UART2RX = 3,
-  UART2TX = 4
+  UART2RX = 2,
+  UART1TRANS = 3,
+  UART2TRANS = 4
 };
 
 /*

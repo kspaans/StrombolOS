@@ -94,6 +94,8 @@
         #define UART1TXINTR1_MASK  0x1000000
         #define UART2RXINTR1_MASK  0x2000000
         #define UART2TXINTR1_MASK  0x4000000
+        #define UART1_MASK	0x100000
+        #define UART2_MASK      0x400000
 #define INTENCL_OFFSET  	0x14
 #define SOFTINT_OFFSET  	0x18
 #define SOFTINTCL_OFFSET 	0x1C

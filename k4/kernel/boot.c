@@ -15,10 +15,11 @@ void enable_timer () {
 }
 
 void enable_uart () {
-  *(uint*)(UART1_BASE+UART_CTLR_OFFSET) = UARTEN_MASK | MSIEN_MASK | RIEN_MASK | TIEN_MASK | RTIEN_MASK;    
+  *(uint*)(UART1_BASE+UART_CTLR_OFFSET) = UARTEN_MASK | MSIEN_MASK | RIEN_MASK;    
 }
 void enable_interrupts () {
   *(uint*)(VIC1BASE+INTSEL_OFFSET)     &= 0;          // Use IRQ mode
+  *(uint*)(VIC2BASE+INTSEL_OFFSET)     &= 0;
   *(uint*)(VIC1BASE+TIMER1CTRL_OFFSET)  = 0x20;       // Enable the timer
   *(uint*)(VIC1BASE+INTEN_OFFSET)       = TC1OI_MASK | UART1RXINTR1_MASK; // ... enable the timer? what is difference
   DPRINTOK ("Interrupts enabled!\n");
