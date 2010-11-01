@@ -5,6 +5,7 @@
 #include "syscalls/ksyscall.h"
 #include "../user/usyscall.h"
 #include "../user/user.h"
+#include "../user/lib.h"
 #include "tasks.h"
 #include "../ktests/tests.h"
 #include "boot.h"
@@ -50,6 +51,7 @@ struct accounting_data {
 };
 
 int main () {
+  unsigned char ubits[8];
   int req = 1;
   int i, newtid;
   int current_tid = 1;
@@ -68,6 +70,8 @@ int main () {
   //    "MCR\tp15, 0, r1, c1, c0\n\t"
   //   );
 
+  FOREACH(i, 8) ubits[i] = 0;
+  UseBits(ubits, 0);
   counters.interrupts   = 0;
   counters.creates      = 0;
   counters.awaitevents  = 0;
@@ -85,6 +89,7 @@ int main () {
   FOREACH(i, NUMEVENTS) {
     eventq[i] = NULL;
   }
+  UseBits(ubits, 1);
 
   bwsetspeed (COM1,  2400);
   bwsetfifo (COM1, OFF);
@@ -92,15 +97,17 @@ int main () {
 
   DPRINT("[2J");
   DPRINT("< kernel> Hello, world!\r\n");
+  //bwputr(COM2, (int)ubits);
+  UseBits(ubits, 2);
   bootstrap (&tds[0], idle_shell, &stacks[0]);
+  UseBits(ubits, 3);
 
   inittasks (&tasks);
   addtask (&tds[0], &tasks);
   struct td *cur = schedule (&tds[0], &tasks);
 
   while (cur) {
-    //bwprintf (COM2, "Going to execute %d:%x:lr%x\n", cur->tid, cur->entry,
-    //          cur->trap.r14);
+    UseBits(ubits, 4);
     req = activate(&cur->trap, cur->SPSR, cur->entry);
     if (req) 
       req = 1234;
@@ -117,16 +124,20 @@ int main () {
         else if (irqstatus2 & UART2_MASK)         i = UART2TRANS;
         else if (irqstatus  & TC1OI_MASK)         i = TIMER1;
         else {
-          DPRINTERR ("UNKNOWN INTERRUPT! HOW DID THIS HAPPEN??\n");
-          bwprintf (COM2, "\tIT WAS %x and %x\n\tDYING!!!\n", irqstatus,irqstatus2);
+          //DPRINTERR ("UNKNOWN INTERRUPT! HOW DID THIS HAPPEN??\n");
+          //bwprintf (COM2, "\tIT WAS %x and %x\n\tDYING!!!\n", irqstatus,irqstatus2);
           while(1);
         }
         if (eventq[i] == 0) {
-          DPRINTERR ("BAD THING 1 HAPPENED, DYING.\n");
+          //DPRINTERR ("BAD THING 1 HAPPENED, DYING. No waiter for event %d\n", i);
+          //bwprintf (COM2, "\tIT WAS %x and %x\n\tDYING!!!\n", irqstatus,irqstatus2);
+          UseBits(ubits, 50 + i);
+          goto oops;
           while(1);
         }
         if (eventq[i]->state != EVENT_BLOCKED) {
-          DPRINTERR ("BAD THING 2 HAPPENED, DYING.\n");
+          //DPRINTERR ("BAD THING 2 HAPPENED, DYING.\n");
+          goto oops;
           while(1);
         }
         eventq[i]->state = READY;
@@ -162,7 +173,7 @@ int main () {
       case 5:
         req = _kSend(cur, cur->trap.r0, (char*)cur->trap.r1, cur->trap.r2,
                      (char*)cur->trap.r3, cur->trap.r4, tds, current_tid);
-      ++counters.sends;
+        ++counters.sends;
         break;
       case 6:
         req = _kReceive(cur, (int *)cur->trap.r0, (char *)cur->trap.r1,
@@ -179,14 +190,17 @@ int main () {
         ++counters.awaitevents;
         break;
       default:
-        DPRINTERR ("UNKNOWN SYSCALL.\n");
+        //DPRINTERR ("UNKNOWN SYSCALL.\n");
+        goto oops;
         while(1);
     }
     cur->trap.r0 = req;
 doneinterrupt:
     cur = schedule (cur, &tasks);
   }
+  UseBits(ubits, 5);
 
+# if 0
   DPRINTOK("+----------------------------------+\r\n");
   DPRINTOK("| INTERRUPT AND SYSCALL STATISTICS |\r\n");
   DPRINTOK("|  Interrupts  %d\t                |\r\n", counters.interrupts);
@@ -200,8 +214,10 @@ doneinterrupt:
   DPRINTOK("|  MyTid       %d\t\t                |\r\n", counters.mytids);
   DPRINTOK("|  MyParentTid %d\t\t                |\r\n", counters.myparenttids);
   DPRINTOK("+----------------------------------+\r\n");
+# endif
 
- 
+oops: 
+  UseBits(ubits, 63);
   DPRINT("Goodbye\r\n");
   return 0;
-}
+} /*** Read UseBits with "x -b 0x1fdcfc0" ***/

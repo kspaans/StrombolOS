@@ -21,8 +21,8 @@ void timings()
   int start_time = 0xFFFF; // We know initial time to be this.
   int *timer_value_addr = (int *)(TIMER2_BASE + VAL_OFFSET);
   int end_time;
-  int i, s, r;
-  int child;
+  int i;
+  //int child, r, s;
 
   FOREACH(i, 2) {
     *(int *)(TIMER2_BASE + LDR_OFFSET)  = 0xFFFF;      // Load the initial count

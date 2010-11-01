@@ -55,7 +55,7 @@ void clckserv()
         //bwputstr(COM2, "LALA\r\n");
         if (r != 0) { bwputstr(COM2, "haha\r\n");PANIC; }
         ++ticks;
-  bwprintf (COM2, "[45m[s[1;25HSilly time = %d[K[m[u",ticks);
+  //bwprintf (COM2, "[45m[s[1;25HSilly time = %d[K[m[u",ticks);
   //      bwprintf(COM2, "[s[1;100H[2K[15D%d[u", ticks);
         //DPRINTOK("Clock tick!\r\n");
         while (delay_list && ticks > delay_list->time) {
