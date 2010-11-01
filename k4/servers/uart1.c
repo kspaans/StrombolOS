@@ -90,7 +90,7 @@ void uart1serv()
         if (reader_queue[0]) { // someone is waiting
           if (Reply(reader_queue[0], &input_queue[head], 1) != 0) PANIC;
           head = (head + 1) % QUEUESIZE;
-          reader_queue[0] = NULL;
+          reader_queue[0] = 0;
         }
         break;
       case 'g': // from getc client

@@ -87,6 +87,7 @@ void idle_shell()
   //bwputstr(COM2, " Created clockserver\r\n");
   i = Create(SYSCALL_HIGH, &uart1serv);
   //bwputstr(COM2, " Created UART1server\r\n");
+  UseBits(uzbits, 5);
   i = Create(SYSCALL_HIGH, &uart2serv);
   //bwputstr(COM2, " Created UART2server\r\n");
   /* Other servers... */
@@ -99,6 +100,8 @@ void idle_shell()
   //               "_tests,\r\n"
   //               "  5:TRAIN_CONTROLLER, 6:timings): ");
   UseBits(uzbits, 7);
+  FOREACH(i, 10000);
+# if 0
   while (1) {
     UseBits(uzbits, 8);
     //c = '3';//Getc(COM2);
@@ -130,6 +133,7 @@ void idle_shell()
         break;
     }
   } IDLE:;
+# endif
   UseBits(uzbits, 11);
 
   Exit();
