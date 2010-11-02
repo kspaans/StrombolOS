@@ -75,7 +75,7 @@ int Putc(int channel, char ch)
   switch (channel) {
     case COM1:
       tid = WhoIs ("com1"); // TODO replace this with a hardcoded value.
-      if(Send (tid, &msg, 2, NULL, 0) != 0) PANIC;
+      if(Send (tid, msg, 2, NULL, 0) != 0) PANIC;
       break;
     case COM2:
       DPRINTERR ("COM2 Putc not implemented.\n");

@@ -8,7 +8,7 @@
 #include "../servers/servers.h"
 #include "../ktests/tests.h"
 
-void trains()
+/*void trains()
 {
   char c;
   int i;
@@ -42,4 +42,4 @@ void trains()
 
   DPRINTOK("Goodbye.\r\n");
   Exit();
-}
+}*/

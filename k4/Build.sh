@@ -18,8 +18,8 @@ OBJS="build/kernel.o build/switch.o build/user.o build/usyscall.o build/boot.o \
       build/tests.o build/wrappers.o build/clock_client.o build/clock.o \
       build/uart1.o build/uart2.o build/trains_ui.o build/timings.o \
       build/notifier_clock.o build/awaitevent.o build/notifier_uart1rx.o \
-      build/notifier_uart1tx.o build/notifier_uart2rx.o \
-      build/notifier_uart2tx.o
+      build/notifier_uart1tx.o build/notifier_uart2rx.o build/wm.o \
+      build/notifier_uart2tx.o build/trains.o
      "
 
 if [ `basename $PWD` != "k4" ]; then
@@ -34,6 +34,12 @@ fi
 
 gcc ${CFLAGS}  -o build/boot.s kernel/boot.c || exit 1
 as  ${ASFLAGS} -o build/boot.o build/boot.s  || exit 1
+
+gcc ${CFLAGS}  -o build/trains.s servers/trains.c || exit 1
+as  ${ASFLAGS} -o build/trains.o build/trains.s  || exit 1
+
+gcc ${CFLAGS}  -o build/wm.s user/wm.c || exit 1
+as  ${ASFLAGS} -o build/wm.o build/wm.s  || exit 1
 
 gcc ${CFLAGS}  -o build/user.s user/user.c || exit 1
 as  ${ASFLAGS} -o build/user.o build/user.s || exit 1

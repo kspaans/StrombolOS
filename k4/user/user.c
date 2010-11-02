@@ -89,11 +89,17 @@ void idle_shell()
   bwputstr(COM2, " Created UART1server\r\n");
   i = Create(SYSCALL_HIGH, &uart2serv);
   bwputstr(COM2, " Created UART2server\r\n");
+  i = Create (SYSCALL_HIGH, &trains);
+  bwputstr (COM2, " Created trains server\r\n");
   /* Other servers... */
   bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock, 4:send"
                  "_tests,\r\n"
                  "  5:TRAIN_CONTROLLER, 6:timings): ");
-  while (1) {
+
+  i = Create (USER_HIGH, &wm);
+ 
+  while (1); {
+ 
     c = bwgetc(COM2);//Getc(COM2);
     bwprintf(COM2, "%c\r\n", c);
     switch (c) {
