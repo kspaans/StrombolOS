@@ -17,6 +17,8 @@ int Delay(int ticks);
 int Time();
 int AwaitEvent(int event);
 
+void Shutdown();
+
 int Getc(int channel);
 int Putc(int channel, char ch);
 

@@ -61,6 +61,7 @@ struct td {
   int mq_last;            // free slot in the queue
   struct mq replyq;
   struct mq fuckq;
+  unsigned int time_active; // clock ticks that the task has been active
 };
 
 int swtch(int arg);

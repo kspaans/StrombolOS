@@ -195,6 +195,8 @@ int main () {
         req = _kAwaitEvent(cur, cur->trap.r0, eventq);
         ++counters.awaitevents;
         break;
+      case 666:
+        goto shutdown;
       default:
         //DPRINTERR ("UNKNOWN SYSCALL.\n");
         goto oops;
@@ -204,6 +206,7 @@ int main () {
 doneinterrupt:
     cur = schedule (cur, &tasks);
   }
+shutdown:
   UseBits(ubits, 5);
 
 # if 0

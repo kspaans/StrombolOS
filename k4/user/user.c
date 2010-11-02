@@ -136,5 +136,5 @@ void idle_shell()
 # endif
   UseBits(uzbits, 11);
 
-  Exit();
+  Shutdown();
 }
