@@ -2,7 +2,7 @@
 #define __TESTS_H__
 
 #define PANIC {bwprintf(COM2, "%s:%d: PANIC PANIC PANIC PANIC  PANIC PANIC PANIC PANIC\r\n", __FILE__, __LINE__); \
-  *((int *)0xFFFFFFFF) = 1; }
+  Shutdown(); }
 
 void srr_tests();
 void srr0();

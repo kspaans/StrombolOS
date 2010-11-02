@@ -108,12 +108,16 @@ int main () {
 
   while (cur) {
     UseBits(ubits, 4);
+    START_TIMER2();
     req = activate(&cur->trap, cur->SPSR, cur->entry);
+    cur->time_active += 0xFFFF - READ_TIMER2;
+    DISABLE_TIMER2;
+
     if (req) 
       req = 1234;
     else 
       req = *((int*)cur->entry-1)&0xFFFF;
-    
+
     switch (req) {
       case 1234:
         irqstatus  = *(int*)(VIC1BASE+IRQSTATUS_OFFSET);
@@ -209,21 +213,23 @@ doneinterrupt:
 shutdown:
   UseBits(ubits, 5);
 
-# if 0
-  DPRINTOK("+----------------------------------+\r\n");
-  DPRINTOK("| INTERRUPT AND SYSCALL STATISTICS |\r\n");
-  DPRINTOK("|  Interrupts  %d\t                |\r\n", counters.interrupts);
-  DPRINTOK("|  Create      %d\t\t                |\r\n", counters.creates);
-  DPRINTOK("|  Exit        %d\t\t                |\r\n", counters.exits);
-  DPRINTOK("|  Send        %d                |\r\n", counters.sends);
-  DPRINTOK("|  Receive     %d                |\r\n", counters.receives);
-  DPRINTOK("|  Reply       %d                |\r\n", counters.replies);
-  DPRINTOK("|  AwaitEvent  %d                |\r\n", counters.awaitevents);
-  DPRINTOK("|  Pass        %d\t\t                |\r\n", counters.passes);
-  DPRINTOK("|  MyTid       %d\t\t                |\r\n", counters.mytids);
-  DPRINTOK("|  MyParentTid %d\t\t                |\r\n", counters.myparenttids);
-  DPRINTOK("+----------------------------------+\r\n");
-# endif
+  DPRINTOK("INTERRUPT, SYSCALL, and TASK STATISTICS\r\n");
+  DPRINTOK("{\r\n");
+  DPRINTOK("  Interrupts  %d\r\n", counters.interrupts);
+  DPRINTOK("  Create      %d\r\n", counters.creates);
+  DPRINTOK("  Exit        %d\r\n", counters.exits);
+  DPRINTOK("  Send        %d\r\n", counters.sends);
+  DPRINTOK("  Receive     %d\r\n", counters.receives);
+  DPRINTOK("  Reply       %d\r\n", counters.replies);
+  DPRINTOK("  AwaitEvent  %d\r\n", counters.awaitevents);
+  DPRINTOK("  Pass        %d\r\n", counters.passes);
+  DPRINTOK("  MyTid       %d\r\n", counters.mytids);
+  DPRINTOK("  MyParentTid %d\r\n", counters.myparenttids);
+  DPRINTOK("}\r\n");
+  FOREACH(i, current_tid) {
+    DPRINTOK("[TID %d|%d]\tticks active: %d\tfinal state: %d\r\n",
+             i, tds[i].priority, tds[i].time_active, tds[i].state);
+  }
 
   return 0;
 oops: 

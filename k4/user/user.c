@@ -100,14 +100,13 @@ void idle_shell()
   //               "_tests,\r\n"
   //               "  5:TRAIN_CONTROLLER, 6:timings): ");
   UseBits(uzbits, 7);
-  FOREACH(i, 10000);
 # if 0
   while (1) {
     UseBits(uzbits, 8);
     //c = '3';//Getc(COM2);
     c = Getc(COM2);
     UseBits(uzbits, 9);
-    Putc(COM2, c);
+    //Putc(COM2, c);
     UseBits(uzbits, 10);
     switch (c) {
       case '1':
