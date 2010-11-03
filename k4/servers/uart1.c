@@ -70,6 +70,15 @@ void uart1serv()
   //           " %c\r\n", client_tid, r, buf[0]);
     if (r < 0 || r > BUFSIZE) PANIC;
     switch (buf[0]) {
+      case 'i': // from client, reentrant getc
+        if (head == tail) {
+          Reply (client_tid, NULL, 0);
+        }
+        else {
+          r = Reply(client_tid, &input_queue[head], 1);
+          head = (head + 1) % QUEUESIZE;
+        }
+        break;
       case 'r': // from rxtd
         if (client_tid != rxtid) {
           DPRINTERR("UART1: WTF notifier didn't send us this RX, %d did\r\n",

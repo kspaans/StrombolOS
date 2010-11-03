@@ -73,7 +73,7 @@ int Getc_r (int ch) {
   msg[0] = 'i';
   int tid;
   switch (ch) {
-    case COM1: tid = WhoIs ("com1"); bwprintf (COM2, "warning, not implemnted??\n"); break;
+    case COM1: tid = WhoIs ("com1"); break;
     case COM2: tid = WhoIs ("com2"); break;
     default: PANIC;
   }

@@ -20,6 +20,7 @@
  | > prompt        |  
  -------------------
 */
+typedef unsigned int uint;
 
 int bwinputready (int channel) {
   int *flags;
@@ -64,7 +65,7 @@ void prettyprinttime (int ticks) {
   CURSORPUSH();
   CURSORMOVE(1,200);
   CURSORBACK(25);
-  SETCOLOUR(BG+MAGENTA);
+  SETCOLOUR(BG+BRIGHT+MAGENTA);
   SETCOLOUR(FG+WHITE);
   DISABLEWRAP();
   char flair;
@@ -121,7 +122,7 @@ void help () {
 void tables(char *sw) {
   CURSORPUSH();
   SETCOLOUR(FG+WHITE);
-  SETCOLOUR(BG+BRIGHT+MAGENTA);
+  SETCOLOUR(BG+MAGENTA);
   int swnum=0,table=0,tablerow=0;
 
   for (tablerow = 0; tablerow <= 11; tablerow++) {
@@ -130,17 +131,17 @@ void tables(char *sw) {
   }
   for (swnum = 0; swnum < 22; ) {
     CURSORMOVE(2,table*25+2);
-    bwprintf (COM2, "^[(0lqqqqqqqqwqqqqqqqk");
+    bwprintf (COM2, "(0lqqqqqqqqwqqqqqqqk");
     CURSORMOVE(3,table*25+2);
-    bwprintf (COM2, "x^[(B SWITCH ^[(0x^[(B STATE ^[(0x");
+    bwprintf (COM2, "x(B SWITCH (0x(B STATE (0x");
     CURSORMOVE(4,table*25+2);
     bwprintf (COM2, "tqqqqqqqqnqqqqqqqu");
     for (tablerow = 0; tablerow <= 7 && swnum < 22; tablerow++) {
       CURSORMOVE(5+tablerow,table*25+2);
-      bwprintf (COM2, "x^[(B %d    ", fuckswitch(swnum));
+      bwprintf (COM2, "x(B %d    ", fuckswitch(swnum));
       if (fuckswitch(swnum) < 10) bwprintf (COM2, "  ");
       else if (fuckswitch(swnum) < 100) bwprintf (COM2, " ");
-      bwprintf (COM2, "^[(0x ^[(B");
+      bwprintf (COM2, "(0x (B");
       switch (sw[swnum]) {
         case 'S':
           SETCOLOUR (FG+BRIGHT+RED);
@@ -154,16 +155,15 @@ void tables(char *sw) {
       }
       bwputc (COM2, sw[swnum]);
       SETCOLOUR (FG+WHITE);
-      bwprintf (COM2, "     ^[(0x");
+      bwprintf (COM2, "     (0x");
       swnum++;
     }
     CURSORMOVE(5+tablerow,table*25+2);
-    bwprintf (COM2, "mqqqqqqqqvqqqqqqqj^[(B");
+    bwprintf (COM2, "mqqqqqqqqvqqqqqqqj(B");
     table++;
   }
   CLEARTOEND();
-  SETCOLOUR(BG+BRIGHT+BLACK);
-  SETCOLOUR(FG+BRIGHT+GREEN);
+  SETCOLOUR(BG+BLACK);
   CURSORPOP();
 }
 void eval (char *cmd, int trid, char *sw) {
@@ -177,11 +177,12 @@ void eval (char *cmd, int trid, char *sw) {
   }
   else if (!strcmp ("q", cmd)) {
     bwprintf (COM2, "Quiting to reboot.\n");
-    // IMPLEMENT ME.
+    // IMPLEMENT ME
   }
   else if (!strcmp ("reboot", cmd)) {
-    bwprintf (COM2, "Rebooting.\n");
-    // IMPLEMENT ME.
+    bwprintf (COM2, "[2J[1;1HRebooting.\n");
+    *((uint*)0x80940000) = 0xAAAA;
+    while (1); // not super effective
   }
   else if (!strcmp ("help", cmd)) {
     help();
@@ -210,6 +211,7 @@ void eval (char *cmd, int trid, char *sw) {
     packet[2] = token(cmd,2,buf)[0];
     Send (trid, packet, 3, NULL, 0);
     bwprintf (COM2, "Switching switch %d to direction %c.\n", stoi(token(cmd,1,buf)), token(cmd,2,buf)[0]);
+    sw[unfuckswitch(stoi(token(cmd,1,buf)))] = token(cmd,2,buf)[0];
     tables (sw);
   }
   else if (!strcmp ("swall", token(cmd,0,buf))) {
@@ -217,6 +219,9 @@ void eval (char *cmd, int trid, char *sw) {
     packet[1] = token(cmd,2,buf)[0];
     Send (trid, packet, 2, NULL, 0);
     bwprintf (COM2, "Switching all switches to direction %c.\n", token(cmd,1,buf)[0]);
+    int ii;
+    for (ii = 0; ii < 32; ii++) { sw[ii] = token(cmd,1,buf)[0]; }
+    tables (sw);
   }
   else if (!strcmp ("st", token (cmd,0,buf))) {
     packet[0] = 'v';
@@ -253,11 +258,12 @@ char sw[32];
 //  }
 
   trid = WhoIs ("tr");
-  bwputstr(COM2, "[s[2J[;H[45mStrombolOS v0.0.4 (Turbo Samba)."
+  CLEAR();
+  SETCOLOUR(BG+BRIGHT+MAGENTA);
+  bwputstr(COM2, "[s[;HStrombolOS v0.0.4 (Turbo Samba)."
                  "[K[m[u");
   bwputstr (COM2, "[?25l");
   CURSORMOVE(2,1);
-  SETCOLOUR(BG+BRIGHT+BLACK);
 //int iii;
 /*while (1) {
   iii = Getc_r(COM2);
@@ -266,10 +272,10 @@ char sw[32];
   else bwprintf (COM2,".");
 }*/
 
-  ENABLESCROLL(16);
+  ENABLESCROLL(14);
   
   SETCOLOUR(BG+BLACK);
-  CURSORMOVE(16,1);
+  CURSORMOVE(14,1);
   bwputstr(COM2,"+--------------------------------------------------+\n"
   "|    ______                 __        ______  ____ |\n"
   "|   / __/ /________  __ _  / /  ___  / / __ \\/ __/ |\n"
@@ -277,6 +283,8 @@ char sw[32];
   "| /___/\\__/_/  \\___/_/_/_/_.__/\\___/_/\\____/___/   |\n"
   "|                             v0.0.4 (Turbo Samba) |\n"
   "+--------------------------------------------------+\n\n\n> "); 
+
+   tables (sw);
    while (!done) {
     t = Time()/2; 
     prettyprinttime (t);

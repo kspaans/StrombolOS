@@ -7,6 +7,42 @@
 #include "../kernel/switch.h" // FOREVER, NULL
 #include <ANSI.h>
 
+void sensorserver () {
+  int last = Time ();
+  int cur;
+  char msg[11]; msg[0] = 'p';
+  int i = 1;
+  RegisterAs ("sen");
+  int trid = WhoIs ("tr"); 
+  int c;
+  int foo;
+  Send (trid, msg, 1, NULL, 0);
+
+  FOREVER {
+    cur = Time ();
+    if (cur - last > 25) {
+      // DPRINTERR ("timeout??\n");
+       Delay (25);
+       Send (trid, msg, 1, NULL, 0);
+       i = 1;
+    }
+//    DPRINTHUH ("what\n");
+    c = Getc_r(COM1);
+    if (c != -1) {
+      last = cur;
+     // DPRINTOK ("bing c=%x i=%d\n",c,i);
+      msg[i] = (char)c;
+      i++;
+      if (i > 10) {
+        i = 1;
+        Send (trid, msg, 11, NULL, 0);
+        Delay (25);
+        Send (trid, msg, 1,  NULL, 0);
+      }
+    }
+  }
+}
+
 int trains_switch (char id, char dir) {
   if (dir=='S') {
     Putc(COM1,33);
@@ -31,18 +67,29 @@ int unfuckswitch (int x) {
   else return x-153+18;
 }
 
+void fucksensor (int x, char *s) {
+       if (x    >= 1 && x    <= 16) { s[0] = 'A'; s[1] = x;    return; }
+  else if (x-16 >= 1 && x-16 <= 16) { s[0] = 'B'; s[1] = x-16; return; }
+  else if (x-32 >= 1 && x-32 <= 16) { s[0] = 'C'; s[1] = x-32; return; }
+  else if (x-48 >= 1 && x-48 <= 16) { s[0] = 'D'; s[1] = x-48; return; }
+  else if (x-64 >= 1 && x-64 <= 16) { s[0] = 'E'; s[1] = x-64; return; }
+}
 
 void trains () {
   int tid;
-  char cmd[5];
+  char cmd[15];
   int speeds[100];
   char sw[32];
+  char recentsw [10]; // 5 things
+  int head = 0;
   int i;
+  for (i = 0; i < 10; i++) { recentsw[i] = 0; }
   for (i = 0; i < 100; i++) { speeds[i] = 0; }
-
+  int r;
   RegisterAs ("tr");
+  Create (SYSCALL_LOW, sensorserver);
   FOREVER {
-    Receive (&tid, cmd, 5);
+    r = Receive (&tid, cmd, 15);
 
     // "special" ones
     switch (cmd[0]) {
@@ -55,6 +102,24 @@ void trains () {
 
     Reply (tid, NULL, 0);
     switch (cmd[0]) {
+      case 'p': // poll sensors
+        switch (r) {
+          case 1:   Putc (COM1, 133); break;
+          case 11: 
+           for (i = 1; i < 11; i++) {
+             char sen = cmd[i+1];
+             char j = (i%2) ? 1 : 9;
+             bwprintf ("got me some data nigz.\n");
+             while (sen) {
+               if (sen&128) { fucksensor (j+(j/2)*16,&recentsw[head]); bwprintf (COM2, "\n\n%c%d\n\n", recentsw[head],recentsw[head+1]%0xFF);head = (head+1)%5; }
+               sen <<= 1;
+               j++;
+             }
+           }
+           break;
+          default: PANIC;
+        }
+        break;
       case 'g': // go
         Putc (COM1, 0x60);
         break;
