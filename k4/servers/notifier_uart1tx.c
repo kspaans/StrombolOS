@@ -19,6 +19,8 @@ void notifier_uart1tx()
 
   FOREVER {
     AwaitEvent(UART1TRANS);
+    *(uint*)(UART1_BASE+UART_INTR_OFFSET) = 0xFFFFFFFF;  // clear interrupt
+
  //   DPRINTOK ("UART1 TRANSMISSION INTERRUPT.\n");
     
     if ((*(int*)(UART1_BASE+UART_FLAG_OFFSET) & CTS_MASK) && (*(int*)(UART1_BASE+UART_FLAG_OFFSET) & TXFE_MASK)) {

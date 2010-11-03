@@ -7,7 +7,7 @@
 
 #include <ts7200.h>
 #include <bwio.h>
-
+#include "../user/usyscall.h"
 /*
  * The UARTs are initialized by RedBoot to the following state
  * 	115,200 bps
@@ -64,6 +64,7 @@ int bwsetspeed( int channel, int speed ) {
 }
 
 int bwputc( int channel, char c ) {
+  return Putc(channel, c);
 	int *flags, *data;
 	switch( channel ) {
 	case COM1:
@@ -123,6 +124,7 @@ void bwputw( int channel, int n, char fc, char *bf ) {
 }
 
 int bwgetc( int channel ) {
+  return Getc(channel);
 	int *flags, *data;
 	unsigned char c;
 

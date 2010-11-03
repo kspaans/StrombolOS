@@ -20,9 +20,9 @@ void notifier_uart1rx()
   tid = WhoIs("com1");
   data[0] = 'r';
   FOREVER {
-    // turn interrupts on here 
+    *(uint*)(VIC1BASE+INTEN_OFFSET)  = UART1RXINTR1_MASK;
     AwaitEvent(UART1RX);
-    // turn interrupts off here
+    *(uint*)(VIC1BASE+INTENCL_OFFSET) = UART1RXINTR1_MASK;
 
     r = *(char*)(UART1_BASE+UART_DATA_OFFSET); 
     if (r < 0) {

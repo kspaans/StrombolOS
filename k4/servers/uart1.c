@@ -56,10 +56,10 @@ void uart1serv()
   reader_queue[1] = 0;
 
   RegisterAs("com1");
-  DPRINTOK ("Creating uart1 rx notifier.\n");
+//  DPRINTOK ("Creating uart1 rx notifier.\n");
   rxtid = Create(INTERRUPT, notifier_uart1rx);
   if (rxtid < 0) PANIC;
-  DPRINTOK ("Creating uart1 tx notifier.\n");
+//  DPRINTOK ("Creating uart1 tx notifier.\n");
   txtid = Create(INTERRUPT, notifier_uart1tx);
   if (txtid < 0) PANIC;
 
@@ -80,7 +80,7 @@ void uart1serv()
         /* Too bad if we overrun the circular buffer. It should be big enough */
         input_queue[tail] = buf[1];
         tail = (tail + 1) % QUEUESIZE;
-        bwprintf (COM2, "got %c\n", buf[1]);
+       // bwprintf (COM2, "got %c\n", buf[1]);
         if (reader_queue[0]) { // someone is waiting
           if (Reply(reader_queue[0], &input_queue[head], 1) != 0) PANIC;
           head = (head + 1) % QUEUESIZE;

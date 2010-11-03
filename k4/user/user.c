@@ -82,22 +82,25 @@ void idle_shell()
   spinner[2] = '-';
   spinner[3] = '\\';
   i = Create (SYSCALL_HIGH, &nameserv);
-  bwputstr(COM2, " Created nameserver\r\n");
+//  bwputstr(COM2, " Created nameserver\r\n");
   i = Create (SYSCALL_HIGH, &clckserv);
-  bwputstr(COM2, " Created clockserver\r\n");
+//  bwputstr(COM2, " Created clockserver\r\n");
   i = Create(SYSCALL_HIGH, &uart1serv);
-  bwputstr(COM2, " Created UART1server\r\n");
+//  bwputstr(COM2, " Created UART1server\r\n");
   i = Create(SYSCALL_HIGH, &uart2serv);
-  bwputstr(COM2, " Created UART2server\r\n");
+//  bwputstr(COM2, " Created UART2server\r\n");
   i = Create (SYSCALL_HIGH, &trains);
-  bwputstr (COM2, " Created trains server\r\n");
+//  bwputstr (COM2, " Created trains server\r\n");
   /* Other servers... */
-  bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock, 4:send"
-                 "_tests,\r\n"
-                 "  5:TRAIN_CONTROLLER, 6:timings): ");
+ // bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock, 4:send"
+ //                "_tests,\r\n"
+ //                "  5:TRAIN_CONTROLLER, 6:timings): ");
 
-  i = Create (USER_HIGH, &wm);
+
+
+
  
+  i = Create (USER_HIGH, &wm);
   while (1); {
  
     c = bwgetc(COM2);//Getc(COM2);
