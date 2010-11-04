@@ -6,6 +6,7 @@ void clckserv();
 void uart1serv();
 void uart2serv();
 
+void trains();
 void rps_server();
 
 void notifier_clock();

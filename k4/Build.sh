@@ -18,8 +18,8 @@ OBJS="build/kernel.o build/switch.o build/user.o build/usyscall.o build/boot.o \
       build/tests.o build/wrappers.o build/clock_client.o build/clock.o \
       build/uart1.o build/uart2.o build/trains_ui.o build/timings.o \
       build/notifier_clock.o build/awaitevent.o build/notifier_uart1rx.o \
-      build/notifier_uart1tx.o build/notifier_uart2rx.o \
-      build/notifier_uart2tx.o
+      build/notifier_uart1tx.o build/notifier_uart2rx.o build/wm.o \
+      build/notifier_uart2tx.o build/trains.o build/bwio.o
      "
 
 if [ `basename $PWD` != "k4" ]; then
@@ -32,8 +32,17 @@ fi
 
 # Could probably improve this with for loops
 
+gcc ${CFLAGS}  -o build/bwio.s bwio/bwio.c || exit 1
+as  ${ASFLAGS} -o build/bwio.o build/bwio.s || exit 1
+
 gcc ${CFLAGS}  -o build/boot.s kernel/boot.c || exit 1
 as  ${ASFLAGS} -o build/boot.o build/boot.s  || exit 1
+
+gcc ${CFLAGS}  -o build/trains.s servers/trains.c || exit 1
+as  ${ASFLAGS} -o build/trains.o build/trains.s  || exit 1
+
+gcc ${CFLAGS}  -o build/wm.s user/wm.c || exit 1
+as  ${ASFLAGS} -o build/wm.o build/wm.s  || exit 1
 
 gcc ${CFLAGS}  -o build/user.s user/user.c || exit 1
 as  ${ASFLAGS} -o build/user.o build/user.s || exit 1
@@ -132,7 +141,7 @@ as  ${ASFLAGS} -o build/trains_ui.o build/trains_ui.s || exit 1
 gcc ${CFLAGS}  -o build/timings.s user/timings.c || exit 1
 as  ${ASFLAGS} -o build/timings.o build/timings.s || exit 1
 
-ld  ${LDFLAGS} -o build/StrombolOS.elf ${OBJS} -lbwio -lgcc
+ld  ${LDFLAGS} -o build/StrombolOS.elf ${OBJS} -lgcc
 
 if [ "$#" = "1" ]; then
 	cp build/StrombolOS.elf /u/cs452/tftpboot/ARM/StrombolOS/$1 || exit 1

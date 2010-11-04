@@ -90,8 +90,8 @@ int main () {
   bwsetfifo (COM1, OFF);
   bwsetfifo (COM2, OFF);
 
-  DPRINT("[2J");
-  DPRINT("< kernel> Hello, world!\r\n");
+//  DPRINT("[2J");
+//  DPRINT("< kernel> Hello, world!\r\n");
   bootstrap (&tds[0], idle_shell, &stacks[0]);
 
   inittasks (&tasks);

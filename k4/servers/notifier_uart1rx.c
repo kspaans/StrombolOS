@@ -6,6 +6,7 @@
 #include "../user/usyscall.h"
 #include "../ktests/tests.h"
 
+typedef unsigned int uint;
 /*
  * Notifier task for the serial server -- Awaits the UART1RX event
  * When it does, it will be given the byte from the kernel, and will turn around
@@ -19,18 +20,16 @@ void notifier_uart1rx()
   tid = WhoIs("com1");
   data[0] = 'r';
   FOREVER {
+    *(uint*)(VIC1BASE+INTEN_OFFSET)  = UART1RXINTR1_MASK;
     AwaitEvent(UART1RX);
+    *(uint*)(VIC1BASE+INTENCL_OFFSET) = UART1RXINTR1_MASK;
+
     r = *(char*)(UART1_BASE+UART_DATA_OFFSET); 
     if (r < 0) {
       DPRINTERR("Could not awaitevent(): %d\r\n", r);
       PANIC;
     }
     data[1] = r;
-    if (Send(tid, data, 2, NULL, 0) != 0) {
-      DPRINTFUNC("notifier_uart1rx()");
-      DPRINTERR("Woah, got a bad return value, %d, when sending to SerialServer"
-                " tid %d\r\n", r, tid);
-      PANIC;
-    }
+    Send (tid, data,2,NULL,0);
   }
 }

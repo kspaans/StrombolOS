@@ -30,4 +30,5 @@
 #define DPRINTOK(...) { bwprintf (COM2, "[ [32m:)[m ] "); bwprintf (COM2,  __VA_ARGS__); }
 #define DPRINTERR(...) { bwprintf (COM2, "[ [31m:([m ] "); bwprintf (COM2,  __VA_ARGS__); }
 #define DPRINTFUNC(...){ bwprintf (COM2, "In function [90m"); bwprintf (COM2, __VA_ARGS__); bwprintf (COM2, "[m.\n"); } 
+#define DPRINTHUH(...) { bwprintf (COM2, "[ [33m:S[m ] "); bwprintf (COM2, __VA_ARGS__); }
 #endif/*__DEBUG_H__*/
