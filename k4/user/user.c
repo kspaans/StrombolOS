@@ -4,7 +4,6 @@
 #include "../kernel/switch.h"
 #include "usyscall.h"
 #include "user.h"
-#include "lib.h"
 #include "clock_client.h"
 #include "../servers/servers.h"
 #include "../ktests/tests.h"
@@ -68,8 +67,6 @@ void other_user_task()
   Exit();
 }
 
-void Idle() {  while (1) {} }
-
 /*
  * The ``First'' user program.
  * It will spawn necessary processes, and then become the idle task.
@@ -78,34 +75,27 @@ void Idle() {  while (1) {} }
 void idle_shell()
 {
   int i, c;
-  /* LOL! hax */
-  unsigned char *uzbits = (unsigned char *)0x01FDCFC0;
+  char spinner[4];
 
+  spinner[0] = '|';
+  spinner[1] = '/';
+  spinner[2] = '-';
+  spinner[3] = '\\';
   i = Create (SYSCALL_HIGH, &nameserv);
-  //bwputstr(COM2, " Created nameserver\r\n");
+  bwputstr(COM2, " Created nameserver\r\n");
   i = Create (SYSCALL_HIGH, &clckserv);
-  //bwputstr(COM2, " Created clockserver\r\n");
+  bwputstr(COM2, " Created clockserver\r\n");
   i = Create(SYSCALL_HIGH, &uart1serv);
-  //bwputstr(COM2, " Created UART1server\r\n");
+  bwputstr(COM2, " Created UART1server\r\n");
   i = Create(SYSCALL_HIGH, &uart2serv);
-  //bwputstr(COM2, " Created UART2server\r\n");
+  bwputstr(COM2, " Created UART2server\r\n");
   /* Other servers... */
-
-  Create(IDLE, &Idle);
-
-  UseBits(uzbits, 6);
-  //Putc(COM2, 'K');
-  //bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock, 4:send"
-  //               "_tests,\r\n"
-  //               "  5:TRAIN_CONTROLLER, 6:timings): ");
-  UseBits(uzbits, 7);
+  bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock, 4:send"
+                 "_tests,\r\n"
+                 "  5:TRAIN_CONTROLLER, 6:timings): ");
   while (1) {
-    UseBits(uzbits, 8);
-    //c = '3';//Getc(COM2);
-    c = Getc(COM2);
-    UseBits(uzbits, 9);
-    Putc(COM2, c);
-    UseBits(uzbits, 10);
+    c = bwgetc(COM2);//Getc(COM2);
+    bwprintf(COM2, "%c\r\n", c);
     switch (c) {
       case '1':
         i = Create(SYSCALL_LOW, &first_user_task);
@@ -130,7 +120,6 @@ void idle_shell()
         break;
     }
   } IDLE:;
-  UseBits(uzbits, 11);
 
-  Exit();
+  FOREVER {}
 }

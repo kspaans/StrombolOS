@@ -56,12 +56,12 @@ int Getc(int channel)
   int tid1, tid2;
 
   tid1 = WhoIs("com1");
-  tid2 = WhoIs("com2");
+  //tid2 = WhoIs("com2");
   if (channel) { // COM2
     if (Send(tid1, &buf, 1, &c, 1) != 1) PANIC;
   }
   else {
-    if (Send(tid2, &buf, 1, &c, 1) != 1) PANIC;
+    //if (Send(tid2, &buf, 1, &c, 1) != 1) PANIC;
   }
   return c;
 }
@@ -72,19 +72,13 @@ int Putc(int channel, char ch)
   msg[0] = 'p';
   msg[1] = ch;
   int tid;
-  unsigned char *uzbits = (unsigned char *)0x01FDCFC0;
-  UseBits(uzbits, 16);
-
   switch (channel) {
     case COM1:
       tid = WhoIs ("com1"); // TODO replace this with a hardcoded value.
-      if(Send (tid, msg, 2, NULL, 0) != 0) PANIC;
+      if(Send (tid, &msg, 2, NULL, 0) != 0) PANIC;
       break;
     case COM2:
-      tid = WhoIs ("com2"); // TODO replace this with a hardcoded value.
-      UseBits(uzbits, 17);
-      if(Send (tid, msg, 2, NULL, 0) != 0) PANIC;
-      UseBits(uzbits, 18);
+      DPRINTERR ("COM2 Putc not implemented.\n");
       break;
     default:
       PANIC;

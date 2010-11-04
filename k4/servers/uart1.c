@@ -90,7 +90,6 @@ void uart1serv()
         if (reader_queue[0]) { // someone is waiting
           if (Reply(reader_queue[0], &input_queue[head], 1) != 0) PANIC;
           head = (head + 1) % QUEUESIZE;
-          reader_queue[0] = NULL;
         }
         break;
       case 'g': // from getc client
@@ -100,6 +99,7 @@ void uart1serv()
         else {
           r = Reply(client_tid, &input_queue[head], 1);
           head = (head + 1) % QUEUESIZE;
+          //r = Reply(reader_queue[0], &input_queue[head++], 1);
           if (r != 0) {
             DPRINTERR("UART1: reply failed with %d retval to client tid %d\r\n",
                       r, reader_queue[0]);
@@ -109,19 +109,20 @@ void uart1serv()
         break;
       case 't': // from txtd
         cts = !cts;
-        if (ohead != otail) {
-          head = transmit (output_queue, ohead, otail, &cts);
+        if (head != tail) {
+          head = transmit (output_queue, head, tail, &cts);
         }
         if (Reply(txtid, NULL, 0) != 0) PANIC;
         break;
       case 'p': // from putc client
-        output_queue[otail] = buf[1];
-        otail = (otail + 1) % OQUEUESIZE;
-        ohead = transmit (output_queue, ohead, otail, &cts);
+        //if (Reply(txtid, "putchar plz") != 0) PANIC;
+        output_queue[tail] = buf[1];
+        tail = (tail + 1) % OQUEUESIZE;
+        head = transmit (output_queue, head, tail, &cts);
         if (Reply(client_tid, NULL, 0) != 0) PANIC;
         break;
       default:
-        PANIC;
+        DPRINTERR ("unknown message to uart1 server.\n");  
     }
   }
 }

@@ -11,7 +11,7 @@
  */
 void notifier_uart1tx()
 {
-  int tid;
+  int r, tid;
   char data = 't';
   tid = WhoIs("com1");
 
