@@ -60,22 +60,21 @@ void uart2serv()
   UseBits(uzbits, 18);
   RegisterAs("com2");
   UseBits(uzbits, 19);
-  rxtid = Create(INTERRUPT, notifier_uart2rx);
-  if (rxtid < 0) PANIC;
-  UseBits(uzbits, 20);
   txtid = Create(INTERRUPT, notifier_uart2tx);
   if (txtid < 0) PANIC;
+  UseBits(uzbits, 20);
+  rxtid = Create(INTERRUPT, notifier_uart2rx);
+  if (rxtid < 0) PANIC;
   UseBits(uzbits, 21);
   Send(txtid, NULL, 0, NULL, 0);
   UseBits(uzbits, 22);
+  Delay(20);
   //bwputstr(COM2, "uart2 reply gotten\r\n");
 
   *(uint*)(VIC2BASE+INTEN_OFFSET) = UART2_MASK;
-  UseBits(uzbits, 28);
 
   FOREVER {
     r = Receive(&client_tid, buf, BUFSIZE);
-    UseBits(uzbits, 29);
     if (r < 0 || r > BUFSIZE) PANIC;
 
     switch (buf[0]) {
@@ -93,7 +92,7 @@ void uart2serv()
         if (reader_queue[0]) { // someone is waiting
           if (Reply(reader_queue[0], &input_queue[head], 1) != 0) PANIC;
           head = (head + 1) % QUEUESIZE;
-          reader_queue[0] = 0;
+          reader_queue[0] = NULL;
         }
         break;
       case 'g':
@@ -111,16 +110,11 @@ void uart2serv()
         }
         break;
       case 't': // from txtd
-        UseBits(uzbits, 29);
-        if (Reply(txtid, NULL, 0) != 0) PANIC;
-        UseBits(uzbits, 30);
         cts = 1;
         if (ohead != otail) {
           ohead = transmit2 (output_queue, ohead, otail, &cts);
-          // Turn the interrupt back on to try and transmit again
-          *(uint*)(UART2_BASE+UART_CTLR_OFFSET) &= ~TIEN_MASK;
         }
-        UseBits(uzbits, 31);
+        if (Reply(txtid, NULL, 0) != 0) PANIC;
         break;
       case 'p':
         output_queue[otail] = buf[1];

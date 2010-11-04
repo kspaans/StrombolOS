@@ -116,9 +116,8 @@ int main () {
     
     switch (req) {
       case 1234:
-        irqstatus  = *(int*)(VIC1BASE+IRQSTATUS_OFFSET);
+        irqstatus = *(int*)(VIC1BASE+IRQSTATUS_OFFSET);
         irqstatus2 = *(int*)(VIC2BASE+IRQSTATUS_OFFSET);
-        // Handle one interrupt at a time
         if      (irqstatus  & UART1RXINTR1_MASK)  i = UART1RX;
         else if (irqstatus  & UART2RXINTR1_MASK)  i = UART2RX;
         else if (irqstatus2 & UART1_MASK)         i = UART1TRANS;
@@ -127,22 +126,17 @@ int main () {
         else {
           //DPRINTERR ("UNKNOWN INTERRUPT! HOW DID THIS HAPPEN??\n");
           //bwprintf (COM2, "\tIT WAS %x and %x\n\tDYING!!!\n", irqstatus,irqstatus2);
-          UseBits(ubits, 42);
-          goto oops;
           while(1);
         }
         if (eventq[i] == 0) {
           //DPRINTERR ("BAD THING 1 HAPPENED, DYING. No waiter for event %d\n", i);
           //bwprintf (COM2, "\tIT WAS %x and %x\n\tDYING!!!\n", irqstatus,irqstatus2);
-          UseBits(ubits, 49);
           UseBits(ubits, 50 + i);
-          UseBits(ubits, 55);
           goto oops;
           while(1);
         }
         if (eventq[i]->state != EVENT_BLOCKED) {
           //DPRINTERR ("BAD THING 2 HAPPENED, DYING.\n");
-          UseBits(ubits, 62);
           goto oops;
           while(1);
         }
@@ -222,9 +216,8 @@ doneinterrupt:
   DPRINTOK("+----------------------------------+\r\n");
 # endif
 
-  return 0;
 oops: 
   UseBits(ubits, 63);
-  DPRINT("OOPS\r\n");
-  return -1;
+  DPRINT("Goodbye\r\n");
+  return 0;
 } /*** Read UseBits with "x -b 0x1fdcfc0" ***/
