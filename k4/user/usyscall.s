@@ -85,12 +85,3 @@ AwaitEvent:
 	mov	pc, lr
 	.size	AwaitEvent, .-AwaitEvent
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-	.text
-	.align	2
-	.global	Shutdown
-	.type	Shutdown, %function
-Shutdown:
-	swi	#666
-	mov	pc, lr
-	.size	Shutdown, .-Shutdown
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
