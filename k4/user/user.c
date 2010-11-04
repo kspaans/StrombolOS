@@ -95,10 +95,6 @@ void idle_shell()
  // bwputstr(COM2, "Please select an option (1:rps, 2:srr_tests, 3:clock, 4:send"
  //                "_tests,\r\n"
  //                "  5:TRAIN_CONTROLLER, 6:timings): ");
-
-
-
-
  
   i = Create (USER_HIGH, &wm);
   while (1); {

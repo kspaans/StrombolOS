@@ -59,6 +59,7 @@ struct td {
   struct mq messageq[MQSIZE]; // Pointer to the next unused slot in the MQ
   int mq_next;            // next message in queue to be processed
   int mq_last;            // free slot in the queue
+  unsigned int time_active;
   struct mq replyq;
   struct mq fuckq;
 };
