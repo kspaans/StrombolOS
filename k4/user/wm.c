@@ -177,7 +177,7 @@ void eval (char *cmd, int trid, char *sw) {
   }
   else if (!strcmp ("q", cmd)) {
     bwprintf (COM2, "Quiting to reboot.\n");
-    // IMPLEMENT ME
+    Shutdown();
   }
   else if (!strcmp ("reboot", cmd)) {
     bwprintf (COM2, "[2J[1;1HRebooting.\n");

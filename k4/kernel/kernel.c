@@ -178,6 +178,8 @@ int main () {
         req = _kAwaitEvent(cur, cur->trap.r0, eventq);
         ++counters.awaitevents;
         break;
+      case 666:
+        goto shutdown;
       default:
         DPRINTERR ("UNKNOWN SYSCALL.\n");
         while(1);
@@ -187,6 +189,8 @@ doneinterrupt:
     cur = schedule (cur, &tasks);
   }
 
+shutdown:
+# if 0
   DPRINTOK("+----------------------------------+\r\n");
   DPRINTOK("| INTERRUPT AND SYSCALL STATISTICS |\r\n");
   DPRINTOK("|  Interrupts  %d\t                |\r\n", counters.interrupts);
@@ -200,8 +204,6 @@ doneinterrupt:
   DPRINTOK("|  MyTid       %d\t\t                |\r\n", counters.mytids);
   DPRINTOK("|  MyParentTid %d\t\t                |\r\n", counters.myparenttids);
   DPRINTOK("+----------------------------------+\r\n");
-
- 
-  DPRINT("Goodbye\r\n");
+# endif
   return 0;
 }

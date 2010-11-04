@@ -16,6 +16,7 @@ int WhoIs (char *name);
 int Delay(int ticks);
 int Time();
 int AwaitEvent(int event);
+void Shutdown();
 
 int Getc(int channel);
 int Getc_r(int ch);

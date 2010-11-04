@@ -109,7 +109,7 @@ void trains () {
            for (i = 1; i < 11; i++) {
              char sen = cmd[i+1];
              char j = (i%2) ? 1 : 9;
-             bwprintf ("got me some data nigz.\n");
+/////////////             bwprintf ("got me some data nigz.\n");
              while (sen) {
                if (sen&128) { fucksensor (j+(j/2)*16,&recentsw[head]); bwprintf (COM2, "\n\n%c%d\n\n", recentsw[head],recentsw[head+1]%0xFF);head = (head+1)%5; }
                sen <<= 1;
