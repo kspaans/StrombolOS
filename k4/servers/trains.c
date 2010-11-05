@@ -45,11 +45,11 @@ void sensorserver () {
 }
 
 int trains_switch (char id, char dir) {
-  if (dir=='S') {
+  if (dir=='S' || dir == 's') {
     Putc(COM1,33);
     Putc(COM1,id);
   }
-  else if (dir=='C') {
+  else if (dir=='C' || dir == 'c') {
     Putc(COM1, 34);
     Putc(COM1, id);
   }
@@ -82,7 +82,7 @@ struct sensorevent fucksensor (int x, int time) {
   else if (x-32 >= 1 && x-32 <= 16) { ans.group = 'C'; ans.id = x-32; }
   else if (x-48 >= 1 && x-48 <= 16) { ans.group = 'D'; ans.id = x-48; }
   else if (x-64 >= 1 && x-64 <= 16) { ans.group = 'E'; ans.id = x-64; }
-//  if (ans.group == 'C' && ans.id == 3) { Putc (COM1, 0x0); Putc(COM1, 0x17); }
+//  if (ans.group == 'C' && ans.id == 3) { Putc (COM1, 0x0f); Putc(COM1, 0x34); }
   return ans;
 }
 
@@ -164,7 +164,7 @@ start:
         sw[unfuckswitch(cmd[1])] = cmd[2];  
         break;
       case 'a': // switch all
-        for (i = 0; i < 32; i++) {
+        for (i = 0; i < 22; i++) {
           trains_switch(fuckswitch(i), cmd[1]);
           sw[i] = cmd[1];
         }

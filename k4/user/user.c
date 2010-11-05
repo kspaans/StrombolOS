@@ -78,7 +78,7 @@ void idle () {
 }
 void idle_shell()
 {
-  int i, c;
+  int i;
 
   i = Create (SYSCALL_HIGH, &nameserv);
 //  bwputstr(COM2, " Created nameserver\r\n");

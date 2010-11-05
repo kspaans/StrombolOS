@@ -70,10 +70,9 @@ void prettyprintsensor (struct sensorevent s) {
   CURSORPUSH ();
   CURSORMOVE (1,40);
   SETCOLOUR (BG+BRIGHT+MAGENTA);
-  SETCOLOUR (FG + WHITE);
+  SETCOLOUR (FG + BRIGHT+ WHITE);
   if (s.group != 0) {
-    bwprintf (COM2, "Latest sensor: %c%d at time %d:%d.%d", s.group,s.id, (s.time/1200), (s.time/20)%60, (s.time/2) %10);
-    CLEARTOEND();
+    bwprintf (COM2, "Latest sensor: %c%d at time %d:%d.%d     ", s.group,s.id, (s.time/1200), (s.time/20)%60, (s.time/2) %10);
   }
   SETCOLOUR(BG+BLACK);
   SETCOLOUR (FG+WHITE);
@@ -85,7 +84,7 @@ void prettyprinttime (int ticks) {
   CURSORMOVE(1,200);
   CURSORBACK(25);
   SETCOLOUR(BG+BRIGHT+MAGENTA);
-  SETCOLOUR(FG+WHITE);
+  SETCOLOUR(FG+BRIGHT+WHITE);
   DISABLEWRAP();
   char flair;
   switch (((ticks/10)%60)%4) {
@@ -116,7 +115,6 @@ int stoi (char *str) {
 }
 
 void help () { 
-  SETCOLOUR(FG+GREEN);
   bwprintf (COM2, "SYSTEM COMMANDS\n"
                   " help                          Get back to this screen.\n"
                   " q                             Quit to redboot.\n"
@@ -126,7 +124,9 @@ void help () {
                   " stop                          Emergency stop the train set.\n"
                   " go                            Start train set.\n"
                   " tr <train num> <speed>        Set speed for a train.\n"
-                  " rv <train num>                Reverse train.\n\n"
+                  " rv <train num>                Reverse train.\n"
+                  " light on|off <trainum>        Turn the train lights on or off.\n"
+                  " honk <train num>              Make the train honk.\n\n"
 
                   "TRACK COMMANDS\n"
                   " sw <switch num> <switch dir>  Throw switch in direction S(traight)/C(urved)\n"
@@ -135,7 +135,6 @@ void help () {
                   " st <switch num>               Display the current direction of switch thing something redundant.\n"
 
                   "\n");
-  SETCOLOUR(FG+BRIGHT+GREEN);
 }
 
 void tables(char *sw) {
@@ -185,7 +184,7 @@ void tables(char *sw) {
   SETCOLOUR(BG+BLACK);
   CURSORPOP();
 }
-void eval (char *cmd, int trid, char *sw) {
+void eval (char *cmd, int trid, char *sw,struct sensorevent s) {
   char packet[5];
   char buf[32];
   SETCOLOUR (FG+BRIGHT+WHITE);
@@ -195,7 +194,7 @@ void eval (char *cmd, int trid, char *sw) {
     bwputstr (COM2, "Train set started.\n");
   }
   else if (!strcmp ("q", cmd)) {
-    bwprintf (COM2, "Quiting to reboot.\n");
+    bwprintf (COM2, "[2J[1;1HQuiting to reboot.\n");
     Shutdown();
   }
   else if (!strcmp ("reboot", cmd)) {
@@ -217,6 +216,42 @@ void eval (char *cmd, int trid, char *sw) {
     packet[2] = (char)stoi(token(cmd,1,buf));
     Send (trid, packet, 3, NULL, 0);
     bwprintf (COM2, "Train %d set to speed %d.\n", stoi(token(cmd,1,buf)), stoi(token(cmd,2,buf)));
+  }
+  else if (!strcmp ("honk", token(cmd,0,buf))) {
+    packet[0] = 't';
+    packet[1] = 0x44;
+    packet[2] = (char)stoi(token(cmd,1,buf));
+    Send (trid, packet, 3, NULL, 0);
+    Delay(4);
+    packet[1] = 0x40;
+    Send (trid, packet, 3, NULL, 0);
+    bwprintf (COM2, "[31mH[32mO[33mN[34mK[35m![37m\n");
+  }
+  else if (!strcmp ("light", token(cmd,0,buf)) || !strcmp ("lights", token(cmd, 0, buf))) {
+    packet[0] = 't';
+    if (!strcmp ("on",token (cmd,1,buf))) {
+      packet[1] = 0x42;
+      bwprintf (COM2, "Lights ");
+      SETCOLOUR (BG+YELLOW);
+      SETCOLOUR (FG+BRIGHT+BLACK);
+      bwprintf (COM2, "ON");
+      SETCOLOUR (BG+BLACK);
+      SETCOLOUR (FG+WHITE);
+      bwprintf (COM2, " for train %d.\n", (char)stoi(token(cmd,2,buf)));
+    }
+    else {
+      packet[1] = 0x40;
+      bwprintf (COM2, "Lights ");
+      SETCOLOUR (BG+BRIGHT+BLACK);
+      SETCOLOUR (FG+BLACK);
+      bwprintf (COM2, "OFF");
+      SETCOLOUR (BG+BLACK);
+      SETCOLOUR (FG+WHITE);
+      bwprintf (COM2," for train %d.\n", (char)stoi(token(cmd,2,buf)));
+    }
+    packet[2] = (char)stoi(token(cmd,2,buf));
+    
+    Send (trid, packet,3,NULL,0);
   }
   else if (!strcmp ("rv", token(cmd,0,buf))) {
     packet[0] = 'r';
@@ -249,6 +284,9 @@ void eval (char *cmd, int trid, char *sw) {
     Send (trid, packet, 2, &c, 1);
     bwprintf (COM2, "Switch %d is in direction %c.\n", stoi(token(cmd,1,buf)), c);
   }
+  else if (!strcmp ("wh", token (cmd, 0, buf))) {
+    bwprintf (COM2, "Latest sensor: %c%d at time %d:%d.%d\n", s.group,s.id, (s.time/1200), (s.time/20)%60, (s.time/2) %10);
+  }
   else {
     bwprintf (COM2, "Unknown command.\n");
   }
@@ -257,7 +295,7 @@ void eval (char *cmd, int trid, char *sw) {
 
 
 void wm () {
-  int sec;  int done = 0;
+  int done = 0;
   int i=0,t;
   char inbuf[32];
   int ch;
@@ -275,10 +313,11 @@ char sw[32];
  //    bwputc(COM1, 0x60);
 //     bwputc (COM2, 'f');
 //  }
-
+  SETCOLOUR (BG+BLACK);
   trid = WhoIs ("tr");
   CLEAR();
   SETCOLOUR(BG+BRIGHT+MAGENTA);
+  SETCOLOUR(FG+BRIGHT+WHITE);
   bwputstr(COM2, "[s[;HStrombolOS v0.0.4 (Turbo Samba)."
                  "[K[m[u");
   bwputstr (COM2, "[?25l");
@@ -315,8 +354,7 @@ char sw[32];
      if (ch == CHR_RETURN) { 
        bwputc (COM2,'\n');
        inbuf[n] = 0;
-
-       eval (inbuf, trid, sw);
+       eval (inbuf, trid, sw, sen);
        bwprintf (COM2, "> ");
        n = 0;
      }
