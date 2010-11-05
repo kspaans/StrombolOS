@@ -9,8 +9,60 @@
 struct delay {
   int time;
   int tid;
-  struct delay *next;
 };
+
+struct heap {
+  int size;
+  int bottom;
+  struct delay **data;
+};
+
+#define PARENT(n) ((n - 1) >> 1)
+#define LEFT(n)    (n * 2)
+#define RIGHT(n)  ((n * 2) +  1)
+
+void swap(struct heap *h, int a, int b)
+{
+  struct delay *temp = h->data[a];
+  h->data[a] = h->data[b];
+  h->data[b] = temp;
+}
+
+void heap_push(struct delay *val, struct heap *h)
+{
+  h->data[h->bottom] = val;
+  while (h->bottom > 0 && val->time < h->data[PARENT(h->bottom)]->time) {
+    swap(h, h->bottom, PARENT(h->bottom));
+  }
+  h->bottom++;
+}
+
+void bubble_down(struct heap *h, int index)
+{
+  int smallest = index;
+  int left  = LEFT(index);
+  int right = RIGHT(index);
+  if (left <= h->bottom && h->data[left]->time <= h->data[index]->time) {
+    smallest = left;
+  }
+  if (right <= h->bottom && h->data[right]->time <= h->data[left]->time) {
+    smallest = right;
+  }
+  if (smallest != index) {
+    swap(h, index, smallest);
+    bubble_down(h, smallest);
+  }
+}
+
+struct delay *heap_pop(struct heap *h)
+{
+  if (h->bottom == 0) return NULL;
+  struct delay *retval = h->data[0];
+  h->data[0] = h->data[h->bottom - 1];
+  h->bottom--;
+  bubble_down(h, 0);
+  return retval;
+}
 
 #define BUFSIZE 5
 
@@ -33,10 +85,16 @@ struct delay {
 void clckserv()
 {
   int ticks = 0;
-  int r, tid = -1, delaysize = 0, delayindex = 0;
+  int r, tid = -1, delayindex = 0;
   char buf[BUFSIZE];
   struct delay delaypool[MAXTASKS];
-  struct delay *delay_list = NULL, *temp, *iter_node, *iter_prev;;
+  struct delay *delayppool[MAXTASKS];
+  struct delay *temp;
+  struct heap delay_heap;
+
+  delay_heap.bottom = 0;
+  delay_heap.size   = MAXTASKS;
+  delay_heap.data   = delayppool;
 
   RegisterAs("clck");
   if (Create(INTERRUPT, &notifier_clock) < 0)   PANIC;
@@ -52,83 +110,27 @@ void clckserv()
     switch (buf[0]) {
       case 'n':
         r = Reply(tid, NULL, 0);
-        //bwputstr(COM2, "LALA\r\n");
         if (r != 0) { bwputstr(COM2, "haha\r\n");PANIC; }
         ++ticks;
-//  bwprintf (COM2, "[45m[s[1;25HSilly time = %d[K[m[u",ticks);
-  //      bwprintf(COM2, "[s[1;100H[2K[15D%d[u", ticks);
-        //DPRINTOK("Clock tick!\r\n");
-        while (delay_list && ticks > delay_list->time) {
-          DPRINT("Finding a delayer to wake... size of list %d\r\n", delaysize);
-          /*
-          for (temp = delay_list; temp != NULL; temp = temp->next) {
-            DPRINTOK("  {time %d, tid %d} ->\r\n", temp->time, temp->tid);
-            if (temp == temp->next) {
-              bwputstr(COM2, "AHHHHH 1-node linked list loop\r\n");
-              PANIC;
-            }
-          }
-          DPRINT("  NULL\r\n");
-          */
-          r = Reply(delay_list->tid, NULL, 0); // error in here
+        while (delay_heap.bottom > 0 && ticks > delay_heap.data[0]->time) {
+          temp = heap_pop(&delay_heap);
+          r = Reply(temp->tid, NULL, 0);
           if (r != 0) {
-            DPRINTERR("WOAH, failed replying to Notifier: r = %d, the del was "
-                      "%x\r\n", r, delay_list);
             PANIC;
           }
-          delay_list = delay_list->next;
-          --delaysize;
-          DPRINT("Replied, size of list is now %d\r\n", delaysize);
         }
-        //bwputstr(COM2, "LALA3\r\n");
         break;
       case 't':
-        r = Reply(tid, (char *)(&ticks), 4); /* XXX is this unsafe? */
+        r = Reply(tid, (char *)(&ticks), 4);
         if (r != 0) PANIC;
         break;
       case 'd':
         /* Put the requesting task's info in the delay_list */
         temp = &delaypool[delayindex];
         delayindex = (delayindex + 1) % MAXTASKS;
-        ++delaysize;
-        DPRINT("Adding delayer %d, size of the list is now %d\r\n", tid, delaysize);
         temp->tid = tid;
         temp->time = ticks + *((int *)(buf + 1));
-        /* Perform insertion sort of the new node into the list */
-        if (delaysize == 1) {
-          DPRINT("easy case, the delay list is empty\r\n");
-          delay_list = temp;
-          delay_list->next = NULL;
-        }
-        else {
-          DPRINT("hard case, the delay list needs insertion sort!\r\n");
-          iter_node = delay_list;
-          iter_prev = NULL;
-          while (iter_node != NULL) {
-            DPRINT("Our time %d vs their time %d, their next %x\r\n",
-                   temp->time, iter_node->time, iter_node->next);
-            if (iter_node->time > temp->time) {
-              temp->next = iter_node;
-              if (iter_prev) {
-                iter_prev->next = temp;
-              }
-              else {
-                delay_list = temp;
-              }
-              break;
-            }
-            else if (iter_node->next == NULL) {
-              DPRINT("Special case! Insert at the end of the list\r\n");
-              iter_node->next = temp;
-              temp->next = NULL; /* special case, but meh this works */
-              break;
-            }
-            else {
-              iter_prev = iter_node;
-              iter_node = iter_node->next;
-            }
-          }
-        }
+        heap_push(temp, &delay_heap);
         break;
       default:
         bwputstr(COM2, "ERROR: CLOCKSERV(): incorrect message received\r\n");
