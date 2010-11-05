@@ -1,5 +1,4 @@
-88  - Create
-65  - MyTid, MyParentTid, Pass (25 with I-cache on)
-101 -   SRR  0 bytes
-534-641 SRR 64bytes
-315 -   SRR  4 bytes (~100 with I-cache on)
+110  - Create (8 w cache)
+80  - MyTid, MyParentTid, Pass (7 with I-cache on)
+560 -   SRR 64bytes  (40
+250 -   SRR  4 bytes (~20 with I-cache on)
