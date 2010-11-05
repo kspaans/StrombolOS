@@ -23,15 +23,16 @@ int _kCreate(struct td *newtd, int priority, void (*code)(), int parenttid,
     return -2;
   }
 
-  newtd->tid       = newtid;
-  newtd->stack     = stack + STACKSIZE; // We are now pointing just below the stack
-  newtd->state     = READY;
-  newtd->priority  = priority;
-  newtd->next      = NULL;
-  newtd->entry     = code;
-  newtd->ptid      = parenttid;
-  newtd->mq_next   = 0;
-  newtd->mq_last   = 0;
+  newtd->tid         = newtid;
+  newtd->stack       = stack + STACKSIZE; // We are now pointing just below the stack
+  newtd->state       = READY;
+  newtd->priority    = priority;
+  newtd->next        = NULL;
+  newtd->entry       = code;
+  newtd->ptid        = parenttid;
+  newtd->mq_next     = 0;
+  newtd->mq_last     = 0;
+  newtd->time_active = 0;
 
   if (priority == INTERRUPT) 
     newtd->SPSR    = 208; // User mode, interrupts off.
