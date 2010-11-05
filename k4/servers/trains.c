@@ -15,29 +15,30 @@ void sensorserver () {
   RegisterAs ("sen");
   int trid = WhoIs ("tr"); 
   int c;
-  int foo;
   Send (trid, msg, 1, NULL, 0);
 
   FOREVER {
     cur = Time ();
-    if (cur - last > 25) {
-      // DPRINTERR ("timeout??\n");
-       Delay (25);
+    if (cur - last > 50) {
+       //DPRINTERR ("timeout cur = %d, last = %d??\n",cur,last);
+       Delay (1);
        Send (trid, msg, 1, NULL, 0);
        i = 1;
+       last = cur;
     }
-//    DPRINTHUH ("what\n");
-    c = Getc_r(COM1);
-    if (c != -1) {
-      last = cur;
-     // DPRINTOK ("bing c=%x i=%d\n",c,i);
-      msg[i] = (char)c;
-      i++;
-      if (i > 10) {
-        i = 1;
-        Send (trid, msg, 11, NULL, 0);
-        Delay (25);
-        Send (trid, msg, 1,  NULL, 0);
+    else {
+      c = Getc_r(COM1);
+      if (c != -1) {
+        last = cur;
+        // DPRINTOK ("bing c=%x i=%d\n",c,i);
+        msg[i] = (char)c;
+        i++;
+        if (i > 10) {
+          i = 1;
+          Send (trid, msg, 11, NULL, 0);
+          Delay (1);
+          Send (trid, msg, 1,  NULL, 0);
+        }
       }
     }
   }
@@ -67,34 +68,53 @@ int unfuckswitch (int x) {
   else return x-153+18;
 }
 
-void fucksensor (int x, char *s) {
-       if (x    >= 1 && x    <= 16) { s[0] = 'A'; s[1] = x;    return; }
-  else if (x-16 >= 1 && x-16 <= 16) { s[0] = 'B'; s[1] = x-16; return; }
-  else if (x-32 >= 1 && x-32 <= 16) { s[0] = 'C'; s[1] = x-32; return; }
-  else if (x-48 >= 1 && x-48 <= 16) { s[0] = 'D'; s[1] = x-48; return; }
-  else if (x-64 >= 1 && x-64 <= 16) { s[0] = 'E'; s[1] = x-64; return; }
+struct sensorevent {
+  char group;
+  int id;
+  int time;
+};
+
+struct sensorevent fucksensor (int x, int time) {
+  struct sensorevent ans;
+  ans.time = time;
+       if (x    >= 1 && x    <= 16) { ans.group = 'A'; ans.id = x;    }  
+  else if (x-16 >= 1 && x-16 <= 16) { ans.group = 'B'; ans.id = x-16; }
+  else if (x-32 >= 1 && x-32 <= 16) { ans.group = 'C'; ans.id = x-32; }
+  else if (x-48 >= 1 && x-48 <= 16) { ans.group = 'D'; ans.id = x-48; }
+  else if (x-64 >= 1 && x-64 <= 16) { ans.group = 'E'; ans.id = x-64; }
+//  if (ans.group == 'C' && ans.id == 3) { Putc (COM1, 0x0); Putc(COM1, 0x17); }
+  return ans;
 }
+
 
 void trains () {
   int tid;
   char cmd[15];
   int speeds[100];
   char sw[32];
-  char recentsw [10]; // 5 things
   int head = 0;
   int i;
-  for (i = 0; i < 10; i++) { recentsw[i] = 0; }
+
+  struct sensorevent latest;
+  latest.group = 0;
   for (i = 0; i < 100; i++) { speeds[i] = 0; }
+
   int r;
   RegisterAs ("tr");
-  Create (SYSCALL_LOW, sensorserver);
+  Create (USER_HIGH, sensorserver);
   FOREVER {
+start:
     r = Receive (&tid, cmd, 15);
 
     // "special" ones
     switch (cmd[0]) {
       case 'v': // st
         Reply (tid, &sw[unfuckswitch(cmd[1])], 1);
+        goto start;
+        break;
+      case 'd':
+        Reply (tid, (char*)(&latest), sizeof (struct sensorevent));
+        goto start;
         break;
       default:
         break;
@@ -104,15 +124,14 @@ void trains () {
     switch (cmd[0]) {
       case 'p': // poll sensors
         switch (r) {
-          case 1:   Putc (COM1, 133); break;
+          case 1:   /*bwprintf (COM2, "pinging\n");*/Putc (COM1, 133); break;
           case 11: 
-           for (i = 1; i < 11; i++) {
-             char sen = cmd[i+1];
-             char j = (i%2) ? 1 : 9;
-             bwprintf ("got me some data nigz.\n");
-             while (sen) {
-               if (sen&128) { fucksensor (j+(j/2)*16,&recentsw[head]); bwprintf (COM2, "\n\n%c%d\n\n", recentsw[head],recentsw[head+1]%0xFF);head = (head+1)%5; }
-               sen <<= 1;
+           for (i = 0; i < 10; i++) {
+             char wut = cmd[i+1];
+             int j = 1;
+             while (wut) {
+               if (wut &128) latest = fucksensor (i*8+j,Time());
+               wut <<= 1;
                j++;
              }
            }
@@ -140,14 +159,14 @@ void trains () {
         Putc (COM1, speeds[(int)cmd[1]]);
         Putc (COM1, cmd[1]);
         break;
-      case 'd': // sw
+      case 'w': // sw
         trains_switch(cmd[1],cmd[2]); 
         sw[unfuckswitch(cmd[1])] = cmd[2];  
         break;
       case 'a': // switch all
         for (i = 0; i < 32; i++) {
-          trains_switch(i, cmd[1]);
-          sw[unfuckswitch(i)] = cmd[1];
+          trains_switch(fuckswitch(i), cmd[1]);
+          sw[i] = cmd[1];
         }
         break;
     }

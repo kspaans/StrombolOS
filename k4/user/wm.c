@@ -22,6 +22,12 @@
 */
 typedef unsigned int uint;
 
+struct sensorevent {
+  char group;
+  int id;
+  int time;
+};
+
 int bwinputready (int channel) {
   int *flags;
   switch (channel) {
@@ -60,7 +66,20 @@ char *token (char *str, int n,char *buf) {
   return buf;
 }
 
-
+void prettyprintsensor (struct sensorevent s) {
+  CURSORPUSH ();
+  CURSORMOVE (1,40);
+  SETCOLOUR (BG+BRIGHT+MAGENTA);
+  SETCOLOUR (FG + WHITE);
+  if (s.group != 0) {
+    bwprintf (COM2, "Latest sensor: %c%d at time %d:%d.%d", s.group,s.id, (s.time/1200), (s.time/20)%60, (s.time/2) %10);
+    CLEARTOEND();
+  }
+  SETCOLOUR(BG+BLACK);
+  SETCOLOUR (FG+WHITE);
+  CURSORPOP ();  
+}
+         
 void prettyprinttime (int ticks) {
   CURSORPUSH();
   CURSORMOVE(1,200);
@@ -206,8 +225,8 @@ void eval (char *cmd, int trid, char *sw) {
     bwprintf (COM2, "Reversing train %d.\n", stoi(token(cmd,1,buf)));
   }
   else if (!strcmp ("sw", token(cmd,0,buf))) {
-    packet[0] = 'd';
-    packet[1] = (char)stoi(token(cmd,1,buf));
+    packet[0] = 'w';
+    packet[1] = (char)(stoi(token(cmd,1,buf))%0xFF);
     packet[2] = token(cmd,2,buf)[0];
     Send (trid, packet, 3, NULL, 0);
     bwprintf (COM2, "Switching switch %d to direction %c.\n", stoi(token(cmd,1,buf)), token(cmd,2,buf)[0]);
@@ -216,7 +235,7 @@ void eval (char *cmd, int trid, char *sw) {
   }
   else if (!strcmp ("swall", token(cmd,0,buf))) {
     packet[0] = 'a';
-    packet[1] = token(cmd,2,buf)[0];
+    packet[1] = token(cmd,1,buf)[0];
     Send (trid, packet, 2, NULL, 0);
     bwprintf (COM2, "Switching all switches to direction %c.\n", token(cmd,1,buf)[0]);
     int ii;
@@ -283,10 +302,13 @@ char sw[32];
   "| /___/\\__/_/  \\___/_/_/_/_.__/\\___/_/\\____/___/   |\n"
   "|                             v0.0.4 (Turbo Samba) |\n"
   "+--------------------------------------------------+\n\n\n> "); 
-
+   char sensorquery = 'd';
+   struct sensorevent sen;
    tables (sw);
    while (!done) {
     t = Time()/2; 
+    Send (trid, &sensorquery, 1, (char*)(&sen), sizeof(struct sensorevent));
+    prettyprintsensor (sen); 
     prettyprinttime (t);
     ch = Getc_r(COM2);
     if (ch !=-1) {

@@ -29,14 +29,14 @@ void first_user_task()
   //int i;
   //char msg[50];
 
-  Create (SYSCALL_LOW, rps_server);
-  Create (USER_HIGH, rps_client); 
-  Create (USER_HIGH, rps_client); 
-  Create (USER_HIGH, rps_client); 
-  Create (USER_HIGH, rps_client); 
-  Create (USER_HIGH, rps_client); 
-  Create (USER_HIGH, rps_client); 
-  Create (USER_HIGH, rps_client); 
+//  Create (SYSCALL_LOW, rps_server);
+//  Create (USER_HIGH, rps_client); 
+//  Create (USER_HIGH, rps_client); 
+//  Create (USER_HIGH, rps_client); 
+//  Create (USER_HIGH, rps_client); 
+//  Create (USER_HIGH, rps_client); 
+//  Create (USER_HIGH, rps_client); 
+//  Create (USER_HIGH, rps_client); 
  
 /*  tids[0] = Create(USER_LOW, other_user_task);
   bwprintf(COM2, "Created: %d.\n", tids[0]);
@@ -72,15 +72,14 @@ void other_user_task()
  * It will spawn necessary processes, and then become the idle task.
  * Will need some hacks to be able to change our priority to IDLE.
  */
+
+void idle () {
+  while (1);
+}
 void idle_shell()
 {
   int i, c;
-  char spinner[4];
 
-  spinner[0] = '|';
-  spinner[1] = '/';
-  spinner[2] = '-';
-  spinner[3] = '\\';
   i = Create (SYSCALL_HIGH, &nameserv);
 //  bwputstr(COM2, " Created nameserver\r\n");
   i = Create (SYSCALL_HIGH, &clckserv);
@@ -101,7 +100,9 @@ void idle_shell()
 
  
   i = Create (USER_HIGH, &wm);
-  while (1); {
+  i = Create (IDLE, idle);
+  Exit();
+  while (1);/* {
  
     c = bwgetc(COM2);//Getc(COM2);
     bwprintf(COM2, "%c\r\n", c);
@@ -130,5 +131,5 @@ void idle_shell()
     }
   } IDLE:;
 
-  FOREVER {}
+  FOREVER {}*/
 }
