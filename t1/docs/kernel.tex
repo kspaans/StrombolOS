@@ -1,0 +1,234 @@
+\documentclass{article}
+%\include{Jake's Stuff}
+
+\begin{document}
+
+\section{Administrivia}
+Build our kernel with \texttt{./Build.sh}, all build files, including
+\texttt{StrombolOS.elf} will be in \texttt{build/}.
+\begin{verbatim}
+9313c3b8d3a2e1d6d6f1162555ea3392  ./bwio/bwio.c
+5bba63afffefa69c48ca4ee9ae7fc4cd  ./kernel/kernel.c
+1861ba11f47ffed0386f26d5b1427fef  ./kernel/switch.h
+f1460ffe80756a10326ea1f543d56b66  ./kernel/syscalls/create.c
+4c445abfc7bbc947523149aa4ff8db69  ./kernel/syscalls/exit.c
+88de93ad80f82c0c19068db925aa9a7b  ./kernel/syscalls/ksyscall.h
+1fc352c47457bcc3483baf673453ca47  ./kernel/syscalls/myparenttid.c
+7aea0293ec3376f3b609444439e0ffd8  ./kernel/syscalls/mytid.c
+02a046f81c0b15aae6672817ba9c8fd7  ./kernel/syscalls/pass.c
+e6193ca65075c3dc851866dfb593b5d7  ./kernel/syscalls/receive.c
+62cfc465c6f3a121e6a1fc7ab37611fc  ./kernel/syscalls/reply.c
+ad583b8bfa980bcd78c2666c0d993662  ./kernel/syscalls/send.c
+60da756ed07348e576848ad2db5b9103  ./kernel/syscalls/awaitevent.c
+ca28262728ec68a324728334cde3d85e  ./kernel/tasks.c
+cf322c58d2b0ffca7960adb1731fc034  ./kernel/tasks.h
+427aed49b53f52ce6185ed277e1046cb  ./kernel/boot.c
+a3f52f48e4f13f1f4f3111c86733b828  ./kernel/boot.h
+63a9c591765b838b80d156ba4d343ea9  ./kernel/switch.s
+d32dda3f6cd59b210c03d1ed8332c581  ./include/bwio.h
+8fe4bcbf13f60d8dfc91ecbdc0605734  ./include/debug.h
+396d47c513a8d1763ec8524ef7043df3  ./include/ts7200.h
+40f4f3cd6e750c354c5e0669cc79afa0  ./include/ANSI.h
+71fab5b6b9f20b06d3fee8a131e488ac  ./user/lib.c
+f6a2380d93ce32a1588c9f7e8672de8b  ./user/lib.h
+bb26439fa9e96b4ad416cca1ffbee9d8  ./user/rps_client.c
+987391166fc3a7911abaade6e911228f  ./user/usyscall.s
+5244b31fad05d2c4a13f3af00151d689  ./user/user.c
+2737fde1654b841a2a8273a03121a808  ./user/user.h
+26e6c3c23813ba23d358bf6cef18a89b  ./user/usyscall.h
+100386ccd693a1b05231723e825a7056  ./user/wrappers.c
+1fc7829e40ad9731b92880bd06e5ae6a  ./user/clock_client.c
+0a4ecd61c17f8fab2701df0fc602f52b  ./user/clock_client.h
+5cdf0685d1b04b08223b59fe346c2a2b  ./user/timings.c
+a66c2ece6a834d354855b5a349577f16  ./user/trains_ui.c
+fdb022424f137015c687e9233746011d  ./user/wm.c
+a499e8d19ee5410832196b18d02604cc  ./ktests/tests.c
+55ff8b30fa5d99a344fe21c4f04efa10  ./ktests/tests.h
+7d2b05ec0779ca90badce6913bb8abe4  ./servers/names.c
+543b0ddeef7d66f66b7126efa9b58ea0  ./servers/rand.c
+53eb72a04263b25510535132b3453e35  ./servers/rps_server.c
+40cfb1a75cc25c85ee53aeea72f1cffa  ./servers/servers.h
+e7394261773af98b40e1363d90fa8b1e  ./servers/clock.c
+1b884ba7141569e43c5e611cd5ca2b37  ./servers/notifier_clock.c
+775f0fd0347788f42800f45778fa1208  ./servers/uart1.c
+9b245bca020cc929b760e3d1e44318d4  ./servers/uart2.c
+304d3518e6d323b70013aa816fc26a08  ./servers/notifier_uart1tx.c
+1c31285b50f4d5d80396fb988ac672f9  ./servers/notifier_uart1rx.c
+843683fbdf9836dbe8454cfee822b646  ./servers/notifier_uart2tx.c
+73f601af47ba67c47b15ba051888c168  ./servers/notifier_uart2rx.c
+6fc27c95fb0c4f9fc6c2e352f62ce1d3  ./servers/trains.c
+343b974fd07f3cd492416b2ea92b7bc6  ./Build.sh
+9e55df43bdbf8cb6b4743399b06df38b  /u/cs452/tftpboot/ARM/StrombolOS/k4
+\end{verbatim}
+
+\section{Sample Output}
+Please run with \texttt{go -c}.
+
+\subsection{Timings}
+\begin{tabular}{|c|c|c|}
+\hline
+Syscall & No Caches (\texttt{go}) & Caches (\texttt{go -c}) \\
+\hline
+\hline
+\texttt{Create()} & 217 $\mu$s & 16 $\mu$s \\
+\hline
+\texttt{MyTid()}, \texttt{MyParentTid()}, \texttt{Pass()} & 157 $\mu$s & 14 $\mu$s \\
+\hline
+\texttt{SRR} 4 bytes & 492 $\mu$s & 39 $\mu$s \\
+\hline
+\texttt{SRR} 64 bytes & 1100 $\mu$s & 79 $\mu$s \\
+\hline
+\end{tabular}
+
+\section{REAME}
+See \texttt{docs/}. Our extra commands include ``q'' to return to RedBoot,
+``reboot'' to reboot the ARM board, ``honk n'' to make a train honk, and
+``lights n'' to turn train headlights on and off.
+
+\section{Kernel Description}
+
+\subsection{Kernel}
+Our kernel's \texttt{main} function is organized as follows:
+\begin{verbatim}
+bootstrap () 
+
+while (there is a task to run) { 
+  req = activate (activet_ask) 
+  req = handle(req, task_descriptor) 
+  active_task = schedule () 
+} 
+\end{verbatim}
+\texttt{activate} is our context switch and exception handler. It will restore a
+user's state and then jump to user code. When a software or hardware interrupt is
+triggered by a system call the cpu will jump back into the code for activate.
+The user state is saved and the kernel's is restored. The value returned by
+activate is a flag indicating whether or not we have come from a system call or
+an interrupt. We then extract the system call number from the the user's code or
+examine the active interrupts, respectively.
+
+\texttt{handle} is really a switch statement, and takes the system call opcode
+and the relevant information for this task and does the appropriate thing. We
+have implemented all system calls as described in the kernel specification
+document. 
+
+\texttt{schedule} will take the current task and make its state Ready if
+its current state is Active. If not, it leaves the task in a blocked state.
+Next, it will pick the highest priority task to run. This is described in more
+detail in the following section. 
+
+\subsection{Scheduling}
+The type of scheduling used is round robin with priority levels. The task which
+schedule chooses is garunteed to be in the state Ready and of the highest
+possible priority given that. The task descriptors have a next pointer in them
+of type pointer-to-task-descriptor. In this way a group of tasks can be stored
+in a singly-linked list. The task management system uses a pair of arrays of
+pointers to task descriptors. The first array, p, points to the last activated
+task of a given priority. The second array,head, points to the most recently
+created task of a given priority. In this way we are able to have circular
+buffers. The \texttt{schedule} function starts at priority 0. If at any point in
+any priority it finds a task in the Ready state it sets the state to Active,
+updates the p pointer for that priority (for round robin scheduling) and returns
+a pointer to this task. If it cannot find a task of priority 0 that is
+\texttt{READY} it then tries level 1 and so on until it has exhausted all
+levels. If there is no task available to run, schedule will return 0 and the
+main kernel loop will exit, causing the kernel to exit and RedBoot to take over.
+However in practice this will never happen, as we have an idle task running at
+the lowest priority in an infinite loop. There are 6 priority levels. The
+justification for each level is given below. The names are considered self
+explainatory. We have yet to find a need for new priority levels.
+\begin{verbatim}
+enum PRIORITY { 
+  INTERRUPT = 0, 
+  SYSCALL_HIGH = 1, 
+  SYSCALL_LOW = 2, 
+  USER_HIGH = 3, 
+  USER_LOW = 4, 
+  IDLE = 5, 
+};
+\end{verbatim}
+
+\subsection{Task States}
+As described in the Kernel Description document, we have the following possible
+states for tasks:
+\begin{verbatim}
+enum STATE {
+  ACTIVE,
+  READY,
+  DEFUNCT,
+  SEND_BLOCKED,
+  RECEIVE_BLOCKED,
+  REPLY_BLOCKED,
+  EVENT_BLOCKED,
+};
+\end{verbatim}
+
+\subsection{Message Passing}
+To temporarily store messages sent between tasks we added some queueing
+variables to the Task Descriptors. The heart of the queues is the \texttt{struct
+mq} which holds the length of a message, a pointer to a message and the relevent
+TID. For messages sent to a task, there is a circular buffer (implemented with
+an array and two index variables) of size \texttt{MQSIZE = 10}. For messages
+sent as replies from a recipient to the sender there is a single \texttt{struct
+mq} for holding the address and size of the sender's reply buffer. We are aware
+that the assignment says that messages should be copied into the recipient's
+address space.  However, we choose to interpret this literally: all tasks share
+the same address space, so saving the messages anywhere will satisfy the
+condition. We are confident that this will not cause errors because a sending
+task is blocked until the message is received, therefore the recipient will have
+a chance to copy the message before the sender could corrupt it. Similarly, if a
+sender is reply-blocked, it will be restored to the ready state as soon as a
+single task replies to it. Thus only a single-sized queue is necessary.
+
+\subsection{Events}
+For \texttt{AwaitEvent()}, we chose to change our kernel and to make interrupts
+disabled when the notifier is called and for only one task to be able to wait on
+any single event.  Therefore the event queue can be represented by an array of
+pointers to TD structs. When a task is waiting on the event a pointer to its TD
+struct will be in the queue. The pointer is removed when the task is woken up.
+For the delay queues in \texttt{Delay()}, two seperate mechanisms are needed.
+First, to support $n$ tasks being delayed at once, \texttt{MAXTASKS} ``delay''
+structures are allocated statically.  These are then setup as a ring buffer of
+``dynamically allocatable'' nodes. This will be improved in the future when we
+find more time.  As a task gets delayed, a structure is allocated and inserted
+into a min-heap, taking $O(\log n)$ time.  Sadly this takes O(n) time. Tasks are
+popped off the heap with the same time complexity upper-bound.  This means that
+when the clock ticks, Delay can compare the current time and the wakeup time of
+the first node in the heap and pop it off accordingly, possibly popping multiple
+delayers. The downside to this allocation scheme is that if there is a single
+long-delaying task, and many shorter delaying tasks, we may wrap around the ring
+buffer of list nodes and reusing the long sleeping tasks's list node. 
+
+\subsection{Interrupts}
+\texttt{activate} starts a user task and through careful use of the
+\texttt{mov}s and \texttt{ldm}/\texttt{stm} version 3 (load/store from/to user
+mode registers from supervisor mode) instructions we change to user mode in an
+atomic fashion. This is to prevent an edge case where an interrupt occurs before
+all of the user state is restored. We \texttt{movs pc, lr} on line $x$. At line
+$x + 1$ we have our IRQ handler. This carefully changes to supervisor mode
+(making sure to transport \texttt{SPSR\_irq} and \texttt{lr\_irq}) A magic byte
+is stored in a magic location. Now the code ``falls through'' to the regular
+system call handler.  We process things as if it was a regular system call (this
+is where our code goes on such a system call.) This code passes the value stored
+at the magic location to the kernel and sets it to 0. The kernel can tell that
+it is processing an interrupt by whether the magic byte is 0 or not.  The
+context switch is under 20 instructions of code for a regular system call.
+
+\subsection{Servers and Task Structure}
+There is one serial server for each UART. Each has different clients, and
+different performance profiles due to the speeds of the UARTs. While each server
+has a similar overall structure, each is different in details. This makes each
+server smaller, and lets us turn on BWIO for a single UART if we need or want to
+debug our code. The train server directly handles all train related
+communication, and exposes data to user clients. The Window Manager deals with
+all output to the screen.
+
+\subsection{Notifiers}
+We decided it was a better design choice to leave interrupts off when running
+our notifiers. This leaves our kernel virtually free of hardware specific code
+apart from some timing code and identifying the nature of interrupts. We have a
+notifier for every kind of interrupt, for a total of 5.
+
+\subsection{Servers}
+Need more here?
+
+\end{document}
