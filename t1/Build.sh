@@ -22,7 +22,7 @@ OBJS="build/kernel.o build/switch.o build/user.o build/usyscall.o build/boot.o \
       build/notifier_uart2tx.o build/trains.o build/bwio.o
      "
 
-if [ `basename $PWD` != "k4" ]; then
+if [ `basename $PWD` != "t1" ]; then
 	cd ..
 fi
 
