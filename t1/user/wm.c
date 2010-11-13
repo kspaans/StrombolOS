@@ -184,7 +184,7 @@ void tables(char *sw) {
   SETCOLOUR(BG+BLACK);
   CURSORPOP();
 }
-void eval (char *cmd, int trid, char *sw,struct sensorevent s) {
+void eval (char *cmd, int trid, int track_tid, char *sw,struct sensorevent s) {
   char packet[5];
   char buf[32];
   SETCOLOUR (FG+BRIGHT+WHITE);
@@ -265,6 +265,13 @@ void eval (char *cmd, int trid, char *sw,struct sensorevent s) {
     packet[2] = token(cmd,2,buf)[0];
     Send (trid, packet, 3, NULL, 0);
     bwprintf (COM2, "Switching switch %d to direction %c.\n", stoi(token(cmd,1,buf)), token(cmd,2,buf)[0]);
+    // Notify the TRACKSERVER about the change in state, later we'll also ask it
+    // for train state...
+    char turnout_update[3];
+    turnout_update[0] = 't';
+    turnout_update[1] = stoi(token(cmd, 1, buf));
+    turnout_update[2] = token(cmd, 2, buf)[0];
+    Send(track_tid, turnout_update, 3, NULL, 0);
     sw[unfuckswitch(stoi(token(cmd,1,buf)))] = token(cmd,2,buf)[0];
     tables (sw);
   }
@@ -274,7 +281,16 @@ void eval (char *cmd, int trid, char *sw,struct sensorevent s) {
     Send (trid, packet, 2, NULL, 0);
     bwprintf (COM2, "Switching all switches to direction %c.\n", token(cmd,1,buf)[0]);
     int ii;
-    for (ii = 0; ii < 32; ii++) { sw[ii] = token(cmd,1,buf)[0]; }
+    // Notify the TRACKSERVER about the change in state, later we'll also ask it
+    // for train state...
+    char turnout_update[3];
+    turnout_update[0] = 't';
+    turnout_update[2] = token(cmd, 1, buf)[0];
+    for (ii = 0; ii < 32; ii++) {
+      sw[ii] = token(cmd,1,buf)[0];
+      turnout_update[1] = ii;
+      Send(track_tid, turnout_update, 3, NULL, 0);
+    }
     tables (sw);
   }
   else if (!strcmp ("st", token (cmd,0,buf))) {
@@ -300,8 +316,8 @@ void wm () {
   char inbuf[32];
   int ch;
   int n = 0;
-  int trid;
-char sw[32];
+  int trid, track_tid;
+  char sw[32];
   for (i = 0; i < 32; i++) sw[i] = '?';
   RegisterAs ("wm");
   
@@ -315,6 +331,7 @@ char sw[32];
 //  }
   SETCOLOUR (BG+BLACK);
   trid = WhoIs ("tr");
+  track_tid = WhoIs("trak");
   CLEAR();
   SETCOLOUR(BG+BRIGHT+MAGENTA);
   SETCOLOUR(FG+BRIGHT+WHITE);
@@ -354,7 +371,7 @@ char sw[32];
      if (ch == CHR_RETURN) { 
        bwputc (COM2,'\n');
        inbuf[n] = 0;
-       eval (inbuf, trid, sw, sen);
+       eval (inbuf, trid, track_tid, sw, sen);
        bwprintf (COM2, "> ");
        n = 0;
      }

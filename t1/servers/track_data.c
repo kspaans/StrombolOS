@@ -1,8 +1,3 @@
-#include "track.h"
-#include "../kernel/switch.h" // NULL
-
-void track_data()
-{
 struct track_node aA1;
 aA1.type      = SENSOR;
 aA1.num_edges = 2;
@@ -1475,4 +1470,3 @@ bSW11.edges[CURVED].dist = 445;
 bSW11.edges[CURVED].dest = &bSW14;
 bSW11.edges[BEHIND].dist = 60;
 bSW11.edges[BEHIND].dest = &bC13;
-}

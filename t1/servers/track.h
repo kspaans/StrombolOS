@@ -18,6 +18,7 @@ enum edge_type {AHEAD, BEHIND, CURVED};
 struct track_node {
   enum { SENSOR, SWITCH, STOP } type;
   int id; // ??? type or w/e
+  char switch_state;
   int x;
   int y;
   int num_edges;

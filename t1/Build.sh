@@ -19,7 +19,7 @@ OBJS="build/kernel.o build/switch.o build/user.o build/usyscall.o build/boot.o \
       build/uart1.o build/uart2.o build/trains_ui.o build/timings.o \
       build/notifier_clock.o build/awaitevent.o build/notifier_uart1rx.o \
       build/notifier_uart1tx.o build/notifier_uart2rx.o build/wm.o \
-      build/notifier_uart2tx.o build/trains.o build/bwio.o build/track_data.o \
+      build/notifier_uart2tx.o build/trains.o build/bwio.o build/track.o \
      "
 
 if [ `basename $PWD` != "t1" ]; then
@@ -141,8 +141,8 @@ as  ${ASFLAGS} -o build/trains_ui.o build/trains_ui.s || exit 1
 gcc ${CFLAGS}  -o build/timings.s user/timings.c || exit 1
 as  ${ASFLAGS} -o build/timings.o build/timings.s || exit 1
 
-gcc ${CFLAGS}  -o build/track_data.s servers/track_data.c || exit 1
-as  ${ASFLAGS} -o build/track_data.o build/track_data.s || exit 1
+gcc ${CFLAGS}  -o build/track.s servers/track.c || exit 1
+as  ${ASFLAGS} -o build/track.o build/track.s || exit 1
 
 ld  ${LDFLAGS} -o build/StrombolOS.elf ${OBJS} -lgcc
 
