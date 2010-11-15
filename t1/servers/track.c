@@ -42,24 +42,28 @@ struct trip next_sensor(int current, struct track_node **map)
   }
 
   if (next->type == SWITCH) { // Must decide if we are ahead/behind
-    prev = next;
+    prev = cur;
     while (next->type == SWITCH) {
-      if (next->edges[AHEAD].dest == cur) {
+      if (next->edges[AHEAD].dest == prev) {
         dist += next->edges[BEHIND].dist;
+        prev =  next;
         next =  next->edges[BEHIND].dest;
       }
-      else if (next->edges[BEHIND].dest == cur) {
+      else if (next->edges[BEHIND].dest == prev) {
         if (next->switch_state == 'S' || next->switch_state == 's') {
           dist += next->edges[AHEAD].dist;
+          prev =  next;
           next =  next->edges[AHEAD].dest;
         }
         else {
           dist += next->edges[CURVED].dist;
+          prev =  next;
           next =  next->edges[CURVED].dest;
         }
       }
       else { // Always go to same place when coming at switch in this direction
         dist += next->edges[BEHIND].dist;
+        prev =  next;
         next =  next->edges[BEHIND].dest;
       }
     }
