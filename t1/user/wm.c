@@ -309,6 +309,35 @@ void eval (char *cmd, int trid, int track_tid, char *sw,struct sensorevent s) {
   SETCOLOUR (FG+WHITE);
 }
 
+#define CURRENT 1
+#define LAST    0
+void examine_sensors(struct sensorevent s, struct sensorevent data[])
+{
+  int dist = 0, r;
+  char msg[5];
+  char *ip;
+  int track_tid = WhoIs("trak");
+
+  r = (data[LAST].group - 'A') * 16 + data[LAST].id;
+  msg[0] = 'd';
+  ip = (char *)&r;
+  msg[1] = *ip++;
+  msg[2] = *ip++;
+  msg[3] = *ip++;
+  msg[4] = *ip++;
+
+  if (s.time != data[LAST].time) {
+    r = Send(track_tid, msg, 5, (char *)(&dist), 4);
+    bwprintf(COM2, ":: Speed between %c%d and %c%d: %d mm/sec (%d / (%d / 20))\r\n",
+             data[LAST].group, data[LAST].id, s.group, s.id,
+             dist / ((s.time - data[LAST].time) / 20), dist,
+             s.time - data[LAST].time);
+    //data[CURRENT] = s.time - data[LAST].time;
+  }
+
+  data[LAST] = s;
+  return;
+}
 
 void wm () {
   int done = 0;
@@ -318,6 +347,7 @@ void wm () {
   int n = 0;
   int trid, track_tid;
   char sw[32];
+  struct sensorevent data[2];
   for (i = 0; i < 32; i++) sw[i] = '?';
   RegisterAs ("wm");
   
@@ -365,6 +395,7 @@ void wm () {
     t = Time()/2; 
     Send (trid, &sensorquery, 1, (char*)(&sen), sizeof(struct sensorevent));
     prettyprintsensor (sen); 
+    examine_sensors(sen, data);
     prettyprinttime (t);
     ch = Getc_r(COM2);
     if (ch !=-1) {

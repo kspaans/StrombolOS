@@ -13,67 +13,104 @@
 #define BUFLEN 5
 //#define // some macro for mapping numbers to IDs
 
+/* Like a track_edge, but has id of next node */
+struct trip {
+  int distance;
+  int destination;
+};
+
 /*
  * Takes the current sensor and reports the next expected one given the track
  * and current state of switches. The trick is to know relative directions when
  * approaching switches/sensors, so that we return the correct ID according to
- * that direction.
+ * that direction. It returns a structure giving both the distance between the
+ * source and destination, and a mappable (given map) ID of the destination.
  */
-int next_sensor(int current, struct track_node **map)
+struct trip next_sensor(int current, struct track_node **map)
 {
+  struct trip t;
   struct track_node *cur = map[current];
   struct track_node *next, *prev;
+  int dist = 0;
 
   if (current % 2 == 0) {
-    next = cur->edges[AHEAD].dest;
+    next =  cur->edges[AHEAD].dest;
+    dist += cur->edges[AHEAD].dist;
   } else {
-    next = cur->edges[BEHIND].dest;
+    next =  cur->edges[BEHIND].dest;
+    dist += cur->edges[BEHIND].dist;
   }
 
   if (next->type == SWITCH) { // Must decide if we are ahead/behind
     prev = next;
     while (next->type == SWITCH) {
       if (next->edges[AHEAD].dest == cur) {
-        next = next->edges[BEHIND].dest;
+        dist += next->edges[BEHIND].dist;
+        next =  next->edges[BEHIND].dest;
       }
       else if (next->edges[BEHIND].dest == cur) {
         if (next->switch_state == 'S' || next->switch_state == 's') {
-          next = next->edges[AHEAD].dest;
+          dist += next->edges[AHEAD].dist;
+          next =  next->edges[AHEAD].dest;
         }
         else {
-          next = next->edges[CURVED].dest;
+          dist += next->edges[CURVED].dist;
+          next =  next->edges[CURVED].dest;
         }
       }
       else { // Always go to same place when coming at switch in this direction
-        next = next->edges[BEHIND].dest;
+        dist += next->edges[BEHIND].dist;
+        next =  next->edges[BEHIND].dest;
       }
     }
     if (next->edges[AHEAD].dest == prev) {
-      return (next->id * 2) + 1;
+      t.destination = (next->id * 2) + 1;
     }
     else {
-      return (next->id * 2) + 2;
+      t.destination = (next->id * 2) + 2;
     }
   }
   else if (next->type == STOP) { // We have nowhere to go "next"
-    return -1;
+    t.distance = -1;
+    t.destination = -1;
   }
   else {
     // To decide which switch direction, see if it points at cur AHEAD or
     // BEHIND
     if (next->edges[AHEAD].dest == cur) {
-      return (next->id * 2) + 1;
+      t.destination = (next->id * 2) + 1;
     }
     else {
-      return (next->id * 2) + 2;
+      t.destination = (next->id * 2) + 2;
     }
   }
+
+  t.distance = dist;
+  // ASSERT(next->id == map[t.destionation]->id);
+
+  return t;
 }
+
+/*
+ * Find the edge between sensors A and B (possibly including segments between
+ * switches) to report the distance between them.
+ */
+#if 0
+int distance(int a, int b, struct track_node *map[])
+{
+  int distance;
+
+  next = next_sensor(a, map);
+
+  return
+}
+#endif /* comment */
 
 /*
  * PROTOCOL:
  * next:    "n####"  next switch after us?
  * turnout: "t#[SC]" new turnout state -- or use a struct?
+ * dist:    "d####"  distance to next sensor
  */
 void track()
 {
@@ -96,6 +133,7 @@ void track()
     &aSW99, &aSW9A, &aSW9B, &aSW9C
   };
   char buf[BUFLEN];
+  struct trip t;
   int i, r, tid;
 
   RegisterAs("trak");
@@ -105,9 +143,12 @@ void track()
 
     switch (buf[0]) {
       case 'n':
-        i = next_sensor(*((int *)(buf + 1)), sens_num_to_node);
-        r = Reply(tid, (char *)(&i), 4);
+        t = next_sensor(*((int *)(buf + 1)), sens_num_to_node);
+        r = Reply(tid, (char *)(&t.destination), 4);
         break;
+      case 'd':
+        t = next_sensor(*((int *)(buf + 1)), sens_num_to_node);
+        r = Reply(tid, (char *)(&t.distance), 4);
       case 't':
         r = Reply(tid, NULL, 0);
         i = buf[1];
