@@ -16,4 +16,8 @@ void notifier_uart1tx();
 void notifier_uart2rx();
 void notifier_uart2tx();
 
+int   fuckswitch(int x);
+int unfuckswitch(int x);
+int strcmp(const char *a, const char *b);
+
 #endif // SERVERS__INCLUDED

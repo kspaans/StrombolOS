@@ -92,7 +92,7 @@ void trains () {
   char cmd[15];
   int speeds[100];
   char sw[32];
-  int head = 0;
+  //int head = 0;
   int i;
 
   struct sensorevent latest;
