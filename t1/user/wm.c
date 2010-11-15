@@ -28,6 +28,11 @@ struct sensorevent {
   int time;
 };
 
+struct measurement {
+  int num;
+  int time;
+};
+
 int bwinputready (int channel) {
   int *flags;
   switch (channel) {
@@ -184,7 +189,8 @@ void tables(char *sw) {
   SETCOLOUR(BG+BLACK);
   CURSORPOP();
 }
-void eval (char *cmd, int trid, int track_tid, char *sw,struct sensorevent s) {
+void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
+           struct measurement mz[][80]) {
   char packet[5];
   char buf[32];
   SETCOLOUR (FG+BRIGHT+WHITE);
@@ -303,6 +309,17 @@ void eval (char *cmd, int trid, int track_tid, char *sw,struct sensorevent s) {
   else if (!strcmp ("wh", token (cmd, 0, buf))) {
     bwprintf (COM2, "Latest sensor: %c%d at time %d:%d.%d\n", s.group,s.id, (s.time/1200), (s.time/20)%60, (s.time/2) %10);
   }
+  else if (!strcmp("cal", token(cmd, 0, buf))) {
+    int i, j;
+    FOREACH(i, 80) {
+      FOREACH(j, 80) {
+        if (mz[i][j].time != 0) {
+          bwprintf(COM2, "Average Time (ticks) [%d][%d]:\t"
+                   "%d\r\n", i, j, mz[i][j].time);
+        }
+      }
+    }
+  }
   else {
     bwprintf (COM2, "Unknown command.\n");
   }
@@ -311,14 +328,16 @@ void eval (char *cmd, int trid, int track_tid, char *sw,struct sensorevent s) {
 
 #define CURRENT 1
 #define LAST    0
-void examine_sensors(struct sensorevent s, struct sensorevent data[])
+void examine_sensors(struct sensorevent s, struct sensorevent data[],
+                     struct measurement mz[][80])
 {
-  int dist = 0, r;
+  int dist = 0, r, last_id, cur_id, time, num;
   char msg[5];
   char *ip;
   int track_tid = WhoIs("trak");
 
-  r = (data[LAST].group - 'A') * 16 + data[LAST].id;
+  last_id = (data[LAST].group - 'A') * 16 + data[LAST].id;
+  cur_id  = (s.group - 'A') * 16 + s.id;
   msg[0] = 'd';
   ip = (char *)&r;
   msg[1] = *ip++;
@@ -326,13 +345,19 @@ void examine_sensors(struct sensorevent s, struct sensorevent data[])
   msg[3] = *ip++;
   msg[4] = *ip++;
 
-  if (s.time != data[LAST].time) {
+  if (s.time != data[LAST].time && last_id > 0 && cur_id > 0) {
+    time =   mz[last_id][cur_id].time;
+    num  = ++mz[last_id][cur_id].num;
+    time = ((time * num) + (s.time - data[LAST].time)) / num;
+    mz[last_id][cur_id].time = time;
+#   if 0
     r = Send(track_tid, msg, 5, (char *)(&dist), 4);
     bwprintf(COM2, ":: Speed between %c%d and %c%d: %d mm/sec (%d / (%d / 20))\r\n",
              data[LAST].group, data[LAST].id, s.group, s.id,
              dist / ((s.time - data[LAST].time) / 20), dist,
              s.time - data[LAST].time);
     //data[CURRENT] = s.time - data[LAST].time;
+#   endif /* comment */
   }
 
   data[LAST] = s;
@@ -341,16 +366,23 @@ void examine_sensors(struct sensorevent s, struct sensorevent data[])
 
 void wm () {
   int done = 0;
-  int i=0,t;
+  int i=0, j, t;
   char inbuf[32];
   int ch;
   int n = 0;
   int trid, track_tid;
   char sw[32];
   struct sensorevent data[2];
+  struct measurement measurements[80][80];
   for (i = 0; i < 32; i++) sw[i] = '?';
+  FOREACH(i, 80) {
+    FOREACH(j, 80) {
+      measurements[i][j].time = 0;
+      measurements[i][j].num  = 0;
+    }
+  }
   RegisterAs ("wm");
-  
+
 
 //  while (1) {
 //     bwgetc(COM1);
@@ -395,14 +427,14 @@ void wm () {
     t = Time()/2; 
     Send (trid, &sensorquery, 1, (char*)(&sen), sizeof(struct sensorevent));
     prettyprintsensor (sen); 
-    examine_sensors(sen, data);
+    examine_sensors(sen, data, measurements);
     prettyprinttime (t);
     ch = Getc_r(COM2);
     if (ch !=-1) {
      if (ch == CHR_RETURN) { 
        bwputc (COM2,'\n');
        inbuf[n] = 0;
-       eval (inbuf, trid, track_tid, sw, sen);
+       eval (inbuf, trid, track_tid, sw, sen, measurements);
        bwprintf (COM2, "> ");
        n = 0;
      }
