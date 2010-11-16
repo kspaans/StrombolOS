@@ -200,6 +200,12 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     Send (trid, packet, 1, NULL, 0);
     bwputstr (COM2, "Train set started.\n");
   }
+  else if (!strcmp ("add", token(cmd,0,buf))) {
+    bwprintf (COM2, "Adding train %d.\n",stoi(token (cmd,1,buf)));
+    packet[0] = 'A';
+    packet[1] = (char)stoi(token(cmd,1,buf));
+    Send (trid, packet, 2, NULL, 0);
+  }
   else if (!strcmp ("q", cmd)) {
     bwprintf (COM2, "[2J[1;1HQuiting to reboot.\n");
     Shutdown();
@@ -307,6 +313,20 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     Send (trid, packet, 2, &c, 1);
     bwprintf (COM2, "Switch %d is in direction %c.\n", stoi(token(cmd,1,buf)), c);
   }
+  else if (!strcmp ("loc", token (cmd,0,buf))) {
+    packet[0] = 'P';
+    packet[1] = (char)stoi(token(cmd,1,buf));
+    char c;
+    Send (trid, packet,2, &c, 1);
+    switch (c) {
+      case 255:
+        bwprintf (COM2, "Train %d is lost!\n", stoi(token(cmd,1,buf))); break;
+      case 254:
+        bwprintf (COM2, "Train %d has not been added!\n", stoi(token(cmd,1,buf))); break;
+      default:
+        bwprintf (COM2, "Train %d is at location %d.\n", stoi(token(cmd,1,buf)), (int)c); break;
+    }
+  }
   else if (!strcmp ("wh", token (cmd, 0, buf))) {
     bwprintf (COM2, "Latest sensor: %c%d at time %d:%d.%d\n", s.group,s.id, (s.time/1200), (s.time/20)%60, (s.time/2) %10);
   }
@@ -372,6 +392,12 @@ void examine_sensors(struct sensorevent s, struct sensorevent data[],
   data[LAST] = s;
   return;
 }
+/*void wm () {
+  RegisterAs ("wm");
+  Pass(); // let ui open.
+  int tid_ui = WhoIs ("ui");
+  
+}*/
 
 void wm () {
   int done = 0;
@@ -392,6 +418,8 @@ void wm () {
   }
   RegisterAs ("wm");
 
+ // RegisterAs ("ui");
+  
 
 //  while (1) {
 //     bwgetc(COM1);
