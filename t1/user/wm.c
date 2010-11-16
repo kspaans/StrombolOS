@@ -34,6 +34,8 @@ struct measurement {
   int time;
 };
 
+struct sensorevent fucksensor (int x, int t);
+
 int bwinputready (int channel) {
   int *flags;
   switch (channel) {
@@ -317,6 +319,7 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     bwprintf (COM2, "Switch %d is in direction %c.\n", stoi(token(cmd,1,buf)), c);
   }
   else if (!strcmp ("loc", token (cmd,0,buf))) {
+    struct sensorevent dispsensor;
     packet[0] = 'P';
     packet[1] = (char)stoi(token(cmd,1,buf));
     char c;
@@ -327,7 +330,8 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
       case 254:
         bwprintf (COM2, "Train %d has not been added!\n", stoi(token(cmd,1,buf))); break;
       default:
-        bwprintf (COM2, "Train %d is at location %d.\n", stoi(token(cmd,1,buf)), (int)c); break;
+        dispsensor = fucksensor (stoi(token(cmd,1,buf)),0);
+        bwprintf (COM2, "Train %d is at sensor %c%d.\n", stoi(token(cmd,1,buf)), dispsensor.group,dispsensor.id); break;
     }
   }
   else if (!strcmp ("wh", token (cmd, 0, buf))) {

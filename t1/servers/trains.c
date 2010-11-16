@@ -78,11 +78,11 @@ struct sensorevent {
 struct sensorevent fucksensor (int x, int time) {
   struct sensorevent ans;
   ans.time = time;
-       if (x    >= 1 && x    <= 16) { ans.group = 'A'; ans.id = x;    }  
-  else if (x-16 >= 1 && x-16 <= 16) { ans.group = 'B'; ans.id = x-16; }
-  else if (x-32 >= 1 && x-32 <= 16) { ans.group = 'C'; ans.id = x-32; }
-  else if (x-48 >= 1 && x-48 <= 16) { ans.group = 'D'; ans.id = x-48; }
-  else if (x-64 >= 1 && x-64 <= 16) { ans.group = 'E'; ans.id = x-64; }
+       if (x    >= 0 && x    <= 15) { ans.group = 'A'; ans.id = x+1;    }  
+  else if (x-16 >= 0 && x-16 <= 15) { ans.group = 'B'; ans.id = x-15; }
+  else if (x-32 >= 0 && x-32 <= 15) { ans.group = 'C'; ans.id = x-31; }
+  else if (x-48 >= 0 && x-48 <= 15) { ans.group = 'D'; ans.id = x-47; }
+  else if (x-64 >= 0 && x-64 <= 15) { ans.group = 'E'; ans.id = x-63; }
 //  if (ans.group == 'C' && ans.id == 3) { Putc (COM1, 0x0f); Putc(COM1, 0x34); }
   return ans;
 }
@@ -103,6 +103,7 @@ void sensor_secretary () {
   while (1) {
     zeromsg (&in);
     zeromsg (&out);
+    t = Time ();
     r = Receive (&tid, (char*)(&in), sizeof(struct msg));
     switch (in.id) {
       case 'D':
@@ -110,7 +111,13 @@ void sensor_secretary () {
         Reply (tid, NULL, 0);
         break;
       case 'R': // train is requesting status of sensor
-        if (sensor[in.d1]) {
+        if (sensor[in.d1] && t-sensor[in.d1] > 60) {
+          bwprintf (COM2, "Expiring sensor %d.\n", in.d1);
+          sensor[in.d1] = 0;
+          Reply(tid,NULL, 0);
+        }
+        else if (sensor[in.d1]) {
+          bwprintf (COM2, "success???\n");
           out.d1 = sensor[in.d1];
           sensor[in.d1] = 0;
           Reply (tid, (char*)(&out), sizeof (struct msg));
@@ -120,7 +127,6 @@ void sensor_secretary () {
         }
         break;
      case 'L': // i am lost!
-       t = Time();
        for (i = 0; i < 80; i++) {
          if (sensor[i] && t-sensor[i] > 60 ) {
            sensor[i] = 0;
@@ -148,14 +154,14 @@ int nextsensor (int cur, int trktid) {
 
   zeromsg(&out);
   out.id = 'n';
-  out.d1 = cur - 1;
+  out.d1 = cur;
 
   // poll for our expectednext
   // if nothing, nothing. otherwise update shit
   // update velocity shit?
   if (Send(trktid, (char *)&out, sizeof(struct msg), (char *)&t,
            sizeof(struct trip)) != sizeof(struct trip)) PANIC;
-  return t.destination + 1;
+  return t.destination;
 }
 
 void train_agent () {
@@ -167,10 +173,10 @@ void train_agent () {
   int lastsensor = -1;
   int newspeed; int speed;
   int timelastsensor  = 0;
-  int expectednext;
+  int expectednext = -1;
   int lost = 1; // start off lost
-  int dx;
-  int r,t;
+  int dx=0;
+  int r=0,t=0;
 
   unsigned int updatemsg[3];
   updatemsg[0] = (unsigned int)'U';
@@ -189,6 +195,7 @@ void train_agent () {
     }
 
     if (t-timelastsensor > LOST_TIMEOUT) {
+      bwprintf (COM2, "Now i am lost...\n");
       lost = 1;
       lastsensor = -1;
     }
@@ -202,7 +209,7 @@ void train_agent () {
         timelastsensor = in.d2;
         lastsensor = in.d1;
         expectednext = nextsensor(lastsensor, trktid);
-        bwprintf(COM2, "I am at %d now, after that: %d\r\n", lastsensor - 1,
+        bwprintf(COM2, "Found! I am at %d now, after that: %d\r\n", lastsensor,
                   expectednext);
       }
     }
@@ -210,12 +217,14 @@ void train_agent () {
       zeromsg(&out);
       zeromsg(&in);
       out.id = 'R';
-      out.d1 = lastsensor;
+      out.d1 = expectednext;
       r = Send (senid, (char*)&out, sizeof (struct msg), (char*)&in, sizeof (struct msg));
       if (r) { // calibrate velocity more????
+        bwprintf (COM2, "ok, successfully got from %d to %d, ", lastsensor, expectednext);
         timelastsensor = in.d1;
         lastsensor = expectednext;
         expectednext = nextsensor(lastsensor, trktid);
+        bwprintf (COM2, "should now get to %d.\n", expectednext);
       }
     }
  
@@ -242,6 +251,7 @@ void trains () {
   unsigned char train_dict[256];
   struct sensorevent latest;
   latest.group = 0;
+
   for (i = 0; i < 100; i++) { speeds[i] = tr2tid[i] = 0; tid2tr[i] = 0; locations[i] = -2; }
   for (i = 0; i < 10; i++)  { lastread[i] = 0; }
 
@@ -291,13 +301,13 @@ start:
            for (i = 0; i < 10; i++) {
              char wut = (cmd[i+1]^lastread[i]) & cmd[i+1];
              lastread[i] = cmd[i+1];
-             int j = 1;
+             int j = 0;
              while (wut) {
                if (wut &128) { 
                  latest = fucksensor (i*8+j,Time()); 
                  out.id = 'D';
                  out.d1 = i*8+j;
-                 out.d2 = Time(); // change me, 508khz reading?
+                 out.d2 = latest.time; // change me, 508khz reading?
                  Send (sens, (char*)(&out), sizeof (struct msg), NULL, 0);
                }
                wut <<= 1;
