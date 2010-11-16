@@ -194,7 +194,12 @@ void track()
         r = Reply(tid, NULL, 0);
         bwprintf(COM2, "\r\nTurnout %d updated to %c\r\n", m.d1, m.c1);
         i = m.d1;
-        switches[i]->switch_state = m.c1; // lol overflow
+        if (i >= sizeof(switches)) {
+          DPRINTERR("Overflow of switch ID number\r\n");
+        }
+        else {
+          switches[i]->switch_state = m.c1; // lol overflow
+        }
         break;
       default:
         PANIC;

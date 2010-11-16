@@ -287,6 +287,9 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     // for train state...
     m.id = 't';
     m.d1 = stoi(token(cmd, 1, buf)) - 1;
+    if (m.d1 > 17) {
+      m.d1 -= 134;
+    }
     m.c1 = token(cmd, 2, buf)[0];
     Send(track_tid, (char *)&m, sizeof(struct msg), NULL, 0);
     sw[unfuckswitch(stoi(token(cmd,1,buf)))] = token(cmd,2,buf)[0];
@@ -302,7 +305,7 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     int ii;
     m.id = 't';
     m.c1 = token(cmd, 2, buf)[0];
-    for (ii = 0; ii < 32; ii++) {
+    for (ii = 0; ii < 22; ii++) {
       sw[ii] = token(cmd,1,buf)[0];
       m.d1 = ii;
       Send(track_tid, (char *)&m, sizeof(struct msg), NULL, 0);
