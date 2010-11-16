@@ -30,3 +30,9 @@ struct trip {
   int destination;
   struct track_node destnode;
 };
+
+struct msg { // for IPC
+  char id, c1, c2, c3;
+  int d1, d2; 
+};
+

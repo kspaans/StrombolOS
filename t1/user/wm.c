@@ -78,7 +78,8 @@ void prettyprintsensor (struct sensorevent s) {
   SETCOLOUR (BG+BRIGHT+MAGENTA);
   SETCOLOUR (FG + BRIGHT+ WHITE);
   if (s.group != 0) {
-    bwprintf (COM2, "Latest sensor: %c%d at time %d:%d.%d     ", s.group,s.id, (s.time/1200), (s.time/20)%60, (s.time/2) %10);
+    // XXX queef
+    //bwprintf (COM2, "Latest sensor: %c%d at time %d:%d.%d     ", s.group,s.id, (s.time/1200), (s.time/20)%60, (s.time/2) %10);
   }
   SETCOLOUR(BG+BLACK);
   SETCOLOUR (FG+WHITE);
@@ -100,7 +101,8 @@ void prettyprinttime (int ticks) {
     case 3: flair = '/';  break;
   }
   ENABLEWRAP();
-  bwprintf (COM2, "Time: %d:%d.%d %c", (ticks/600),(ticks/10)%60, ticks % 10, flair);
+  // XXX queef
+  //bwprintf (COM2, "Time: %d:%d.%d %c", (ticks/600),(ticks/10)%60, ticks % 10, flair);
   CLEARTOEND();
   SETCOLOUR(BG+BLACK);
   SETCOLOUR(FG+WHITE);
@@ -194,6 +196,7 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
            struct measurement mz[][80]) {
   char packet[5];
   char buf[32];
+  struct msg m;
   SETCOLOUR (FG+BRIGHT+WHITE);
   if (!strcmp("go", cmd)) {
     packet[0] = 'g';
@@ -278,13 +281,14 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     packet[2] = token(cmd,2,buf)[0];
     Send (trid, packet, 3, NULL, 0);
     bwprintf (COM2, "Switching switch %d to direction %c.\n", stoi(token(cmd,1,buf)), token(cmd,2,buf)[0]);
+#   if 0
     // Notify the TRACKSERVER about the change in state, later we'll also ask it
     // for train state...
-    char turnout_update[3];
-    turnout_update[0] = 't';
-    turnout_update[1] = stoi(token(cmd, 1, buf));
-    turnout_update[2] = token(cmd, 2, buf)[0];
-    Send(track_tid, turnout_update, 3, NULL, 0);
+    m.id = 't';
+    m.d1 = stoi(token(cmd, 1, buf));
+    m.c1 = token(cmd, 2, buf)[0];
+    Send(track_tid, (char *)&m, sizeof(struct msg), NULL, 0);
+#   endif
     sw[unfuckswitch(stoi(token(cmd,1,buf)))] = token(cmd,2,buf)[0];
     tables (sw);
   }
@@ -293,16 +297,15 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     packet[1] = token(cmd,1,buf)[0];
     Send (trid, packet, 2, NULL, 0);
     bwprintf (COM2, "Switching all switches to direction %c.\n", token(cmd,1,buf)[0]);
-    int ii;
     // Notify the TRACKSERVER about the change in state, later we'll also ask it
     // for train state...
-    char turnout_update[3];
-    turnout_update[0] = 't';
-    turnout_update[2] = token(cmd, 1, buf)[0];
+    int ii;
+    m.id = 't';
+    m.c1 = token(cmd, 2, buf)[0];
     for (ii = 0; ii < 32; ii++) {
       sw[ii] = token(cmd,1,buf)[0];
-      turnout_update[1] = ii;
-      Send(track_tid, turnout_update, 3, NULL, 0);
+      m.d1 = ii;
+      //Send(track_tid, (char *)&m, sizeof(struct msg), NULL, 0);
     }
     tables (sw);
   }
@@ -471,9 +474,9 @@ void wm () {
    while (!done) {
     t = Time()/2; 
     Send (trid, &sensorquery, 1, (char*)(&sen), sizeof(struct sensorevent));
-    prettyprintsensor (sen); 
-    examine_sensors(sen, data, measurements);
-    prettyprinttime (t);
+    //prettyprintsensor (sen); 
+    //examine_sensors(sen, data, measurements);
+    //prettyprinttime (t);
     ch = Getc_r(COM2);
     if (ch !=-1) {
      if (ch == CHR_RETURN) { 

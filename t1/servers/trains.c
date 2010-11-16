@@ -2,6 +2,7 @@
 #include <ts7200.h>
 #include <debug.h>
 #include "servers.h"
+#include "track.h"
 #include "../user/usyscall.h"
 #include "../ktests/tests.h"  // PANIC
 #include "../kernel/switch.h" // FOREVER, NULL
@@ -86,11 +87,6 @@ struct sensorevent fucksensor (int x, int time) {
   return ans;
 }
 
-struct msg { // for IPC
-  char id, c1, c2, c3;
-  int d1, d2; 
-};
-
 void zeromsg (struct msg *f) {
   f->id=f->c1=f->c2=f->c3=0;
   f->d1=f->d2=0;
@@ -144,10 +140,22 @@ fart:
   }
 }
 
-#define LOST_TIMEOUT 100
+#define LOST_TIMEOUT 10000000
 
-int nextsensor (int cur) {
- // FILL ME IN
+int nextsensor (int cur, int trktid) {
+  struct trip t;
+  struct msg out;
+
+  zeromsg(&out);
+  out.id = 'n';
+  out.d1 = cur;
+
+  // poll for our expectednext
+  // if nothing, nothing. otherwise update shit
+  // update velocity shit?
+  if (Send(trktid, (char *)&out, sizeof(struct msg), (char *)&t,
+           sizeof(struct trip)) != sizeof(struct trip)) PANIC;
+  return t.destination;
 }
 
 void train_agent () {
@@ -155,7 +163,7 @@ void train_agent () {
   char msg = 'U';
   int trid = MyParentTid ();
   int senid = WhoIs ("sens");
-  int trkid = WhoIs ("trk");
+  int trktid = WhoIs ("trak");
   int lastsensor = -1;
   int newspeed; int speed;
   int timelastsensor  = 0;
@@ -193,7 +201,7 @@ void train_agent () {
         lost = 0;
         timelastsensor = in.d2;
         lastsensor = in.d1;
-        expectednext = nextsensor(lastsensor);
+        expectednext = nextsensor(lastsensor, trktid);
       }
     }
     else {
@@ -205,7 +213,7 @@ void train_agent () {
       if (r) { // calibrate velocity more????
         timelastsensor = in.d1;
         lastsensor = expectednext;
-        expectednext = nextsensor(lastsensor);
+        expectednext = nextsensor(lastsensor, trktid);
       }
     }
  
@@ -279,7 +287,7 @@ start:
           case 1:   /*bwprintf (COM2, "pinging\n");*/Putc (COM1, 133); break;
           case 11: 
            for (i = 0; i < 10; i++) {
-             char wut = cmd[i+1]^lastread[i] & cmd[i+1];
+             char wut = (cmd[i+1]^lastread[i]) & cmd[i+1];
              lastread[i] = cmd[i+1];
              int j = 1;
              while (wut) {

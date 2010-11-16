@@ -10,7 +10,6 @@
 #include "../kernel/switch.h" // FOREVER, NULL, FOREACH
 #include "track.h"
 
-#define BUFLEN 5
 //#define // some macro for mapping numbers to IDs
 
 /*
@@ -131,27 +130,27 @@ void track()
     &aSW10, &aSW11, &aSW12, &aSW13, &aSW14, &aSW15, &aSW16, &aSW17, &aSW18,
     &aSW99, &aSW9A, &aSW9B, &aSW9C
   };
-  char buf[BUFLEN];
   struct trip t;
+  struct msg m;
   int i, r, tid;
 
   RegisterAs("trak");
 
   FOREVER {
-    r = Receive(&tid, buf, BUFLEN);
+    r = Receive(&tid, (char *)&m, sizeof(struct msg));
 
-    switch (buf[0]) {
+    switch (m.id) {
       case 'n':
-        t = next_sensor(*((int *)(buf + 1)), sens_num_to_node);
+        t = next_sensor(m.d1, sens_num_to_node);
         r = Reply(tid, (char *)&t, sizeof(struct trip));
         break;
       case 'd':
-        t = next_sensor(*((int *)(buf + 1)), sens_num_to_node);
+        t = next_sensor(m.d1, sens_num_to_node);
         r = Reply(tid, (char *)(&t.distance), 4);
       case 't':
         r = Reply(tid, NULL, 0);
-        i = buf[1];
-        switches[i]->switch_state = buf[2];
+        i = m.d1; // FIXME
+        switches[i]->switch_state = m.c1;
         break;
       default:
         PANIC;
