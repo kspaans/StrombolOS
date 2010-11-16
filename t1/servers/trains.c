@@ -107,18 +107,23 @@ void sensor_secretary () {
     r = Receive (&tid, (char*)(&in), sizeof(struct msg));
     switch (in.id) {
       case 'D':
+        bwprintf (COM2, "was told that sensor %d was triggered at %d.\n", in.d1,
+        in.d2);
         sensor[in.d1] = in.d2;
         Reply (tid, NULL, 0);
         break;
       case 'R': // train is requesting status of sensor
-        if (sensor[in.d1] && t-sensor[in.d1] > 60) {
-          bwprintf (COM2, "Expiring sensor %d.\n", in.d1);
+        if (sensor[in.d1]!=0 && t-sensor[in.d1] > 60) {
+          bwprintf (COM2, "Expiring sensor %d, which was triggered at %d\n", in.d1,
+          sensor[in.d1]);
           sensor[in.d1] = 0;
           Reply(tid,NULL, 0);
         }
         else if (sensor[in.d1]) {
+          sensor[in.d1] = 0;
           bwprintf (COM2, "success???\n");
           out.d1 = sensor[in.d1];
+          sensor[in.d1] = 0;
           sensor[in.d1] = 0;
           Reply (tid, (char*)(&out), sizeof (struct msg));
         }
@@ -299,12 +304,13 @@ start:
           case 1:   /*bwprintf (COM2, "pinging\n");*/Putc (COM1, 133); break;
           case 11: 
            for (i = 0; i < 10; i++) {
+             int tt = Time ();
              char wut = (cmd[i+1]^lastread[i]) & cmd[i+1];
              lastread[i] = cmd[i+1];
              int j = 0;
              while (wut) {
                if (wut &128) { 
-                 latest = fucksensor (i*8+j,Time()); 
+                 latest = fucksensor (i*8+j,tt); 
                  out.id = 'D';
                  out.d1 = i*8+j;
                  out.d2 = latest.time; // change me, 508khz reading?

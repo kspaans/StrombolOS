@@ -61,10 +61,10 @@ struct trip next_sensor(int current, struct track_node **map)
       }
     }
     if (next->edges[AHEAD].dest == prev) {
-      t.destination = (next->id * 2);
+      t.destination = (next->id * 2) + 1;
     }
     else {
-      t.destination = (next->id * 2) + 1;
+      t.destination = (next->id * 2) + 2;
     }
   }
   else if (next->type == STOP) { // We have nowhere to go "next"
@@ -75,10 +75,10 @@ struct trip next_sensor(int current, struct track_node **map)
     // To decide which switch direction, see if it points at cur AHEAD or
     // BEHIND
     if (next->edges[AHEAD].dest == cur) {
-      t.destination = (next->id * 2);
+      t.destination = (next->id * 2) + 1;
     }
     else {
-      t.destination = (next->id * 2) + 1;
+      t.destination = (next->id * 2) + 2;
     }
   }
 
