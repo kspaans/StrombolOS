@@ -337,14 +337,14 @@ void eval (char *cmd, int trid, int track_tid, char *sw,struct sensorevent s) {
 }*/
 
 void wm () {
-  bwputstr (COM2, "[2J[1;1H");
+/*  bwputstr (COM2, "[2J[1;1H");
   int ii,jj;
   for (ii = 0; ii < 15; ii++) {
     bwprintf (COM2, "[%d;1H[41m                                                            ", ii);
   }
   bwprintf (COM2, "[100m[2;2H  [4;8H  [100;100H");
   Shutdown();
-
+*/
   int done = 0;
   int i=0,t;
   char inbuf[32];
