@@ -148,14 +148,14 @@ int nextsensor (int cur, int trktid) {
 
   zeromsg(&out);
   out.id = 'n';
-  out.d1 = cur;
+  out.d1 = cur - 1;
 
   // poll for our expectednext
   // if nothing, nothing. otherwise update shit
   // update velocity shit?
   if (Send(trktid, (char *)&out, sizeof(struct msg), (char *)&t,
            sizeof(struct trip)) != sizeof(struct trip)) PANIC;
-  return t.destination;
+  return t.destination + 1;
 }
 
 void train_agent () {
@@ -202,6 +202,8 @@ void train_agent () {
         timelastsensor = in.d2;
         lastsensor = in.d1;
         expectednext = nextsensor(lastsensor, trktid);
+        bwprintf(COM2, "I am at %d now, after that: %d\r\n", lastsensor - 1,
+                  expectednext);
       }
     }
     else {
