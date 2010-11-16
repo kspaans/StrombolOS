@@ -22,50 +22,84 @@
  */
 struct trip next_sensor(int current, struct track_node **map)
 {
+  char name1[4], name2[4];
   struct trip t;
   struct track_node *cur = map[current];
   struct track_node *next, *prev;
   int dist = 0;
 
+  sens_id_to_name(current, name1);
+    bwprintf(COM2, "NEXT         %d|%s\r\n", current, name1);
+  //sens_id_to_name(cur->id * 2, name1);
+  //  bwprintf(COM2, "NEXT  mapped %d|%s  ... edge choices:\r\n", cur->id * 2, name1);
+  //sens_id_to_name(cur->edges[AHEAD].dest->id * 2, name1);
+  //  bwprintf(COM2, "NEXT s id %d type %d\r\n", cur->edges[AHEAD].dest->id,
+  //            cur->edges[AHEAD].dest->type);
+  //sens_id_to_name(cur->edges[BEHIND].dest->id * 2, name1);
+  //  bwprintf(COM2, "NEXT b id %d type %d\r\n", cur->edges[BEHIND].dest->id,
+  //            cur->edges[BEHIND].dest->type);
+//  sens_id_to_name(cur->edges[CURVED].dest->id * 2, name1);
+//    bwprintf(COM2, "NEXT c       %d|%s\r\n", cur->edges[CURVED].dest->id * 2, name1);
   if (current % 2 == 0) {
     next =  cur->edges[AHEAD].dest;
+    //sens_id_to_name(next->id * 2, name1);
+    //if (next->type == SENSOR)
+    //bwprintf(COM2, "NEXT first n %d|%s\r\n", next->id * 2, name1);
+    //else
+    //bwprintf(COM2, "NEXT first n(non sens) id %d, type %d\r\n", next->id, next->type);
     dist += cur->edges[AHEAD].dist;
   } else {
     next =  cur->edges[BEHIND].dest;
+    //sens_id_to_name(next->id * 2, name1);
+    //if (next->type == SENSOR)
+    //bwprintf(COM2, "NEXT first n %d|%s\r\n", next->id * 2, name1);
+    //else
+    //bwprintf(COM2, "NEXT first n(non sens) id %d, type %d\r\n", next->id, next->type);
     dist += cur->edges[BEHIND].dist;
   }
 
   if (next->type == SWITCH) { // Must decide if we are ahead/behind
     prev = cur;
     while (next->type == SWITCH) {
+      //bwprintf(COM2, "NEXT inside while id %d, type %d\r\n", next->id,
+      //next->type);
       if (next->edges[AHEAD].dest == prev) {
+        //bwprintf(COM2, "NEXT switch behind\r\n");
         dist += next->edges[BEHIND].dist;
         prev =  next;
         next =  next->edges[BEHIND].dest;
       }
       else if (next->edges[BEHIND].dest == prev) {
         if (next->switch_state == 'S' || next->switch_state == 's') {
+          //bwprintf(COM2, "NEXT switch ahead\r\n");
           dist += next->edges[AHEAD].dist;
           prev =  next;
           next =  next->edges[AHEAD].dest;
         }
         else {
+          //bwprintf(COM2, "NEXT switch curved\r\n");
           dist += next->edges[CURVED].dist;
           prev =  next;
           next =  next->edges[CURVED].dest;
         }
       }
       else { // Always go to same place when coming at switch in this direction
+        //bwprintf(COM2, "NEXT switch behind\r\n");
         dist += next->edges[BEHIND].dist;
         prev =  next;
         next =  next->edges[BEHIND].dest;
       }
     }
+    //sens_id_to_name(next->id * 2, name1);
+    //bwprintf(COM2, "NEXT outside while  %d|%s\r\n", next->id * 2, name1);
+    //bwprintf(COM2, "NEXT outside  prev  %d\r\n", prev->id);
     if (next->edges[AHEAD].dest == prev) {
+      //bwprintf(COM2, "NEXT add 0\r\n");
       t.destination = (next->id * 2) + 1;
     }
     else {
-      t.destination = (next->id * 2) + 2;
+      //bwprintf(COM2, "NEXT add 1\r\n");
+      t.destination = (next->id * 2);
     }
   }
   else if (next->type == STOP) { // We have nowhere to go "next"
@@ -76,15 +110,19 @@ struct trip next_sensor(int current, struct track_node **map)
     // To decide which switch direction, see if it points at cur AHEAD or
     // BEHIND
     if (next->edges[AHEAD].dest == cur) {
+      //bwprintf(COM2, "NEXT ad 0\r\n");
       t.destination = (next->id * 2) + 1;
     }
     else {
-      t.destination = (next->id * 2) + 2;
+      //bwprintf(COM2, "NEXT ad 1\r\n");
+      t.destination = (next->id * 2);
     }
   }
 
   t.distance = dist;
   t.destnode = *next;
+  //bwprintf(COM2, "NEXT ASSERT: next->id %d == map[dest]->id %d\r\n", next->id,
+  //         map[t.destination]->id);
   // ASSERT(next->id == map[t.destionation]->id);
 
   return t;
