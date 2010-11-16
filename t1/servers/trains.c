@@ -157,7 +157,7 @@ fart:
 
 #define LOST_TIMEOUT 10000000
 
-int nextsensor (int cur, int trktid) {
+int nextsensor (int cur, int trktid, int *d) {
   struct trip t;
   struct msg out;
 
@@ -170,6 +170,7 @@ int nextsensor (int cur, int trktid) {
   // update velocity shit?
   if (Send(trktid, (char *)&out, sizeof(struct msg), (char *)&t,
            sizeof(struct trip)) != sizeof(struct trip)) PANIC;
+  *d = t.distance;
   return t.destination;
 }
 
@@ -185,6 +186,7 @@ void train_agent () {
   int expectednext = -1;
   int lost = 1; // start off lost
   int dx=0;
+  int sensdistance = 0;
   int r=0,t=0;
 
   unsigned int updatemsg[3];
@@ -218,7 +220,7 @@ void train_agent () {
         lost = 0;
         timelastsensor = in.d2;
         lastsensor = in.d1;
-        expectednext = nextsensor(lastsensor, trktid);
+        expectednext = nextsensor(lastsensor, trktid, &sensdistance);
         sens_id_to_name(lastsensor, name);
         //bwprintf(COM2, "Found! I am at %s now, after that: %d\r\n", name,
         //          expectednext);
@@ -233,12 +235,17 @@ void train_agent () {
       out.d1 = expectednext;
       r = Send (senid, (char*)&out, sizeof (struct msg), (char*)&in, sizeof (struct msg));
       if (r) { // calibrate velocity more????
+        int delta_t = t - timelastsensor;
+        delta_t /= 200; // convert to tenths of a second
         sens_id_to_name(lastsensor, nam2);
         sens_id_to_name(expectednext, msg2);
-        bwprintf (COM2, "ok, successfully got from %s to %s, ", nam2, msg2);
+        bwprintf (COM2, "ok, successfully got from %s to %s, distance %dmm, dt %d"
+                  " v %dmm/(s/10)\r\n",
+                  nam2, msg2, sensdistance, delta_t, sensdistance / delta_t);
+
         timelastsensor = in.d1;
         lastsensor = expectednext;
-        expectednext = nextsensor(lastsensor, trktid);
+        expectednext = nextsensor(lastsensor, trktid, &sensdistance);
         sens_id_to_name(expectednext, nam2);
         //bwprintf (COM2, "should now get to %s.\n", nam2);
       }
