@@ -6,6 +6,7 @@
 #include <debug.h>
 #include "servers.h"
 #include "../user/usyscall.h"
+#include "../user/lib.h"
 #include "../ktests/tests.h"  // PANIC
 #include "../kernel/switch.h" // FOREVER, NULL, FOREACH
 #include "track.h"
@@ -149,7 +150,7 @@ void track()
         r = Reply(tid, (char *)(&t.distance), 4);
       case 't':
         r = Reply(tid, NULL, 0);
-        i = m.d1; // FIXME
+        i = m.d1;
         switches[i]->switch_state = m.c1;
         break;
       default:

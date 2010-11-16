@@ -283,14 +283,12 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     packet[2] = token(cmd,2,buf)[0];
     Send (trid, packet, 3, NULL, 0);
     bwprintf (COM2, "Switching switch %d to direction %c.\n", stoi(token(cmd,1,buf)), token(cmd,2,buf)[0]);
-#   if 0
     // Notify the TRACKSERVER about the change in state, later we'll also ask it
     // for train state...
     m.id = 't';
     m.d1 = stoi(token(cmd, 1, buf));
     m.c1 = token(cmd, 2, buf)[0];
     Send(track_tid, (char *)&m, sizeof(struct msg), NULL, 0);
-#   endif
     sw[unfuckswitch(stoi(token(cmd,1,buf)))] = token(cmd,2,buf)[0];
     tables (sw);
   }
@@ -307,7 +305,7 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     for (ii = 0; ii < 32; ii++) {
       sw[ii] = token(cmd,1,buf)[0];
       m.d1 = ii;
-      //Send(track_tid, (char *)&m, sizeof(struct msg), NULL, 0);
+      Send(track_tid, (char *)&m, sizeof(struct msg), NULL, 0);
     }
     tables (sw);
   }
