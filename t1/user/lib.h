@@ -10,6 +10,7 @@ struct heap {
 
 int strlen (char *s);
 void strcpy (char *d, char *s);
+void sens_id_to_name(int id, char *str);
 void UseBits(unsigned char *bits, int numbits);
 void PrintBits(unsigned char *bits, int len);
 void heap_push(int *val, struct heap *h);

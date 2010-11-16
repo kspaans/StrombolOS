@@ -2,6 +2,8 @@
 #include "lib.h"
 #include <bwio.h>
 #include <ts7200.h>
+#include <debug.h>
+#include "../ktests/tests.h"
 
 int strlen (char *s) {
   int i;
@@ -25,6 +27,47 @@ void UseBits(unsigned char *bits, int bitnum)
   subbyte = bitnum % 8;
 
   bits[offset] |= 1 << (7 - subbyte);
+}
+
+/* Give it a string to sprintf() into.
+   Expects indexing from 0 */
+void sens_id_to_name(int id, char *str)
+{
+  int tens;
+  if (id < 16) {
+    tens = 0;
+    str[0] = 'A';
+  }
+  else if (id < 32) {
+    tens = 1;
+    str[0] = 'B';
+  }
+  else if (id < 48) {
+    tens = 2;
+    str[0] = 'C';
+  }
+  else if (id < 64) {
+    tens = 3;
+    str[0] = 'D';
+  }
+  else if (id < 80) {
+    tens = 4;
+    str[0] = 'E';
+  }
+  else {
+    DPRINTERR("Sensor ID number out of range!\r\n");
+    PANIC;
+  }
+  id -= (tens * 16);
+  if (id > 8) {
+    str[1] = '1';
+    str[2] = '1' + (id - 10);
+  }
+  else {
+    str[1] = '1' + id;
+    str[2] = '\0';
+  }
+  str[3] = '\0';
 }
 
 /* Will kind of suck without zero-padding */

@@ -4,6 +4,7 @@
 #include "servers.h"
 #include "track.h"
 #include "../user/usyscall.h"
+#include "../user/lib.h"
 #include "../ktests/tests.h"  // PANIC
 #include "../kernel/switch.h" // FOREVER, NULL
 #include <ANSI.h>
@@ -94,6 +95,7 @@ void zeromsg (struct msg *f) {
 
 void sensor_secretary () {
   int sensor[80];
+  char name[4];
   struct msg in;
   struct msg out;
   int r, i, tid, t;
@@ -107,15 +109,17 @@ void sensor_secretary () {
     r = Receive (&tid, (char*)(&in), sizeof(struct msg));
     switch (in.id) {
       case 'D':
-        bwprintf (COM2, "was told that sensor %d was triggered at %d.\n", in.d1,
+        sens_id_to_name(in.d1, name);
+        bwprintf (COM2, "was told that sensor %s was triggered at %d.\n", name,
         in.d2);
         sensor[in.d1] = in.d2;
         Reply (tid, NULL, 0);
         break;
       case 'R': // train is requesting status of sensor
         if (sensor[in.d1]!=0 && t-sensor[in.d1] > 60) {
-          bwprintf (COM2, "Expiring sensor %d, which was triggered at %d\n", in.d1,
-          sensor[in.d1]);
+          sens_id_to_name(in.d1, name);
+          bwprintf (COM2, "Expiring sensor %s, which was triggered at %d\n",
+                    name, sensor[in.d1]);
           sensor[in.d1] = 0;
           Reply(tid,NULL, 0);
         }
@@ -210,26 +214,33 @@ void train_agent () {
       out.id = 'L';
       r = Send (senid, (char*)(&out), sizeof(struct msg), (char*)(&in), sizeof(struct msg));
       if (r) {
+        char name[4];
         lost = 0;
         timelastsensor = in.d2;
         lastsensor = in.d1;
         expectednext = nextsensor(lastsensor, trktid);
-        bwprintf(COM2, "Found! I am at %d now, after that: %d\r\n", lastsensor,
+        sens_id_to_name(lastsensor, name);
+        bwprintf(COM2, "Found! I am at %s now, after that: %d\r\n", name,
                   expectednext);
       }
     }
     else {
+      char msg2[4];
+      char nam2[4];
       zeromsg(&out);
       zeromsg(&in);
       out.id = 'R';
       out.d1 = expectednext;
       r = Send (senid, (char*)&out, sizeof (struct msg), (char*)&in, sizeof (struct msg));
       if (r) { // calibrate velocity more????
-        bwprintf (COM2, "ok, successfully got from %d to %d, ", lastsensor, expectednext);
+        sens_id_to_name(lastsensor, nam2);
+        sens_id_to_name(expectednext, msg2);
+        bwprintf (COM2, "ok, successfully got from %s to %s, ", nam2, msg2);
         timelastsensor = in.d1;
         lastsensor = expectednext;
         expectednext = nextsensor(lastsensor, trktid);
-        bwprintf (COM2, "should now get to %d.\n", expectednext);
+        sens_id_to_name(expectednext, nam2);
+        bwprintf (COM2, "should now get to %s.\n", nam2);
       }
     }
  
