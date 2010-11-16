@@ -286,11 +286,11 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     // Notify the TRACKSERVER about the change in state, later we'll also ask it
     // for train state...
     m.id = 't';
-    m.d1 = stoi(token(cmd, 1, buf));
+    m.d1 = stoi(token(cmd, 1, buf)) - 1;
     m.c1 = token(cmd, 2, buf)[0];
     Send(track_tid, (char *)&m, sizeof(struct msg), NULL, 0);
     sw[unfuckswitch(stoi(token(cmd,1,buf)))] = token(cmd,2,buf)[0];
-    tables (sw);
+    //tables (sw);
   }
   else if (!strcmp ("swall", token(cmd,0,buf))) {
     packet[0] = 'a';
@@ -307,7 +307,7 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
       m.d1 = ii;
       Send(track_tid, (char *)&m, sizeof(struct msg), NULL, 0);
     }
-    tables (sw);
+    //tables (sw);
   }
   else if (!strcmp ("st", token (cmd,0,buf))) {
     packet[0] = 'v';
@@ -472,7 +472,7 @@ void wm () {
   "+--------------------------------------------------+\n\n\n> "); 
    char sensorquery = 'd';
    struct sensorevent sen;
-   tables (sw);
+   //tables (sw);
    while (!done) {
     t = Time()/2; 
     Send (trid, &sensorquery, 1, (char*)(&sen), sizeof(struct sensorevent));

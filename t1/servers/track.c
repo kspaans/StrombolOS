@@ -72,12 +72,16 @@ struct trip next_sensor(int current, struct track_node **map)
       else if (next->edges[BEHIND].dest == prev) {
         if (next->switch_state == 'S' || next->switch_state == 's') {
           //bwprintf(COM2, "NEXT switch ahead\r\n");
+          bwprintf(COM2, "\r\nNEXT went over a switch in state %c\r\n",
+                   next->switch_state);
           dist += next->edges[AHEAD].dist;
           prev =  next;
           next =  next->edges[AHEAD].dest;
         }
         else {
           //bwprintf(COM2, "NEXT switch curved\r\n");
+          bwprintf(COM2, "\r\nNEXT went over a switch in state %c\r\n",
+                   next->switch_state);
           dist += next->edges[CURVED].dist;
           prev =  next;
           next =  next->edges[CURVED].dest;
@@ -188,8 +192,9 @@ void track()
         r = Reply(tid, (char *)(&t.distance), 4);
       case 't':
         r = Reply(tid, NULL, 0);
+        bwprintf(COM2, "\r\nTurnout %d updated to %c\r\n", m.d1, m.c1);
         i = m.d1;
-        switches[i]->switch_state = m.c1;
+        switches[i]->switch_state = m.c1; // lol overflow
         break;
       default:
         PANIC;

@@ -110,22 +110,22 @@ void sensor_secretary () {
     switch (in.id) {
       case 'D':
         sens_id_to_name(in.d1, name);
-        bwprintf (COM2, "was told that sensor %s was triggered at %d.\n", name,
-        in.d2);
+        //bwprintf (COM2, "was told that sensor %s was triggered at %d.\n", name,
+        //in.d2);
         sensor[in.d1] = in.d2;
         Reply (tid, NULL, 0);
         break;
       case 'R': // train is requesting status of sensor
         if (sensor[in.d1]!=0 && t-sensor[in.d1] > 60) {
           sens_id_to_name(in.d1, name);
-          bwprintf (COM2, "Expiring sensor %s, which was triggered at %d\n",
-                    name, sensor[in.d1]);
+          //bwprintf (COM2, "Expiring sensor %s, which was triggered at %d\n",
+          //          name, sensor[in.d1]);
           sensor[in.d1] = 0;
           Reply(tid,NULL, 0);
         }
         else if (sensor[in.d1]) {
           sensor[in.d1] = 0;
-          bwprintf (COM2, "success???\n");
+          //bwprintf (COM2, "success???\n");
           out.d1 = sensor[in.d1];
           sensor[in.d1] = 0;
           sensor[in.d1] = 0;
@@ -204,7 +204,7 @@ void train_agent () {
     }
 
     if (t-timelastsensor > LOST_TIMEOUT) {
-      bwprintf (COM2, "Now i am lost...\n");
+      //bwprintf (COM2, "Now i am lost...\n");
       lost = 1;
       lastsensor = -1;
     }
@@ -220,8 +220,8 @@ void train_agent () {
         lastsensor = in.d1;
         expectednext = nextsensor(lastsensor, trktid);
         sens_id_to_name(lastsensor, name);
-        bwprintf(COM2, "Found! I am at %s now, after that: %d\r\n", name,
-                  expectednext);
+        //bwprintf(COM2, "Found! I am at %s now, after that: %d\r\n", name,
+        //          expectednext);
       }
     }
     else {
@@ -240,7 +240,7 @@ void train_agent () {
         lastsensor = expectednext;
         expectednext = nextsensor(lastsensor, trktid);
         sens_id_to_name(expectednext, nam2);
-        bwprintf (COM2, "should now get to %s.\n", nam2);
+        //bwprintf (COM2, "should now get to %s.\n", nam2);
       }
     }
  
