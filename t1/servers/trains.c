@@ -86,26 +86,151 @@ struct sensorevent fucksensor (int x, int time) {
   return ans;
 }
 
+struct msg { // for IPC
+  char id, c1, c2, c3;
+  int d1, d2; 
+};
+
+void zeromsg (struct msg *f) {
+  f->id=f->c1=f->c2=f->c3=0;
+  f->d1=f->d2=0;
+}
+
+void sensor_secretary () {
+  int sensor[80];
+  struct msg in;
+  struct msg out;
+  int r, i, tid, t;
+  RegisterAs ("sens");
+  for (i = 0; i < 80; i++) sensor[i] = 0;
+
+  while (1) {
+    zeromsg (&in);
+    zeromsg (&out);
+    r = Receive (&tid, (char*)(&in), sizeof(struct msg));
+    switch (in.id) {
+      case 'D':
+        sensor[in.d1] = in.d2;
+        Reply (tid, NULL, 0);
+        break;
+      case 'R': // train is requesting status of sensor
+        if (sensor[in.d1]) {
+          out.d1 = sensor[in.d1];
+          sensor[in.d1] = 0;
+          Reply (tid, (char*)(&out), sizeof (struct msg));
+        }
+        else { 
+          Reply (tid, NULL, 0);
+        }
+        break;
+     case 'L': // i am lost!
+       t = Time();
+       for (i = 0; i < 80; i++) {
+         if (sensor[i] && t-sensor[i] > 60 ) {
+           sensor[i] = 0;
+         }
+         else if (sensor[i] && t-sensor[i] > 20) {
+           out.d1 = i;
+           out.d2 = sensor[i];
+           sensor[i] = 0;
+           Reply (tid, (char*)(&out), sizeof (struct msg));
+           goto fart;
+         }
+       }
+       Reply(tid, NULL, 0);
+fart: 
+       break;
+    }
+  }
+}
+
+#define LOST_TIMEOUT 100
+
+void train_agent () {
+  struct msg out,in;
+  char msg = 'U';
+  int trid = MyParentTid ();
+  int senid = WhoIs ("sens");
+  int trkid = WhoIs ("trk");
+  int lastsensor = -1;
+  int newspeed; int speed;
+  int timelastsensor  = 0;
+  int lost = 1; // start off lost
+  int dx;
+  int r,t;
+
+  unsigned int updatemsg[3];
+  updatemsg[0] = (unsigned int)'U';
+
+  while(1) {
+    t = Time();
+    // measure 508khz clock, update timesincelastsensor
+    updatemsg[1] = lastsensor;
+    updatemsg[2] = dx;
+
+    // ask train server for updates on speed, update it with our positions.
+    Send (trid, (char*)(updatemsg), 3*sizeof(int), (char*)(&newspeed), 4);
+    if (newspeed != speed) {
+      speed = newspeed;
+      // time since speed change for blending?
+    }
+
+    if (t-timelastsensor > LOST_TIMEOUT) {
+      lost = 1;
+      lastsensor = -1;
+    }
+    if (lost) { // we are lost  (be a bit more smart about this?)
+      zeromsg(&out);
+      zeromsg(&in);
+      out.id = 'L';
+      r = Send (senid, (char*)(&out), sizeof(struct msg), (char*)(&in), sizeof(struct msg));
+      if (r) {
+        lost = 0;
+        timelastsensor = in.d2;
+        lastsensor = in.d1;
+      }
+    }
+    else {
+      // poll for our expectednext
+      // if nothing, nothing. otherwise update shit
+      // update velocity shit?
+    }
+ 
+    dx += 0; // calculate distance past current sensor
+  }
+}
+
 
 void trains () {
   int tid;
-  char cmd[15];
+  char cmd[32];
+  char lastread[10];
+
   int speeds[100];
+  int tr2tid[100];
+  int locations[100];
+  int tid2tr[100];
+
   char sw[32];
   int head = 0;
   int i;
 
+  struct msg out;
+  unsigned char train_dict[256];
   struct sensorevent latest;
   latest.group = 0;
-  for (i = 0; i < 100; i++) { speeds[i] = 0; }
+  for (i = 0; i < 100; i++) { speeds[i] = tr2tid[i] = 0; tid2tr[i] = 0; locations[i] = -2; }
+  for (i = 0; i < 10; i++)  { lastread[i] = 0; }
 
   int r;
   RegisterAs ("tr");
   Create (USER_HIGH, sensorserver);
+  int sens = Create (USER_HIGH, sensor_secretary);
+
   FOREVER {
 start:
-    r = Receive (&tid, cmd, 15);
-
+    r = Receive (&tid, cmd, 32);
+    zeromsg (&out);
     // "special" ones
     switch (cmd[0]) {
       case 'v': // st
@@ -116,21 +241,42 @@ start:
         Reply (tid, (char*)(&latest), sizeof (struct sensorevent));
         goto start;
         break;
+      case 'P': // give back location of train
+        cmd[0] = (char)locations[(int)cmd[1]];
+        Reply (tid, cmd, 1);
+        goto start;
+        break;
+      case 'U': // update from a train
+        locations[tid2tr[tid]] = ((int*)cmd)[1];
+        Reply (tid, (char*)(&speeds[tid2tr[tid]]), 4);
+        goto start;
+        break;
       default:
         break;
     }
 
     Reply (tid, NULL, 0);
     switch (cmd[0]) {
+      case 'A': // add train
+        tr2tid[(int)cmd[1]] =  Create (USER_HIGH, train_agent);
+        tid2tr[tr2tid[(int)cmd[1]]] = (int)cmd[1];
+        break;
       case 'p': // poll sensors
         switch (r) {
           case 1:   /*bwprintf (COM2, "pinging\n");*/Putc (COM1, 133); break;
           case 11: 
            for (i = 0; i < 10; i++) {
-             char wut = cmd[i+1];
+             char wut = cmd[i+1]^lastread[i] & cmd[i+1];
+             lastread[i] = cmd[i+1];
              int j = 1;
              while (wut) {
-               if (wut &128) latest = fucksensor (i*8+j,Time());
+               if (wut &128) { 
+                 latest = fucksensor (i*8+j,Time()); 
+                 out.id = 'D';
+                 out.d1 = i*8+j;
+                 out.d2 = Time(); // change me, 508khz reading?
+                 Send (sens, (char*)(&out), sizeof (struct msg), NULL, 0);
+               }
                wut <<= 1;
                j++;
              }
