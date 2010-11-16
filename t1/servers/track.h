@@ -14,13 +14,19 @@ struct track_edge {
 #define EDGES 3
 enum edge_type {AHEAD, BEHIND, CURVED};
 
-// What about switches, where we have a choice?
 struct track_node {
   enum { SENSOR, SWITCH, STOP } type;
-  int id; // ??? type or w/e
+  int id; // From the track data file
   char switch_state;
   int x;
   int y;
   int num_edges;
   struct track_edge edges[EDGES];
+};
+
+/* Like a track_edge, but has id of next node */
+struct trip {
+  int distance;
+  int destination;
+  struct track_node destnode;
 };

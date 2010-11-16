@@ -13,12 +13,6 @@
 #define BUFLEN 5
 //#define // some macro for mapping numbers to IDs
 
-/* Like a track_edge, but has id of next node */
-struct trip {
-  int distance;
-  int destination;
-};
-
 /*
  * Takes the current sensor and reports the next expected one given the track
  * and current state of switches. The trick is to know relative directions when
@@ -90,6 +84,7 @@ struct trip next_sensor(int current, struct track_node **map)
   }
 
   t.distance = dist;
+  t.destnode = *next;
   // ASSERT(next->id == map[t.destionation]->id);
 
   return t;
@@ -148,7 +143,7 @@ void track()
     switch (buf[0]) {
       case 'n':
         t = next_sensor(*((int *)(buf + 1)), sens_num_to_node);
-        r = Reply(tid, (char *)(&t.destination), 4);
+        r = Reply(tid, (char *)&t, sizeof(struct trip));
         break;
       case 'd':
         t = next_sensor(*((int *)(buf + 1)), sens_num_to_node);
@@ -158,6 +153,8 @@ void track()
         i = buf[1];
         switches[i]->switch_state = buf[2];
         break;
+      default:
+        PANIC;
     }
   }
 }

@@ -7,6 +7,7 @@
 #include "usyscall.h"
 #include "user.h"
 #include "../servers/servers.h"
+#include "../servers/track.h"
 
 /*
  __________________
@@ -331,25 +332,29 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
 void examine_sensors(struct sensorevent s, struct sensorevent data[],
                      struct measurement mz[][80])
 {
-  int dist = 88, r, last_id, cur_id, time, num;
+  int r, last_id, cur_id, time, num;
   char msg[5];
   char *ip;
   int track_tid = WhoIs("trak");
+  struct trip next_sens;
 
   last_id = (data[LAST].group - 'A') * 16 + data[LAST].id;
   cur_id  = (s.group - 'A') * 16 + s.id;
   msg[0] = 'n';
-  ip = (char *)&cur_id;
+  ip = (char *)&last_id;
   msg[1] = *ip++;
   msg[2] = *ip++;
   msg[3] = *ip++;
   msg[4] = *ip++;
 
-  if (s.time != data[LAST].time && last_id > 0 && cur_id > 0) {
-    r = Send(track_tid, msg, 5, (char *)&dist, 4);
+  if (s.time != data[LAST].time && s.id != data[LAST].id && s.group !=
+      data[LAST].group && last_id > 0 && cur_id > 0) {
+    r = Send(track_tid, msg, 5, (char *)&next_sens, sizeof(struct trip));
     bwprintf(COM2, "Change from sensor %c%d to %c%d (%d--%d) :: predicted next"
-    " is: %d\r\n",
-    data[LAST].group, data[LAST].id, s.group, s.id, last_id, cur_id, dist);
+        " is: %d(with edges to IDs %d, %d)\r\n",
+        data[LAST].group, data[LAST].id, s.group, s.id, last_id, cur_id,
+        next_sens.destnode.id, next_sens.destnode.edges[AHEAD],
+        next_sens.destnode.edges[BEHIND]);
     time =   mz[last_id][cur_id].time;
     num  = ++mz[last_id][cur_id].num;
     time = ((time * num) + (s.time - data[LAST].time)) / num;
