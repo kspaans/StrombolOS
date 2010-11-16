@@ -146,6 +146,10 @@ fart:
 
 #define LOST_TIMEOUT 100
 
+int nextsensor (int cur) {
+ // FILL ME IN
+}
+
 void train_agent () {
   struct msg out,in;
   char msg = 'U';
@@ -155,6 +159,7 @@ void train_agent () {
   int lastsensor = -1;
   int newspeed; int speed;
   int timelastsensor  = 0;
+  int expectednext;
   int lost = 1; // start off lost
   int dx;
   int r,t;
@@ -188,12 +193,20 @@ void train_agent () {
         lost = 0;
         timelastsensor = in.d2;
         lastsensor = in.d1;
+        expectednext = nextsensor(lastsensor);
       }
     }
     else {
-      // poll for our expectednext
-      // if nothing, nothing. otherwise update shit
-      // update velocity shit?
+      zeromsg(&out);
+      zeromsg(&in);
+      out.id = 'R';
+      out.d1 = lastsensor;
+      r = Send (senid, (char*)&out, sizeof (struct msg), (char*)&in, sizeof (struct msg));
+      if (r) { // calibrate velocity more????
+        timelastsensor = in.d1;
+        lastsensor = expectednext;
+        expectednext = nextsensor(lastsensor);
+      }
     }
  
     dx += 0; // calculate distance past current sensor
