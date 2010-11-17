@@ -236,17 +236,17 @@ void train_agent () {
       r = Send (senid, (char*)&out, sizeof (struct msg), (char*)&in, sizeof (struct msg));
       if (r) { // calibrate velocity more????
         int delta_t = t - timelastsensor;
-        ////bwprintf(COM2, "LALA old %d vs now %d,,%d\r\n", in.d1, t, timelastsensor);
         sens_id_to_name(lastsensor, nam2);
         sens_id_to_name(expectednext, msg2);
-        temp = sensdistance / delta_t;
+        speed = temp = sensdistance / delta_t;
         avg_val = (avg_val * avg_cnt + temp) / (avg_cnt + 1);
         ++avg_cnt;
-        bwprintf (COM2, "ok, successfully got from %s to %s, distance %dmm, dt"
-                  " %d(s/10)"
-                  " v %dcm/s --->\tAverage %dcm/s\r\n",
-                  nam2, msg2, sensdistance, delta_t, temp, avg_val);
+        //bwprintf (COM2, "ok, successfully got from %s to %s, distance %dmm, dt"
+        //          " %d(s/10)"
+        //          " v %dcm/s --->\tAverage %dcm/s\r\n",
+        //          nam2, msg2, sensdistance, delta_t, temp, avg_val);
 
+        dx = 0;
         timelastsensor = in.d1;
         lastsensor = expectednext;
         expectednext = nextsensor(lastsensor, trktid, &sensdistance);
@@ -255,7 +255,7 @@ void train_agent () {
       }
     }
  
-    dx += 0; // calculate distance past current sensor
+    dx = speed * (t - timelastsensor); // calculate distance past current sensor (in mm)
   }
 }
 
