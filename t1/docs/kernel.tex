@@ -1,65 +1,79 @@
 \documentclass{article}
 %\include{Jake's Stuff}
 
+\title{CS452 Train Control Demo 1}
+\date{November 17, 2010}
+\author{Jacob Parker, Kyle Spaans}
+
 \begin{document}
+\maketitle
 
 \section{Administrivia}
 Build our kernel with \texttt{./Build.sh}, all build files, including
 \texttt{StrombolOS.elf} will be in \texttt{build/}. The files and executable can
 be found in \texttt{/u/j3parker/cs452/cs452-kernel/t1/}
 \begin{verbatim}
-9313c3b8d3a2e1d6d6f1162555ea3392  ./bwio/bwio.c
-5bba63afffefa69c48ca4ee9ae7fc4cd  ./kernel/kernel.c
-1861ba11f47ffed0386f26d5b1427fef  ./kernel/switch.h
-f1460ffe80756a10326ea1f543d56b66  ./kernel/syscalls/create.c
-4c445abfc7bbc947523149aa4ff8db69  ./kernel/syscalls/exit.c
-88de93ad80f82c0c19068db925aa9a7b  ./kernel/syscalls/ksyscall.h
-1fc352c47457bcc3483baf673453ca47  ./kernel/syscalls/myparenttid.c
-7aea0293ec3376f3b609444439e0ffd8  ./kernel/syscalls/mytid.c
-02a046f81c0b15aae6672817ba9c8fd7  ./kernel/syscalls/pass.c
-e6193ca65075c3dc851866dfb593b5d7  ./kernel/syscalls/receive.c
-62cfc465c6f3a121e6a1fc7ab37611fc  ./kernel/syscalls/reply.c
-ad583b8bfa980bcd78c2666c0d993662  ./kernel/syscalls/send.c
-60da756ed07348e576848ad2db5b9103  ./kernel/syscalls/awaitevent.c
-ca28262728ec68a324728334cde3d85e  ./kernel/tasks.c
-cf322c58d2b0ffca7960adb1731fc034  ./kernel/tasks.h
-427aed49b53f52ce6185ed277e1046cb  ./kernel/boot.c
-a3f52f48e4f13f1f4f3111c86733b828  ./kernel/boot.h
-63a9c591765b838b80d156ba4d343ea9  ./kernel/switch.s
-d32dda3f6cd59b210c03d1ed8332c581  ./include/bwio.h
-8fe4bcbf13f60d8dfc91ecbdc0605734  ./include/debug.h
-396d47c513a8d1763ec8524ef7043df3  ./include/ts7200.h
-40f4f3cd6e750c354c5e0669cc79afa0  ./include/ANSI.h
-71fab5b6b9f20b06d3fee8a131e488ac  ./user/lib.c
-f6a2380d93ce32a1588c9f7e8672de8b  ./user/lib.h
-bb26439fa9e96b4ad416cca1ffbee9d8  ./user/rps_client.c
-987391166fc3a7911abaade6e911228f  ./user/usyscall.s
-5244b31fad05d2c4a13f3af00151d689  ./user/user.c
-2737fde1654b841a2a8273a03121a808  ./user/user.h
-26e6c3c23813ba23d358bf6cef18a89b  ./user/usyscall.h
-100386ccd693a1b05231723e825a7056  ./user/wrappers.c
-1fc7829e40ad9731b92880bd06e5ae6a  ./user/clock_client.c
-0a4ecd61c17f8fab2701df0fc602f52b  ./user/clock_client.h
-5cdf0685d1b04b08223b59fe346c2a2b  ./user/timings.c
-a66c2ece6a834d354855b5a349577f16  ./user/trains_ui.c
-fdb022424f137015c687e9233746011d  ./user/wm.c
-a499e8d19ee5410832196b18d02604cc  ./ktests/tests.c
-55ff8b30fa5d99a344fe21c4f04efa10  ./ktests/tests.h
-7d2b05ec0779ca90badce6913bb8abe4  ./servers/names.c
-543b0ddeef7d66f66b7126efa9b58ea0  ./servers/rand.c
-53eb72a04263b25510535132b3453e35  ./servers/rps_server.c
-40cfb1a75cc25c85ee53aeea72f1cffa  ./servers/servers.h
-e7394261773af98b40e1363d90fa8b1e  ./servers/clock.c
-1b884ba7141569e43c5e611cd5ca2b37  ./servers/notifier_clock.c
-775f0fd0347788f42800f45778fa1208  ./servers/uart1.c
-9b245bca020cc929b760e3d1e44318d4  ./servers/uart2.c
-304d3518e6d323b70013aa816fc26a08  ./servers/notifier_uart1tx.c
-1c31285b50f4d5d80396fb988ac672f9  ./servers/notifier_uart1rx.c
-843683fbdf9836dbe8454cfee822b646  ./servers/notifier_uart2tx.c
-73f601af47ba67c47b15ba051888c168  ./servers/notifier_uart2rx.c
-6fc27c95fb0c4f9fc6c2e352f62ce1d3  ./servers/trains.c
-343b974fd07f3cd492416b2ea92b7bc6  ./Build.sh
-9e55df43bdbf8cb6b4743399b06df38b  /u/cs452/tftpboot/ARM/StrombolOS/k4
+9cc9ae069f0541741e431899828b754f  Build.sh
+4536d16dcdf9c8aa6e88e7a89d45e529  build/orex.ld
+969d8339502a5ef8367bef58d0188080  bwio/Makefile
+9313c3b8d3a2e1d6d6f1162555ea3392  bwio/bwio.c
+40f4f3cd6e750c354c5e0669cc79afa0  include/ANSI.h
+d32dda3f6cd59b210c03d1ed8332c581  include/bwio.h
+8fe4bcbf13f60d8dfc91ecbdc0605734  include/debug.h
+396d47c513a8d1763ec8524ef7043df3  include/ts7200.h
+427aed49b53f52ce6185ed277e1046cb  kernel/boot.c
+a3f52f48e4f13f1f4f3111c86733b828  kernel/boot.h
+5bba63afffefa69c48ca4ee9ae7fc4cd  kernel/kernel.c
+70c9044b63f139fc82dfc9c98202cb33  kernel/switch.h
+60da756ed07348e576848ad2db5b9103  kernel/syscalls/awaitevent.c
+f1460ffe80756a10326ea1f543d56b66  kernel/syscalls/create.c
+4c445abfc7bbc947523149aa4ff8db69  kernel/syscalls/exit.c
+88de93ad80f82c0c19068db925aa9a7b  kernel/syscalls/ksyscall.h
+1fc352c47457bcc3483baf673453ca47  kernel/syscalls/myparenttid.c
+7aea0293ec3376f3b609444439e0ffd8  kernel/syscalls/mytid.c
+02a046f81c0b15aae6672817ba9c8fd7  kernel/syscalls/pass.c
+e6193ca65075c3dc851866dfb593b5d7  kernel/syscalls/receive.c
+62cfc465c6f3a121e6a1fc7ab37611fc  kernel/syscalls/reply.c
+ad583b8bfa980bcd78c2666c0d993662  kernel/syscalls/send.c
+ca28262728ec68a324728334cde3d85e  kernel/tasks.c
+cf322c58d2b0ffca7960adb1731fc034  kernel/tasks.h
+a499e8d19ee5410832196b18d02604cc  ktests/tests.c
+55ff8b30fa5d99a344fe21c4f04efa10  ktests/tests.h
+0e9575033e476a0254664162d6351166  parse.py
+a43cc9ca6547b1a07d338122b753320f  servers/calibration.h
+e7394261773af98b40e1363d90fa8b1e  servers/clock.c
+7d2b05ec0779ca90badce6913bb8abe4  servers/names.c
+1b884ba7141569e43c5e611cd5ca2b37  servers/notifier_clock.c
+1c31285b50f4d5d80396fb988ac672f9  servers/notifier_uart1rx.c
+304d3518e6d323b70013aa816fc26a08  servers/notifier_uart1tx.c
+73f601af47ba67c47b15ba051888c168  servers/notifier_uart2rx.c
+843683fbdf9836dbe8454cfee822b646  servers/notifier_uart2tx.c
+543b0ddeef7d66f66b7126efa9b58ea0  servers/rand.c
+53eb72a04263b25510535132b3453e35  servers/rps_server.c
+6854c195ef55bcb20d3bd8f1ad13128f  servers/servers.h
+4ae8e8ee2506107ab967fbc46196bacb  servers/t2c.py
+81943d8cab3228606b4b2ad4b8b350cb  servers/track.c
+f9c227aabc82ef7f425c68592cf9c1e9  servers/track.dot
+deec28f0a7faaf199d808e571ae30a25  servers/track.h
+22205ebd7eb10fbfd0414b0d0aff2205  servers/track_data.c
+f1fa12526ca078848c5df08c4448be1f  servers/track_data.png
+8f54111804db620acb0c4f556bebe9f3  servers/trains.c
+f26834428e4c987502cf8734e60cab10  servers/trains.h
+775f0fd0347788f42800f45778fa1208  servers/uart1.c
+9b245bca020cc929b760e3d1e44318d4  servers/uart2.c
+1fc7829e40ad9731b92880bd06e5ae6a  user/clock_client.c
+0a4ecd61c17f8fab2701df0fc602f52b  user/clock_client.h
+54c3506b4ecac217dd3c02c3e8468aad  user/lib.c
+441bb18450155365328c5c06e56ab244  user/lib.h
+bb26439fa9e96b4ad416cca1ffbee9d8  user/rps_client.c
+5cdf0685d1b04b08223b59fe346c2a2b  user/timings.c
+a66c2ece6a834d354855b5a349577f16  user/trains_ui.c
+153e779b8369576f209d30256b2ebe86  user/user.c
+2737fde1654b841a2a8273a03121a808  user/user.h
+26e6c3c23813ba23d358bf6cef18a89b  user/usyscall.h
+eb04df8d1ff1899ef25c2eb68c0d1005  user/wm.c
+100386ccd693a1b05231723e825a7056  user/wrappers.c
+96eb9556d08c2a75b7f4768d83d46ab4  /u3/cs452/tftpboot/ARM/StrombolOS/t1
 \end{verbatim}
 
 \section{REAME}
@@ -98,6 +112,29 @@ by traversing a graph representing the topology of the track. The current
 position is estimated given the train's current speed and the time since it
 tripped the sensor, a simple calculation.
 
+\subsection{Track Data Structures}
+The track topology and distance data is maintained as a graph of track nodes.
+Each node is either a sensor, turnout, or dead-end. Each node has 1-3 pointers
+to edge structures. Edge structures contain a length (in mm) and a pointer to
+their destination, another track node. Any node can be directly referenced from
+a table that maps node IDs (sensor IDs) to the corresponding track node. Nodes
+only exist for odd-numbered sensors, but sensor IDs are laid out in the table
+such that IDs $2n$ and $2n + 1$ both map to the same track node.
+
+When traversing the graph to determine the next sensor given the current sensor,
+the direction of travel is implied by the sensor ID. Each track node has edges
+in the ahead, behind, or curved (for switches) positions. Refering to a node by
+an even ID number implies that one is travelling in the ahead direction, and
+vice-versa. Determining which side of a switch is being approached (ahead,
+behind, or curved) is done by checking which of the switch's three edges point
+back to the current node. For example, if the switch's ahead edge points to the
+current node then the train will pass over the switch backwards (regardless of
+switch orientation) and come out on the behind edge. It is possible that
+multiple switch nodes will have to be traversed in order to find the next sensor
+node. However, there are a maximum of 4 switches separating any two sensors.
+Therefore finding the next sensor given the current sensor is considered a
+$O(1)$ operation.
+
 \subsection{Calibration}
 So far, we assume that the trains maintain a constant speed over every portion
 of the track. We have measured the average speeds for trains 32 and 52, at three
@@ -111,8 +148,5 @@ when the train is stopped (\texttt{tr $x$ 0}).
 The current speed is updated by incorporating the amount of time between the
 last two successive sesnors that the train has tripped and the distance between
 those sensors (as reported by the track server).
-
-\subsection{Servers}
-Need more here?
 
 \end{document}
