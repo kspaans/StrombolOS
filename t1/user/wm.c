@@ -9,6 +9,111 @@
 #include "../servers/servers.h"
 #include "../servers/track.h"
 
+#define MAX_TRAINS 6
+#define HEIGHT 8
+#define WIDTH 24
+struct pos {
+  int x, y;
+};
+
+struct pos sensorlocation (int sen) {
+  struct pos p;
+  switch (sen) {
+    case 0: case 1:   p.x = 4; p.y = 1; return p; // A1
+    case 2: case 3:   p.x = 7; p.y = 4; return p;// A3
+    case 4: case 5:   p.x = 5; p.y = 8; return p;// A5
+    case 6: case 7:   p.x = 4; p.y = 7; return p;// A7
+    case 8: case 9:   p.x = 3; p.y = 6; return p;// A9
+    case 10: case 11: p.x = 4; p.y = 5; return p; // A11
+    case 12: case 13: p.x = 3; p.y = 2; return p; // A13
+    case 14: case 15: p.x = 4; p.y = 3; return p; // A15
+    case 16: case 17: p.x = 14; p.y = 6; return p;// B1
+    case 18: case 19: p.x = 13; p.y = 5; return p;// B3
+    case 20: case 21: p.x = 14; p.y = 2; return p;// B5
+    case 22: case 23: p.x = 1; p.y = 6; return p;// B7
+    case 24: case 25: p.x = 1; p.y = 8; return p;// B9
+    case 26: case 27: p.x = 1; p.y = 7; return p; // B11
+    case 28: case 29: p.x = 15; p.y = 4; return p;// B13
+    case 30: case 31: p.x = 7; p.y = 4; return p;// B15
+    case 32: case 33: p.x = 15; p.y = 4; return p;// C1
+    case 34: case 35: p.x = 19; p.y = 8; return p;// C3
+    case 36: case 37: p.x = 9; p.y = 7; return p;// C5
+    case 38: case 39: p.x = 11; p.y = 8; return p;// C7
+    case 40: case 41: p.x = 9; p.y = 6; return p;// C9
+    case 42: case 43: p.x = 9; p.y = 2; return p; // C11
+    case 44: case 45: p.x = 8; p.y = 1; return p; // C13
+    case 46: case 47: p.x = 14; p.y = 7; return p;// C15
+    case 48: case 49: p.x = 15; p.y = 4; return p;// E1
+    case 50: case 51: p.x = 17; p.y = 3; return p;// E3
+    case 52: case 53: p.x = 18; p.y = 2; return p;// E5
+    case 54: case 55: p.x = 21; p.y = 1; return p; // E7
+    case 56: case 57: p.x = 22; p.y = 6; return p;// E9
+    case 58: case 59: p.x = 21; p.y = 7; return p;// E11
+    case 60: case 61: p.x = 18; p.y = 6; return p;// E13
+    case 62: case 63: p.x = 13; p.y = 3; return p;// E15
+    case 64: case 65: p.x = 15; p.y = 4; return p;// D1
+    case 66: case 67: p.x = 16; p.y = 2; return p;// D3
+    case 68: case 69: p.x = 22; p.y = 2; return p;// D5
+    case 70: case 71: p.x = 23; p.y = 2; return p; // D7
+    case 72: case 73: p.x = 23; p.y = 6; return p;// D9
+    case 74: case 75: p.x = 16; p.y = 7; return p;// D11
+    case 76: case 77: p.x = 16; p.y = 6; return p;// D13
+    case 78: case 79: p.x = 17; p.y = 5; return p;// D15
+  }
+  return p;
+}
+struct pos switchlocation (int sw) {
+  struct pos p;
+  switch (sw) {
+    case 0: p.x = 4; p.y = 6; return p; // SW1
+    case 1: p.x = 5; p.y = 7; return p;// SW2
+    case 2: p.x = 6; p.y = 8; return p;// SW3
+    case 3: p.x = 4; p.y = 2; return p; // SW4
+    case 4: p.x = 17; p.y = 8; return p;// SW5
+    case 5: p.x = 12; p.y = 7; return p;// SW6
+    case 6: p.x = 18; p.y = 7; return p;// SW7
+    case 7: p.x = 23; p.y = 5; return p;// SW8
+    case 8: p.x = 23; p.y = 3; return p;// SW9
+    case 9: p.x = 17; p.y = 2; return p;// SW10
+    case 10:p.x = 7; p.y = 1; return p; // SW11
+    case 11:p.x = 5; p.y = 1; return p; // SW12
+    case 12:p.x = 13; p.y = 2; return p;// SW13
+    case 13:p.x = 7; p.y = 3; return p; // SW14
+    case 14:p.x = 7; p.y = 5; return p;// SW15
+    case 15:p.x = 13; p.y = 6; return p;// SW16
+    case 16:p.x = 17; p.y = 6; return p;// SW17
+    case 17:p.x = 13; p.y = 8; return p;// SW18
+    case 18:p.x = 14; p.y = 5; return p;// SW99
+    case 19:p.x = 16; p.y = 5; return p;// SW9A
+    case 20:p.x = 16; p.y = 3; return p;// SW9B
+    case 21:p.x = 14; p.y = 3; return p;// SW9C
+  }
+  return p;
+}
+
+char charatlocation (struct pos p, char *trk) {
+  return trk[(p.x-1)+(p.y-1)*WIDTH];
+}
+
+void putpixel (struct pos p, int colour, char *trk) {
+  CURSORPUSH();
+  bwprintf (COM2, "[%d;%dH[%dm%c[m", p.y+2, p.x+2, colour, charatlocation(p,trk));
+  CURSORPOP();
+}
+
+void drawsensors (char *trk) {
+  int i;
+  for (i=0; i<80; i++) {
+    putpixel (sensorlocation(i), 44, trk);
+  }
+}
+void drawswitches (char *trk, int c) {
+  int i;
+  for (i =0; i<22; i++) {
+    putpixel (switchlocation(i),c,trk);
+  }
+}
+
 /*
  __________________
  |__Taskbar________|
@@ -147,6 +252,28 @@ void help () {
                   "\n");
 }
 
+
+
+void drawtrack (char *trk) { 
+  CURSORPUSH();
+  SETCOLOUR(BG+BRIGHT+BLACK);
+  SETCOLOUR(FG+BRIGHT+WHITE);
+  CURSORMOVE(2,1);
+  int x,y; 
+  for (y = 0; y < HEIGHT; y++) { 
+    bwprintf (COM2," [K[%d;1H  ", y+3); 
+    for (x = 0; x < WIDTH; x++) { 
+      bwprintf (COM2,"%c", trk[x+y*WIDTH]); 
+    } 
+  }
+  bwprintf (COM2, "[K\n");
+  CLEARTOEND();
+  SETCOLOUR(BG+BLACK);
+  SETCOLOUR(FG+WHITE);
+  CURSORPOP();
+}
+
+
 void tables(char *sw) {
   CURSORPUSH();
   SETCOLOUR(FG+WHITE);
@@ -194,8 +321,42 @@ void tables(char *sw) {
   SETCOLOUR(BG+BLACK);
   CURSORPOP();
 }
+void drawlegend (int *legend, char *trk, int trid) {
+  char packet[2];
+  packet[0] = 'P';
+  CURSORPUSH();
+  CURSORMOVE(3,30);
+  SETCOLOUR(BG+BRIGHT+BLACK);
+  bwprintf (COM2, "Train ID\t\tPosition");
+  int i;
+  struct msg in;
+  for (i = 0; legend[i] && i < MAX_TRAINS; i++) {
+    //get train pos
+    packet[1] = (char)legend[i];
+    Send (trid, packet,2, (char*)(&in), sizeof (struct msg));
+    CURSORMOVE(4+i,30); 
+    SETCOLOUR(41+i);
+    bwprintf (COM2, "  ");
+    SETCOLOUR(BG+BRIGHT+BLACK);
+    struct sensorevent s;// = fucksensor((int)c,0);
+    switch ((char)in.d1) {
+      case 255:
+      case 254:
+        bwprintf (COM2, "  Train %d\t(lost!)", legend[i]); 
+        break; 
+       // bwprintf (COM2, "  I AM ERROR."); 
+        break;
+      default:
+        s = fucksensor(in.d1,0);
+        bwprintf (COM2, "  Train %d\t(%c%d+%d.%d)", legend[i],s.group, s.id, in.d2/10, in.d2%10);
+        break;
+    }
+  }
+  SETCOLOUR (BG+BLACK);
+  CURSORPOP();
+}
 void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
-           struct measurement mz[][80]) {
+           struct measurement mz[][80], char *trk, int *legend) {
   char packet[5];
   char buf[32];
   struct msg m;
@@ -206,10 +367,17 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     bwputstr (COM2, "Train set started.\n");
   }
   else if (!strcmp ("add", token(cmd,0,buf))) {
-    bwprintf (COM2, "Adding train %d.\n",stoi(token (cmd,1,buf)));
-    packet[0] = 'A';
-    packet[1] = (char)stoi(token(cmd,1,buf));
-    Send (trid, packet, 2, NULL, 0);
+    int i=0;
+    while (legend[i] != 0 && i < MAX_TRAINS) i++;
+    if (i == MAX_TRAINS) bwprintf (COM2, "Too many trains!\n");  
+    else {
+      legend[i] = stoi(token(cmd,1,buf));
+      drawlegend(legend, trk, trid);
+      bwprintf (COM2, "Adding train %d (%d).\n",stoi(token (cmd,1,buf)),i);
+      packet[0] = 'A';
+      packet[1] = (char)stoi(token(cmd,1,buf));
+      Send (trid, packet, 2, NULL, 0);
+    }
   }
   else if (!strcmp ("q", cmd)) {
     bwprintf (COM2, "[2J[1;1HQuiting to reboot.\n");
@@ -281,6 +449,8 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     packet[0] = 'w';
     packet[1] = (char)(stoi(token(cmd,1,buf))%0xFF);
     packet[2] = token(cmd,2,buf)[0];
+    if (token(cmd,2,buf)[0] == 's' || token(cmd,2,buf)[0] =='S') putpixel (switchlocation(unfuckswitch(stoi(token(cmd,1,buf)))), 47, trk);
+    else putpixel (switchlocation(unfuckswitch(stoi(token(cmd,1,buf)))), 100, trk);
     Send (trid, packet, 3, NULL, 0);
     bwprintf (COM2, "Switching switch %d to direction %c.\n", stoi(token(cmd,1,buf)), token(cmd,2,buf)[0]);
     // Notify the TRACKSERVER about the change in state, later we'll also ask it
@@ -298,6 +468,8 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
   else if (!strcmp ("swall", token(cmd,0,buf))) {
     packet[0] = 'a';
     packet[1] = token(cmd,1,buf)[0];
+    if (token(cmd,1,buf)[0] == 's' || token(cmd,1,buf)[0] == 'S') drawswitches(trk,47);
+    else drawswitches (trk, 100);
     Send (trid, packet, 2, NULL, 0);
     bwprintf (COM2, "Switching all switches to direction %c.\n", token(cmd,1,buf)[0]);
     // Notify the TRACKSERVER about the change in state, later we'll also ask it
@@ -321,10 +493,11 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
   }
   else if (!strcmp ("loc", token (cmd,0,buf))) {
     struct sensorevent dispsensor;
+    struct msg in;
     packet[0] = 'P';
     packet[1] = (char)stoi(token(cmd,1,buf));
     char c;
-    Send (trid, packet,2, &c, 1);
+    Send (trid, packet,2, (char*)(&in), sizeof (struct msg));
     switch (c) {
       case 255:
         bwprintf (COM2, "Train %d is lost!\n", stoi(token(cmd,1,buf))); break;
@@ -423,7 +596,22 @@ void wm () {
   int n = 0;
   int trid, track_tid;
   char sw[32];
-  struct sensorevent data[2];
+  int legend[MAX_TRAINS];
+  for (i=0; i<MAX_TRAINS; i++) {
+    legend[i] = 0;
+  }
+
+  char *trkB = "---------------------,  "
+                "---/  |,-------------,\\ "
+                "   |  /      \\|/      \\|"
+                "   |  |       |        |"
+                "   |  \\      /|\\      /|"
+                "---\\  |`-------------\'/ "
+                "----\\  `-------------\'  "
+                "------------\\---/-------";
+
+
+
   struct measurement measurements[80][80];
   for (i = 0; i < 32; i++) sw[i] = '?';
   FOREACH(i, 80) {
@@ -476,8 +664,10 @@ void wm () {
    char sensorquery = 'd';
    struct sensorevent sen;
    //tables (sw);
+   drawtrack(trkB);
    while (!done) {
     t = Time()/2; 
+    if (t%5==0) drawlegend(legend,trkB,trid); 
     Send (trid, &sensorquery, 1, (char*)(&sen), sizeof(struct sensorevent));
     //prettyprintsensor (sen); 
     //examine_sensors(sen, data, measurements);
@@ -487,7 +677,7 @@ void wm () {
      if (ch == CHR_RETURN) { 
        bwputc (COM2,'\n');
        inbuf[n] = 0;
-       eval (inbuf, trid, track_tid, sw, sen, measurements);
+       eval (inbuf, trid, track_tid, sw, sen, measurements, trkB,legend);
        bwprintf (COM2, "> ");
        n = 0;
      }

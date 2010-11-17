@@ -192,7 +192,7 @@ void track()
         r = Reply(tid, (char *)(&t.distance), 4);
       case 't':
         r = Reply(tid, NULL, 0);
-        bwprintf(COM2, "\r\nTurnout %d updated to %c\r\n", m.d1, m.c1);
+        //bwprintf(COM2, "\r\nTurnout %d updated to %c\r\n", m.d1, m.c1);
         i = m.d1;
         if (i >= sizeof(switches)) {
           DPRINTERR("Overflow of switch ID number\r\n");

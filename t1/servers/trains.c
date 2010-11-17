@@ -95,7 +95,6 @@ void zeromsg (struct msg *f) {
 
 void sensor_secretary () {
   int sensor[80];
-  char name[4];
   struct msg in;
   struct msg out;
   int r, i, tid, t;
@@ -174,7 +173,6 @@ int nextsensor (int cur, int trktid, int *d) {
 
 void train_agent () {
   struct msg out,in;
-  char msg = 'U';
   int trid = MyParentTid ();
   int senid = WhoIs ("sens");
   int trktid = WhoIs ("trak");
@@ -242,10 +240,10 @@ void train_agent () {
         temp = sensdistance / delta_t;
         avg_val = (avg_val * avg_cnt + temp) / (avg_cnt + 1);
         ++avg_cnt;
-        bwprintf (COM2, "ok, successfully got from %s to %s, distance %dmm, dt"
-                  " %d(s/10)"
-                  " v %dcm/s --->\tAverage %dcm/s\r\n",
-                  nam2, msg2, sensdistance, delta_t, temp, avg_val);
+        //bwprintf (COM2, "ok, successfully got from %s to %s, distance %dmm, dt"
+       //           " %d(s/10)"
+         //         " v %dcm/s --->\tAverage %dcm/s\r\n",
+           //       nam2, msg2, sensdistance, delta_t, temp, avg_val);
 
         timelastsensor = in.d1;
         lastsensor = expectednext;
@@ -265,21 +263,21 @@ void trains () {
   char cmd[32];
   char lastread[10];
 
-  int speeds[100];
-  int tr2tid[100];
-  int locations[100];
-  int tid2tr[100];
+  int speeds[80];
+  int tr2tid[80];
+  int locations[80];
+  int dx[80];
+  int tid2tr[80];
 
   char sw[32];
   //int head = 0;
   int i;
 
   struct msg out;
-  unsigned char train_dict[256];
   struct sensorevent latest;
   latest.group = 0;
 
-  for (i = 0; i < 100; i++) { speeds[i] = tr2tid[i] = 0; tid2tr[i] = 0; locations[i] = -2; }
+  for (i = 0; i < 80; i++) { dx[i] = speeds[i] = tr2tid[i] = 0; tid2tr[i] = 0; locations[i] = -2; }
   for (i = 0; i < 10; i++)  { lastread[i] = 0; }
 
   int r;
@@ -303,11 +301,14 @@ start:
         break;
       case 'P': // give back location of train
         cmd[0] = (char)locations[(int)cmd[1]];
-        Reply (tid, cmd, 1);
+        out.d1 = locations[(int)cmd[1]];
+        out.d2 = dx[(int)cmd[1]];
+        Reply (tid, (char*)(&out), sizeof (struct msg));
         goto start;
         break;
       case 'U': // update from a train
         locations[tid2tr[tid]] = ((int*)cmd)[1];
+        dx[tid2tr[tid]] = ((int*)cmd)[1];
         Reply (tid, (char*)(&speeds[tid2tr[tid]]), 4);
         goto start;
         break;
