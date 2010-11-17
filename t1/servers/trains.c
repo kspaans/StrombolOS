@@ -109,7 +109,7 @@ void sensor_secretary () {
     r = Receive (&tid, (char*)(&in), sizeof(struct msg));
     switch (in.id) {
       case 'D':
-        sens_id_to_name(in.d1, name);
+        //sens_id_to_name(in.d1, name);
         //bwprintf (COM2, "was told that sensor %s was triggered at %d.\n", name,
         //in.d2);
         sensor[in.d1] = in.d2;
@@ -117,17 +117,15 @@ void sensor_secretary () {
         break;
       case 'R': // train is requesting status of sensor
         if (sensor[in.d1]!=0 && t-sensor[in.d1] > 60) {
-          sens_id_to_name(in.d1, name);
+          //sens_id_to_name(in.d1, name);
           //bwprintf (COM2, "Expiring sensor %s, which was triggered at %d\n",
           //          name, sensor[in.d1]);
           sensor[in.d1] = 0;
           Reply(tid,NULL, 0);
         }
         else if (sensor[in.d1]) {
-          sensor[in.d1] = 0;
           //bwprintf (COM2, "success???\n");
           out.d1 = sensor[in.d1];
-          sensor[in.d1] = 0;
           sensor[in.d1] = 0;
           Reply (tid, (char*)(&out), sizeof (struct msg));
         }
@@ -188,6 +186,7 @@ void train_agent () {
   int dx=0;
   int sensdistance = 0;
   int r=0,t=0;
+  int avg_val = 0, avg_cnt = 0;
 
   unsigned int updatemsg[3];
   updatemsg[0] = (unsigned int)'U';
@@ -229,6 +228,7 @@ void train_agent () {
     else {
       char msg2[4];
       char nam2[4];
+      int temp;
       zeromsg(&out);
       zeromsg(&in);
       out.id = 'R';
@@ -236,12 +236,16 @@ void train_agent () {
       r = Send (senid, (char*)&out, sizeof (struct msg), (char*)&in, sizeof (struct msg));
       if (r) { // calibrate velocity more????
         int delta_t = t - timelastsensor;
-        delta_t /= 200; // convert to tenths of a second
+        ////bwprintf(COM2, "LALA old %d vs now %d,,%d\r\n", in.d1, t, timelastsensor);
         sens_id_to_name(lastsensor, nam2);
         sens_id_to_name(expectednext, msg2);
-        bwprintf (COM2, "ok, successfully got from %s to %s, distance %dmm, dt %d"
-                  " v %dmm/(s/10)\r\n",
-                  nam2, msg2, sensdistance, delta_t, sensdistance / delta_t);
+        temp = sensdistance / delta_t;
+        avg_val = (avg_val * avg_cnt + temp) / (avg_cnt + 1);
+        ++avg_cnt;
+        bwprintf (COM2, "ok, successfully got from %s to %s, distance %dmm, dt"
+                  " %d(s/10)"
+                  " v %dcm/s --->\tAverage %dcm/s\r\n",
+                  nam2, msg2, sensdistance, delta_t, temp, avg_val);
 
         timelastsensor = in.d1;
         lastsensor = expectednext;

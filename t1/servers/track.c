@@ -29,7 +29,7 @@ struct trip next_sensor(int current, struct track_node **map)
   int dist = 0;
 
   sens_id_to_name(current, name1);
-    bwprintf(COM2, "NEXT         %d|%s\r\n", current, name1);
+    //bwprintf(COM2, "NEXT         %d|%s\r\n", current, name1);
   //sens_id_to_name(cur->id * 2, name1);
   //  bwprintf(COM2, "NEXT  mapped %d|%s  ... edge choices:\r\n", cur->id * 2, name1);
   //sens_id_to_name(cur->edges[AHEAD].dest->id * 2, name1);
@@ -72,16 +72,16 @@ struct trip next_sensor(int current, struct track_node **map)
       else if (next->edges[BEHIND].dest == prev) {
         if (next->switch_state == 'S' || next->switch_state == 's') {
           //bwprintf(COM2, "NEXT switch ahead\r\n");
-          bwprintf(COM2, "\r\nNEXT went over a switch in state %c\r\n",
-                   next->switch_state);
+          //bwprintf(COM2, "\r\nNEXT went over a switch in state %c\r\n",
+          //         next->switch_state);
           dist += next->edges[AHEAD].dist;
           prev =  next;
           next =  next->edges[AHEAD].dest;
         }
         else {
           //bwprintf(COM2, "NEXT switch curved\r\n");
-          bwprintf(COM2, "\r\nNEXT went over a switch in state %c\r\n",
-                   next->switch_state);
+          //bwprintf(COM2, "\r\nNEXT went over a switch in state %c\r\n",
+          //         next->switch_state);
           dist += next->edges[CURVED].dist;
           prev =  next;
           next =  next->edges[CURVED].dest;
