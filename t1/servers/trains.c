@@ -152,7 +152,7 @@ fart:
   }
 }
 
-#define LOST_TIMEOUT 10000000
+#define LOST_TIMEOUT 70
 
 int nextsensor (int cur, int trktid, int *d) {
   struct trip t;

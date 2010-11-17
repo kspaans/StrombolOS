@@ -321,7 +321,7 @@ void tables(char *sw) {
   SETCOLOUR(BG+BLACK);
   CURSORPOP();
 }
-void drawlegend (int *legend, char *trk, int trid) {
+void drawlegend (int *legend, char *trk, int trid, int *locations) {
   char packet[2];
   packet[0] = 'P';
   CURSORPUSH();
@@ -342,13 +342,33 @@ void drawlegend (int *legend, char *trk, int trid) {
     switch ((char)in.d1) {
       case 255:
       case 254:
+        if (locations[i] != -1) {
+          CURSORPOP();
+          putpixel (sensorlocation(locations[i]),BG+BRIGHT+BLACK, trk);
+          CURSORPUSH();
+          CURSORMOVE(4+i, 32);
+          locations[i] = -1;
+        }
         bwprintf (COM2, "  Train %d\t(lost!)", legend[i]); 
         break; 
        // bwprintf (COM2, "  I AM ERROR."); 
         break;
       default:
+        if (locations[i] != -1 && locations[i] != in.d1) {
+          CURSORPOP();
+          putpixel (sensorlocation(locations[i]),BG+BRIGHT+BLACK, trk);
+          CURSORPUSH();
+          CURSORMOVE(4+i, 32);
+          locations[i] = -1;
+        }
         s = fucksensor(in.d1,0);
+        CURSORPOP();
+        putpixel (sensorlocation(in.d1), 41+i,trk);
+        CURSORPUSH();
+        CURSORMOVE(4+i,32); 
+        SETCOLOUR(BG+BRIGHT+BLACK);
         bwprintf (COM2, "  Train %d\t(%c%d+%d.%d)", legend[i],s.group, s.id, in.d2/10, in.d2%10);
+        locations[i] = in.d1;
         break;
     }
   }
@@ -356,7 +376,7 @@ void drawlegend (int *legend, char *trk, int trid) {
   CURSORPOP();
 }
 void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
-           struct measurement mz[][80], char *trk, int *legend) {
+           struct measurement mz[][80], char *trk, int *legend, int *locations) {
   char packet[5];
   char buf[32];
   struct msg m;
@@ -372,7 +392,7 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     if (i == MAX_TRAINS) bwprintf (COM2, "Too many trains!\n");  
     else {
       legend[i] = stoi(token(cmd,1,buf));
-      drawlegend(legend, trk, trid);
+      drawlegend(legend, trk, trid, locations);
       bwprintf (COM2, "Adding train %d (%d).\n",stoi(token (cmd,1,buf)),i);
       packet[0] = 'A';
       packet[1] = (char)stoi(token(cmd,1,buf));
@@ -604,7 +624,7 @@ void wm () {
   for (i=0; i<MAX_TRAINS; i++) {
     legend[i] = 0;
   }
-
+  int locations[80];
   char *trkB = "---------------------,  "
                 "---/  |,-------------,\\ "
                 "   |  /      \\|/      \\|"
@@ -619,6 +639,7 @@ void wm () {
   struct measurement measurements[80][80];
   for (i = 0; i < 32; i++) sw[i] = '?';
   FOREACH(i, 80) {
+    locations[i]=-1;
     FOREACH(j, 80) {
       measurements[i][j].time = 0;
       measurements[i][j].num  = 0;
@@ -671,7 +692,7 @@ void wm () {
    drawtrack(trkB);
    while (!done) {
     t = Time()/2; 
-    if (t%5==0) drawlegend(legend,trkB,trid); 
+    if (t%5==0) drawlegend(legend,trkB,trid,locations); 
     Send (trid, &sensorquery, 1, (char*)(&sen), sizeof(struct sensorevent));
     //prettyprintsensor (sen); 
     //examine_sensors(sen, data, measurements);
@@ -681,7 +702,7 @@ void wm () {
      if (ch == CHR_RETURN) { 
        bwputc (COM2,'\n');
        inbuf[n] = 0;
-       eval (inbuf, trid, track_tid, sw, sen, measurements, trkB,legend);
+       eval (inbuf, trid, track_tid, sw, sen, measurements, trkB,legend,locations);
        bwprintf (COM2, "> ");
        n = 0;
      }
