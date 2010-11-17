@@ -413,6 +413,10 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     Send (trid, packet, 3, NULL, 0);
     bwprintf (COM2, "[31mH[32mO[33mN[34mK[35m![37m\n");
   }
+  else if (!strcmp ("trap", token(cmd,0,buf))) {
+    cmd[0] = 'T';
+    Send (trid, cmd, 10, NULL, 0);
+  }
   else if (!strcmp ("light", token(cmd,0,buf)) || !strcmp ("lights", token(cmd, 0, buf))) {
     packet[0] = 't';
     if (!strcmp ("on",token (cmd,1,buf))) {

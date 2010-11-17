@@ -234,17 +234,17 @@ void train_agent () {
       r = Send (senid, (char*)&out, sizeof (struct msg), (char*)&in, sizeof (struct msg));
       if (r) { // calibrate velocity more????
         int delta_t = t - timelastsensor;
-        ////bwprintf(COM2, "LALA old %d vs now %d,,%d\r\n", in.d1, t, timelastsensor);
         sens_id_to_name(lastsensor, nam2);
         sens_id_to_name(expectednext, msg2);
-        temp = sensdistance / delta_t;
+        speed = temp = sensdistance / delta_t;
         avg_val = (avg_val * avg_cnt + temp) / (avg_cnt + 1);
         ++avg_cnt;
         //bwprintf (COM2, "ok, successfully got from %s to %s, distance %dmm, dt"
-       //           " %d(s/10)"
-         //         " v %dcm/s --->\tAverage %dcm/s\r\n",
-           //       nam2, msg2, sensdistance, delta_t, temp, avg_val);
+        //          " %d(s/10)"
+        //          " v %dcm/s --->\tAverage %dcm/s\r\n",
+        //          nam2, msg2, sensdistance, delta_t, temp, avg_val);
 
+        dx = 0;
         timelastsensor = in.d1;
         lastsensor = expectednext;
         expectednext = nextsensor(lastsensor, trktid, &sensdistance);
@@ -253,7 +253,7 @@ void train_agent () {
       }
     }
  
-    dx += 0; // calculate distance past current sensor
+    dx = speed * (t - timelastsensor); // calculate distance past current sensor (in mm)
   }
 }
 
@@ -275,6 +275,9 @@ void trains () {
 
   struct msg out;
   struct sensorevent latest;
+  struct sensorevent trap;
+  trap.group   = '\0';
+  trap.id      = 0;
   latest.group = 0;
 
   for (i = 0; i < 80; i++) { dx[i] = speeds[i] = tr2tid[i] = 0; tid2tr[i] = 0; locations[i] = -2; }
@@ -312,6 +315,17 @@ start:
         Reply (tid, (char*)(&speeds[tid2tr[tid]]), 4);
         goto start;
         break;
+      case 'T': //set a trap
+        trap.group = cmd[5];
+        int id;
+        if (cmd[7] == ' ') {
+          id = cmd[6] - '0';
+        }
+        else {
+          id = 10 + cmd[7] - '0';
+        }
+        trap.id = id;
+        bwprintf(COM2, "Trapping at %c%d\r\n", trap.group, trap.id);
       default:
         break;
     }
@@ -334,6 +348,11 @@ start:
              while (wut) {
                if (wut &128) { 
                  latest = fucksensor (i*8+j,tt); 
+                 if (trap.id && trap.id == latest.id && trap.group ==
+                     latest.group) {
+                   Putc(COM1, 0x00);
+                   Putc(COM1, 0x20); //stop train 32
+                 }
                  out.id = 'D';
                  out.d1 = i*8+j;
                  out.d2 = latest.time; // change me, 508khz reading?
