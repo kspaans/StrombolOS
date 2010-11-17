@@ -277,6 +277,9 @@ void trains () {
   struct msg out;
   unsigned char train_dict[256];
   struct sensorevent latest;
+  struct sensorevent trap;
+  trap.group   = '\0';
+  trap.id      = 0;
   latest.group = 0;
 
   for (i = 0; i < 100; i++) { speeds[i] = tr2tid[i] = 0; tid2tr[i] = 0; locations[i] = -2; }
@@ -311,6 +314,17 @@ start:
         Reply (tid, (char*)(&speeds[tid2tr[tid]]), 4);
         goto start;
         break;
+      case 'T': //set a trap
+        trap.group = cmd[5];
+        int id;
+        if (cmd[7] == ' ') {
+          id = cmd[6] - '0';
+        }
+        else {
+          id = 10 + cmd[7] - '0';
+        }
+        trap.id = id;
+        bwprintf(COM2, "Trapping at %c%d\r\n", trap.group, trap.id);
       default:
         break;
     }
@@ -333,6 +347,11 @@ start:
              while (wut) {
                if (wut &128) { 
                  latest = fucksensor (i*8+j,tt); 
+                 if (trap.id && trap.id == latest.id && trap.group ==
+                     latest.group) {
+                   Putc(COM1, 0x00);
+                   Putc(COM1, 0x20); //stop train 32
+                 }
                  out.id = 'D';
                  out.d1 = i*8+j;
                  out.d2 = latest.time; // change me, 508khz reading?
