@@ -136,3 +136,17 @@ int Time()
   /* XXX check return value XXX */
   return time;
 }
+
+void LockAcquire (int l) {
+  char msg[2];
+  msg[0] = 'A';
+  msg[1] = (char)l;
+  Send (WhoIs("lk"), msg, 2, NULL, 0);
+}
+
+void LockRelease (int l) {
+  char msg[2];
+  msg[0] = 'R';
+  msg[1] = (char)l;
+  Send (WhoIs("lk"), msg, 2, NULL, 0);
+}

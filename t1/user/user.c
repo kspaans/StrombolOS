@@ -26,7 +26,7 @@ void idle_shell()
   i = Create(SYSCALL_HIGH, &uart2serv);
   i = Create (SYSCALL_HIGH, &trains);
   i = Create (SYSCALL_HIGH, &track);
- 
+  i = Create (SYSCALL_HIGH, &lock123); 
   i = Create (USER_HIGH, &wm);
   i = Create (IDLE, idle);
   Exit();
