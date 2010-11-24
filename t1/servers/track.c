@@ -22,7 +22,7 @@
  */
 struct trip next_sensor(int current, struct track_node **map)
 {
-  char name1[4], name2[4];
+  char name1[4];//, name2[4];
   struct trip t;
   struct track_node *cur = map[current];
   struct track_node *next, *prev;

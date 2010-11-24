@@ -104,6 +104,7 @@ void zeromsg (struct msg *f) {
  */
 void sensor_secretary () {
   int sensor[80]; // Timings, counting down from 0xFFFFFFFF at 508KHz on TIMER3
+  char name[10];
   struct msg in;
   struct msg out;
   int r, i, tid, t;
@@ -187,11 +188,12 @@ void train_agent () {
   int trktid = WhoIs ("trak");
   int lastsensor = -1;
   int newspeed;
-  int speed; // Calculated in this function in mm/us
-  int timelastsensor = 0;
+  int virtspeed; // as calibrated/guesstimated
+  int realspeed; // Calculated in this function in mm/sec
+  int timelastsensor = 0; // in ticks, descending from 0xFFFFFFFF
   int expectednext = -1;
   int lost = 1; // start off lost
-  int dx = 0;
+  int dx = 0; // in mm
   int sensdistance = 0; // in mm
   int r = 0;
   int t = 0; // in 508KHz ticks aka ~1.97us
@@ -207,8 +209,8 @@ void train_agent () {
 
     // ask train server for updates on speed, update it with our positions.
     Send (trid, (char*)(updatemsg), 3*sizeof(int), (char*)(&newspeed), 4);
-    if (newspeed != speed) {
-      speed = newspeed;
+    if (newspeed != virtspeed) {
+      virtspeed = newspeed;
       // time since speed change for blending?
     }
 
@@ -236,24 +238,26 @@ void train_agent () {
     else {
       char msg2[4];
       char nam2[4];
-      int temp;
       zeromsg(&out);
       zeromsg(&in);
       out.id = 'R';
       out.d1 = expectednext;
       r = Send (senid, (char*)&out, sizeof (struct msg), (char*)&in, sizeof (struct msg));
-      if (r) { // calibrate velocity more????
-        int delta_t = timelastsensor - t;
+      if (r) { // We've hit a fresh sensor, calibrate velocity more????
+        int delta_t = timelastsensor - t; // in 1.97us
+        // Scale the integers, to get mm/sec
+        sensdistance *= 100000;
+        delta_t      /=   1000;
+        realspeed = (sensdistance / delta_t) / 197; // the ratio of ticks to time
+        avg_val = (avg_val * avg_cnt + realspeed) / (avg_cnt + 1);
+        ++avg_cnt;
+
         sens_id_to_name(lastsensor, nam2);
         sens_id_to_name(expectednext, msg2);
-        speed = temp = sensdistance / delta_t;
-        // Why isn't this working?
-        avg_val = (avg_val * avg_cnt + temp) / (avg_cnt + 1);
-        ++avg_cnt;
-        //bwprintf (COM2, "ok, successfully got from %s to %s, distance %dmm, dt"
-        //          " %d(s/10)"
-        //          " v %dcm/s --->\tAverage %dcm/s\r\n",
-        //          nam2, msg2, sensdistance, delta_t, temp, avg_val);
+        bwprintf (COM2, "Got from %s to %s\tdistance %dmm, dt"
+                  " %d,"
+                  " v %dmm/s\tAverage %dmm/s DIST so far %d\r\n",
+                  nam2, msg2, sensdistance, delta_t, realspeed, avg_val, dx);
 
         dx = 0;
         timelastsensor = in.d1;
@@ -264,10 +268,9 @@ void train_agent () {
       }
     }
  
-    dx = speed * (timelastsensor - 1); // calculate distance past current sensor (in mm)
+    dx = realspeed * timelastsensor; // calculate distance past current sensor (in mm) FIXME
   }
 }
-
 
 void trains () {
   int tid;

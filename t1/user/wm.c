@@ -367,7 +367,7 @@ void drawlegend (int *legend, char *trk, int trid, int *locations) {
         CURSORPUSH();
         CURSORMOVE(4+i,32); 
         SETCOLOUR(BG+BRIGHT+BLACK);
-        bwprintf (COM2, "  Train %d\t(%c%d+%d.%d)", legend[i],s.group, s.id, in.d2/10, in.d2%10);
+        bwprintf (COM2, "  Train %d\t(%c%d+%dmm)", legend[i],s.group, s.id, in.d2);
         locations[i] = in.d1;
         break;
     }
@@ -375,6 +375,7 @@ void drawlegend (int *legend, char *trk, int trid, int *locations) {
   SETCOLOUR (BG+BLACK);
   CURSORPOP();
 }
+
 void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
            struct measurement mz[][80], char *trk, int *legend, int *locations) {
   char packet[5];
