@@ -22,4 +22,7 @@ int Getc(int channel);
 int Getc_r(int ch);
 int Putc(int channel, char ch);
 
+void LockAcquire(int l);
+void LockRelease(int l);
+
 #endif // USYSCALL__INCLUDED

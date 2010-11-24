@@ -9,6 +9,7 @@ void uart2serv();
 void track();
 void trains();
 void rps_server();
+void lock123();
 
 void notifier_clock();
 void notifier_uart1rx();

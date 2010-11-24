@@ -8,6 +8,7 @@
 #include "user.h"
 #include "../servers/servers.h"
 #include "../servers/track.h"
+#include <lock.h>
 
 #define MAX_TRAINS 6
 #define HEIGHT 8
@@ -102,16 +103,20 @@ void putpixel (struct pos p, int colour, char *trk) {
 }
 
 void drawsensors (char *trk) {
+  LockAcquire (COM2_W_LOCK);
   int i;
   for (i=0; i<80; i++) {
     putpixel (sensorlocation(i), 44, trk);
   }
+  LockRelease (COM2_W_LOCK);
 }
 void drawswitches (char *trk, int c) {
   int i;
+  LockAcquire (COM2_W_LOCK);
   for (i =0; i<22; i++) {
     putpixel (switchlocation(i),c,trk);
   }
+  LockRelease (COM2_W_LOCK);
 }
 
 /*
@@ -180,6 +185,7 @@ char *token (char *str, int n,char *buf) {
 }
 
 void prettyprintsensor (struct sensorevent s) {
+  LockAcquire (COM2_W_LOCK);
   CURSORPUSH ();
   CURSORMOVE (1,40);
   SETCOLOUR (BG+BRIGHT+MAGENTA);
@@ -191,9 +197,12 @@ void prettyprintsensor (struct sensorevent s) {
   SETCOLOUR(BG+BLACK);
   SETCOLOUR (FG+WHITE);
   CURSORPOP ();  
+  LockRelease (COM2_W_LOCK);
 }
          
+
 void prettyprinttime (int ticks) {
+  LockAcquire (COM2_W_LOCK);
   CURSORPUSH();
   CURSORMOVE(1,200);
   CURSORBACK(25);
@@ -214,6 +223,7 @@ void prettyprinttime (int ticks) {
   SETCOLOUR(BG+BLACK);
   SETCOLOUR(FG+WHITE);
   CURSORPOP();
+  LockAcquire (COM2_W_LOCK);
 }
 
 /*int strcmp (char *a, char *b) {
@@ -230,6 +240,7 @@ int stoi (char *str) {
 }
 
 void help () { 
+  LockAcquire (COM2_W_LOCK);
   bwprintf (COM2, "SYSTEM COMMANDS\n"
                   " help                          Get back to this screen.\n"
                   " q                             Quit to redboot.\n"
@@ -250,11 +261,13 @@ void help () {
                   " st <switch num>               Display the current direction of switch thing something redundant.\n"
 
                   "\n");
+  LockRelease (COM2_W_LOCK);
 }
 
 
 
 void drawtrack (char *trk) { 
+  LockAcquire(COM2_W_LOCK);
   CURSORPUSH();
   SETCOLOUR(BG+BRIGHT+BLACK);
   SETCOLOUR(FG+BRIGHT+WHITE);
@@ -271,10 +284,12 @@ void drawtrack (char *trk) {
   SETCOLOUR(BG+BLACK);
   SETCOLOUR(FG+WHITE);
   CURSORPOP();
+  LockRelease (COM2_W_LOCK);
 }
 
 
 void tables(char *sw) {
+  LockAcquire (COM2_W_LOCK);
   CURSORPUSH();
   SETCOLOUR(FG+WHITE);
   SETCOLOUR(BG+MAGENTA);
@@ -320,10 +335,12 @@ void tables(char *sw) {
   CLEARTOEND();
   SETCOLOUR(BG+BLACK);
   CURSORPOP();
+  LockRelease (COM2_W_LOCK);
 }
 void drawlegend (int *legend, char *trk, int trid, int *locations) {
   char packet[2];
   packet[0] = 'P';
+  LockAcquire (COM2_W_LOCK);
   CURSORPUSH();
   CURSORMOVE(3,30);
   SETCOLOUR(BG+BRIGHT+BLACK);
@@ -374,6 +391,7 @@ void drawlegend (int *legend, char *trk, int trid, int *locations) {
   }
   SETCOLOUR (BG+BLACK);
   CURSORPOP();
+  LockRelease (COM2_W_LOCK);
 }
 
 void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
@@ -381,11 +399,15 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
   char packet[5];
   char buf[32];
   struct msg m;
+  LockAcquire (COM2_W_LOCK);
   SETCOLOUR (FG+BRIGHT+WHITE);
+  LockRelease (COM2_W_LOCK);
   if (!strcmp("go", cmd)) {
     packet[0] = 'g';
     Send (trid, packet, 1, NULL, 0);
+    LockAcquire (COM2_W_LOCK);
     bwputstr (COM2, "Train set started.\n");
+    LockRelease (COM2_W_LOCK);
   }
   else if (!strcmp ("add", token(cmd,0,buf))) {
     int i=0;
@@ -394,18 +416,24 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     else {
       legend[i] = stoi(token(cmd,1,buf));
       drawlegend(legend, trk, trid, locations);
+      LockAcquire (COM2_W_LOCK);
       bwprintf (COM2, "Adding train %d (%d).\n",stoi(token (cmd,1,buf)),i);
+      LockRelease (COM2_W_LOCK);
       packet[0] = 'A';
       packet[1] = (char)stoi(token(cmd,1,buf));
       Send (trid, packet, 2, NULL, 0);
     }
   }
   else if (!strcmp ("q", cmd)) {
+    LockAcquire (COM2_W_LOCK);
     bwprintf (COM2, "[2J[1;1HQuiting to reboot.\n");
+    LockRelease (COM2_W_LOCK);
     Shutdown();
   }
   else if (!strcmp ("reboot", cmd)) {
+    LockAcquire (COM2_W_LOCK);
     bwprintf (COM2, "[2J[1;1HRebooting.\n");
+    LockRelease (COM2_W_LOCK);
     *((uint*)0x80940000) = 0xAAAA;
     while (1); // not super effective
   }
@@ -415,14 +443,18 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
   else if (!strcmp ("stop", cmd)) {
     packet[0] = 's';
     Send (trid, packet, 1, NULL, 0);
+    LockAcquire (COM2_W_LOCK);
     bwputstr (COM2, "Train set stopped.\n");
+    LockRelease (COM2_W_LOCK);
   }
   else if (!strcmp ("tr", token(cmd,0,buf))) {
     packet[0] = 't';
     packet[1] = (char)stoi(token(cmd,2,buf));
     packet[2] = (char)stoi(token(cmd,1,buf));
     Send (trid, packet, 3, NULL, 0);
+    LockAcquire (COM2_W_LOCK);
     bwprintf (COM2, "Train %d set to speed %d.\n", stoi(token(cmd,1,buf)), stoi(token(cmd,2,buf)));
+    LockRelease (COM2_W_LOCK);
   }
   else if (!strcmp ("honk", token(cmd,0,buf))) {
     packet[0] = 't';
@@ -432,7 +464,9 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     Delay(4);
     packet[1] = 0x40;
     Send (trid, packet, 3, NULL, 0);
+    LockAcquire (COM2_W_LOCK);
     bwprintf (COM2, "[31mH[32mO[33mN[34mK[35m![37m\n");
+    LockRelease (COM2_W_LOCK);
   }
   else if (!strcmp ("trap", token(cmd,0,buf))) {
     cmd[0] = 'T';
@@ -442,6 +476,7 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     packet[0] = 't';
     if (!strcmp ("on",token (cmd,1,buf))) {
       packet[1] = 0x42;
+      LockAcquire (COM2_W_LOCK);
       bwprintf (COM2, "Lights ");
       SETCOLOUR (BG+YELLOW);
       SETCOLOUR (FG+BRIGHT+BLACK);
@@ -449,9 +484,11 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
       SETCOLOUR (BG+BLACK);
       SETCOLOUR (FG+WHITE);
       bwprintf (COM2, " for train %d.\n", (char)stoi(token(cmd,2,buf)));
+      LockRelease (COM2_W_LOCK);
     }
     else {
       packet[1] = 0x40;
+      LockAcquire (COM2_W_LOCK);
       bwprintf (COM2, "Lights ");
       SETCOLOUR (BG+BRIGHT+BLACK);
       SETCOLOUR (FG+BLACK);
@@ -459,6 +496,7 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
       SETCOLOUR (BG+BLACK);
       SETCOLOUR (FG+WHITE);
       bwprintf (COM2," for train %d.\n", (char)stoi(token(cmd,2,buf)));
+      LockRelease (COM2_W_LOCK);
     }
     packet[2] = (char)stoi(token(cmd,2,buf));
     
@@ -468,15 +506,20 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     packet[0] = 'r';
     packet[1] = (char)stoi(token(cmd,1,buf));
     Send (trid, packet, 2, NULL, 0);
+    LockAcquire (COM2_W_LOCK);
     bwprintf (COM2, "Reversing train %d.\n", stoi(token(cmd,1,buf)));
+    LockRelease (COM2_W_LOCK);
   }
   else if (!strcmp ("sw", token(cmd,0,buf))) {
     packet[0] = 'w';
     packet[1] = (char)(stoi(token(cmd,1,buf))%0xFF);
     packet[2] = token(cmd,2,buf)[0];
+    LockAcquire (COM2_W_LOCK);
     if (token(cmd,2,buf)[0] == 's' || token(cmd,2,buf)[0] =='S') putpixel (switchlocation(unfuckswitch(stoi(token(cmd,1,buf)))), 47, trk);
     else putpixel (switchlocation(unfuckswitch(stoi(token(cmd,1,buf)))), 100, trk);
+    LockRelease (COM2_W_LOCK);
     Send (trid, packet, 3, NULL, 0);
+    LockAcquire (COM2_W_LOCK);
     bwprintf (COM2, "Switching switch %d to direction %c.\n", stoi(token(cmd,1,buf)), token(cmd,2,buf)[0]);
     // Notify the TRACKSERVER about the change in state, later we'll also ask it
     // for train state...
@@ -486,6 +529,7 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
       m.d1 -= 134;
     }
     m.c1 = token(cmd, 2, buf)[0];
+    LockRelease (COM2_W_LOCK);
     Send(track_tid, (char *)&m, sizeof(struct msg), NULL, 0);
     sw[unfuckswitch(stoi(token(cmd,1,buf)))] = token(cmd,2,buf)[0];
     //tables (sw);
@@ -496,12 +540,14 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     if (token(cmd,1,buf)[0] == 's' || token(cmd,1,buf)[0] == 'S') drawswitches(trk,47);
     else drawswitches (trk, 100);
     Send (trid, packet, 2, NULL, 0);
+    LockAcquire (COM2_W_LOCK);
     bwprintf (COM2, "Switching all switches to direction %c.\n", token(cmd,1,buf)[0]);
     // Notify the TRACKSERVER about the change in state, later we'll also ask it
     // for train state...
     int ii;
     m.id = 't';
     m.c1 = token(cmd, 2, buf)[0];
+    LockRelease (COM2_W_LOCK);
     for (ii = 0; ii < 22; ii++) {
       sw[ii] = token(cmd,1,buf)[0];
       m.d1 = ii;
@@ -514,7 +560,9 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     packet[1] = (char)stoi(token(cmd,1,buf));
     char c;
     Send (trid, packet, 2, &c, 1);
+    LockAcquire (COM2_W_LOCK);
     bwprintf (COM2, "Switch %d is in direction %c.\n", stoi(token(cmd,1,buf)), c);
+    LockRelease (COM2_W_LOCK);
   }
   else if (!strcmp ("loc", token (cmd,0,buf))) {
     struct sensorevent dispsensor;
@@ -523,6 +571,7 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     packet[1] = (char)stoi(token(cmd,1,buf));
     char c;
     Send (trid, packet,2, (char*)(&in), sizeof (struct msg));
+    LockAcquire (COM2_W_LOCK);
     switch (c) {
       case 255:
         bwprintf (COM2, "Train %d is lost!\n", stoi(token(cmd,1,buf))); break;
@@ -532,12 +581,16 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
         dispsensor = fucksensor (stoi(token(cmd,1,buf)),0);
         bwprintf (COM2, "Train %d is at sensor %c%d.\n", stoi(token(cmd,1,buf)), dispsensor.group,dispsensor.id); break;
     }
+    LockRelease (COM2_W_LOCK);
   }
   else if (!strcmp ("wh", token (cmd, 0, buf))) {
+    LockAcquire (COM2_W_LOCK);
     bwprintf (COM2, "Latest sensor: %c%d at time %d:%d.%d\n", s.group,s.id, (s.time/1200), (s.time/20)%60, (s.time/2) %10);
+    LockRelease (COM2_W_LOCK);
   }
   else if (!strcmp("cal", token(cmd, 0, buf))) {
     int i, j;
+    LockAcquire (COM2_W_LOCK);
     FOREACH(i, 80) {
       FOREACH(j, 80) {
         if (mz[i][j].time != 0) {
@@ -546,11 +599,16 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
         }
       }
     }
+    LockRelease (COM2_W_LOCK);
   }
   else {
+    LockAcquire (COM2_W_LOCK);
     bwprintf (COM2, "Unknown command.\n");
+    LockRelease (COM2_W_LOCK);
   }
+  LockAcquire (COM2_W_LOCK);
   SETCOLOUR (FG+WHITE);
+  LockRelease (COM2_W_LOCK);
 }
 
 #define CURRENT 1
@@ -605,6 +663,30 @@ void examine_sensors(struct sensorevent s, struct sensorevent data[],
   
 }*/
 
+void foo1() {
+  while (1) {
+    LockAcquire (COM2_R_LOCK);
+    bwprintf (COM2, "foo1: blah i have the lock. passing.\n");
+    Pass();
+    bwprintf (COM2, "foo1: still got it. delaying...\n");
+    Delay (4);
+    bwprintf (COM2, "foo1: still got it. gonna give it up and Delay(2)\n");
+    LockRelease (COM2_R_LOCK);
+    Delay(2);
+  }
+}
+
+void foo2 () {
+  while (1) {
+   LockAcquire (COM2_R_LOCK);
+   bwprintf (COM2, "foo2: got the lock! passing...\n");
+   Pass();
+   bwprintf (COM2, "foo2: still got it but going to give it away now.\n");
+   LockRelease(COM2_R_LOCK);
+   Delay(2);
+ }
+}
+
 void wm () {
 /*  bwputstr (COM2, "[2J[1;1H");
   int ii,jj;
@@ -614,6 +696,10 @@ void wm () {
   bwprintf (COM2, "[100m[2;2H  [4;8H  [100;100H");
   Shutdown();
 */
+  Create (USER_HIGH, foo1);
+  Create (USER_HIGH, foo2);
+  LockAcquire(COM2_R_LOCK);
+  LockAcquire(COM2_W_LOCK);
   int done = 0;
   int i=0, j, t;
   char inbuf[32];
@@ -690,6 +776,7 @@ void wm () {
    char sensorquery = 'd';
    struct sensorevent sen;
    //tables (sw);
+   LockRelease (COM2_W_LOCK);
    drawtrack(trkB);
    while (!done) {
     t = Time()/2; 
@@ -701,27 +788,34 @@ void wm () {
     ch = Getc_r(COM2);
     if (ch !=-1) {
      if (ch == CHR_RETURN) { 
+       LockAcquire (COM2_W_LOCK);
        bwputc (COM2,'\n');
        inbuf[n] = 0;
+       LockRelease(COM2_W_LOCK);
        eval (inbuf, trid, track_tid, sw, sen, measurements, trkB,legend,locations);
        bwprintf (COM2, "> ");
        n = 0;
+       LockRelease (COM2_W_LOCK);
      }
      else if (ch == CHR_BACKSPACE) {
        if (n > 0) {
          n--;
+         LockAcquire (COM2_W_LOCK);
          CURSORBACK(1);
          CLEARTOEND();
+         LockRelease (COM2_W_LOCK);
        }
      }
      else if ( ('0' <= ch && ch <= '9') || ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == ' ') {
        if (n < 32) {
+         LockAcquire (COM2_W_LOCK);
          bwputc (COM2, (char)ch);
+         LockRelease (COM2_W_LOCK);
          inbuf[n++] = (char)ch;
        }
      }
    }
-  
+   Pass (); // let other dudes acquire the print lock
   }
   DPRINTERR ("wm closing wut\n");
 }
