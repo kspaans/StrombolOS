@@ -191,8 +191,7 @@ void prettyprintsensor (struct sensorevent s) {
   SETCOLOUR (BG+BRIGHT+MAGENTA);
   SETCOLOUR (FG + BRIGHT+ WHITE);
   if (s.group != 0) {
-    // XXX queef
-    //bwprintf (COM2, "Latest sensor: %c%d at time %d:%d.%d     ", s.group,s.id, (s.time/1200), (s.time/20)%60, (s.time/2) %10);
+    bwprintf (COM2, "Latest sensor: %c%d at time %d:%d.%d     ", s.group,s.id, (s.time/1200), (s.time/20)%60, (s.time/2) %10);
   }
   SETCOLOUR(BG+BLACK);
   SETCOLOUR (FG+WHITE);
@@ -217,13 +216,12 @@ void prettyprinttime (int ticks) {
     case 3: flair = '/';  break;
   }
   ENABLEWRAP();
-  // XXX queef
-  //bwprintf (COM2, "Time: %d:%d.%d %c", (ticks/600),(ticks/10)%60, ticks % 10, flair);
+  bwprintf (COM2, "Time: %d:%d.%d %c", (ticks/600),(ticks/10)%60, ticks % 10, flair);
   CLEARTOEND();
   SETCOLOUR(BG+BLACK);
   SETCOLOUR(FG+WHITE);
   CURSORPOP();
-  LockAcquire (COM2_W_LOCK);
+  LockRelease (COM2_W_LOCK);
 }
 
 /*int strcmp (char *a, char *b) {
@@ -781,9 +779,9 @@ void wm () {
     t = Time()/2; 
     if (t%5==0) drawlegend(legend,trkB,trid,locations); 
     Send (trid, &sensorquery, 1, (char*)(&sen), sizeof(struct sensorevent));
-    //prettyprintsensor (sen); 
-    //examine_sensors(sen, data, measurements);
-    //prettyprinttime (t);
+    prettyprintsensor (sen); 
+ //   examine_sensors(sen, data, measurements);
+  prettyprinttime(t);
     ch = Getc_r(COM2);
     if (ch !=-1) {
      if (ch == CHR_RETURN) { 
