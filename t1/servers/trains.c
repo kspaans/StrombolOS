@@ -7,7 +7,10 @@
 #include "../user/lib.h"
 #include "../ktests/tests.h"  // PANIC
 #include "../kernel/switch.h" // FOREVER, NULL
+#include "../kernel/boot.h"   // TIMER3*          HARDWARE HAX
 #include <ANSI.h>
+
+typedef unsigned int uint;
 
 void sensorserver () {
   int last = Time ();
@@ -93,8 +96,15 @@ void zeromsg (struct msg *f) {
   f->d1=f->d2=0;
 }
 
+/*
+ * PROTOCOL
+ *  D - receive new time of sensor data
+ *  L - we are now lost
+ *  R - train requesting status of sensor
+ */
 void sensor_secretary () {
-  int sensor[80];
+  int sensor[80]; // Timings, counting down from 0xFFFFFFFF at 508KHz on TIMER3
+  char name[10];
   struct msg in;
   struct msg out;
   int r, i, tid, t;
@@ -104,7 +114,7 @@ void sensor_secretary () {
   while (1) {
     zeromsg (&in);
     zeromsg (&out);
-    t = Time ();
+    t = READ_TIMER3;
     r = Receive (&tid, (char*)(&in), sizeof(struct msg));
     switch (in.id) {
       case 'D':
@@ -115,7 +125,7 @@ void sensor_secretary () {
         Reply (tid, NULL, 0);
         break;
       case 'R': // train is requesting status of sensor
-        if (sensor[in.d1]!=0 && t-sensor[in.d1] > 60) {
+        if (sensor[in.d1] != 0 && sensor[in.d1] - t > 1200000) {
           //sens_id_to_name(in.d1, name);
           //bwprintf (COM2, "Expiring sensor %s, which was triggered at %d\n",
           //          name, sensor[in.d1]);
@@ -134,10 +144,10 @@ void sensor_secretary () {
         break;
      case 'L': // i am lost!
        for (i = 0; i < 80; i++) {
-         if (sensor[i] && t-sensor[i] > 60 ) {
+         if (sensor[i] && sensor[i] - t > 1200000 ) {
            sensor[i] = 0;
          }
-         else if (sensor[i] && t-sensor[i] > 20) {
+         else if (sensor[i] && sensor[i] - t > 400000) {
            out.d1 = i;
            out.d2 = sensor[i];
            sensor[i] = 0;
@@ -152,7 +162,7 @@ fart:
   }
 }
 
-#define LOST_TIMEOUT 70
+#define LOST_TIMEOUT 0xFFFFFFFF
 
 int nextsensor (int cur, int trktid, int *d) {
   struct trip t;
@@ -177,32 +187,34 @@ void train_agent () {
   int senid = WhoIs ("sens");
   int trktid = WhoIs ("trak");
   int lastsensor = -1;
-  int newspeed; int speed;
-  int timelastsensor  = 0;
+  int newspeed;
+  int virtspeed; // as calibrated/guesstimated
+  int realspeed; // Calculated in this function in mm/sec
+  int timelastsensor = 0; // in ticks, descending from 0xFFFFFFFF
   int expectednext = -1;
   int lost = 1; // start off lost
-  int dx=0;
-  int sensdistance = 0;
-  int r=0,t=0;
+  int dx = 0; // in mm
+  int sensdistance = 0; // in mm
+  int r = 0;
+  int t = 0; // in 508KHz ticks aka ~1.97us
   int avg_val = 0, avg_cnt = 0;
 
   unsigned int updatemsg[3];
   updatemsg[0] = (unsigned int)'U';
 
   while(1) {
-    t = Time();
-    // measure 508khz clock, update timesincelastsensor
+    t = READ_TIMER3;
     updatemsg[1] = lastsensor;
     updatemsg[2] = dx;
 
     // ask train server for updates on speed, update it with our positions.
     Send (trid, (char*)(updatemsg), 3*sizeof(int), (char*)(&newspeed), 4);
-    if (newspeed != speed) {
-      speed = newspeed;
+    if (newspeed != virtspeed) {
+      virtspeed = newspeed;
       // time since speed change for blending?
     }
 
-    if (t-timelastsensor > LOST_TIMEOUT) {
+    if (timelastsensor - t > LOST_TIMEOUT) {
       //bwprintf (COM2, "Now i am lost...\n");
       lost = 1;
       lastsensor = -1;
@@ -226,23 +238,26 @@ void train_agent () {
     else {
       char msg2[4];
       char nam2[4];
-      int temp;
       zeromsg(&out);
       zeromsg(&in);
       out.id = 'R';
       out.d1 = expectednext;
       r = Send (senid, (char*)&out, sizeof (struct msg), (char*)&in, sizeof (struct msg));
-      if (r) { // calibrate velocity more????
-        int delta_t = t - timelastsensor;
+      if (r) { // We've hit a fresh sensor, calibrate velocity more????
+        int delta_t = timelastsensor - t; // in 1.97us
+        // Scale the integers, to get mm/sec
+        sensdistance *= 100000;
+        delta_t      /=   1000;
+        realspeed = (sensdistance / delta_t) / 197; // the ratio of ticks to time
+        avg_val = (avg_val * avg_cnt + realspeed) / (avg_cnt + 1);
+        ++avg_cnt;
+
         sens_id_to_name(lastsensor, nam2);
         sens_id_to_name(expectednext, msg2);
-        speed = temp = sensdistance / delta_t;
-        avg_val = (avg_val * avg_cnt + temp) / (avg_cnt + 1);
-        ++avg_cnt;
-        //bwprintf (COM2, "ok, successfully got from %s to %s, distance %dmm, dt"
-        //          " %d(s/10)"
-        //          " v %dcm/s --->\tAverage %dcm/s\r\n",
-        //          nam2, msg2, sensdistance, delta_t, temp, avg_val);
+        bwprintf (COM2, "Got from %s to %s\tdistance %dmm, dt"
+                  " %d,"
+                  " v %dmm/s\tAverage %dmm/s DIST so far %d\r\n",
+                  nam2, msg2, sensdistance, delta_t, realspeed, avg_val, dx);
 
         dx = 0;
         timelastsensor = in.d1;
@@ -253,10 +268,9 @@ void train_agent () {
       }
     }
  
-    dx = speed * (t - timelastsensor); // calculate distance past current sensor (in mm)
+    dx = realspeed * timelastsensor; // calculate distance past current sensor (in mm) FIXME
   }
 }
-
 
 void trains () {
   int tid;
@@ -279,6 +293,8 @@ void trains () {
   trap.group   = '\0';
   trap.id      = 0;
   latest.group = 0;
+
+  START_TIMER3();
 
   for (i = 0; i < 80; i++) { dx[i] = speeds[i] = tr2tid[i] = 0; tid2tr[i] = 0; locations[i] = -2; }
   for (i = 0; i < 10; i++)  { lastread[i] = 0; }
@@ -341,7 +357,7 @@ start:
           case 1:   /*bwprintf (COM2, "pinging\n");*/Putc (COM1, 133); break;
           case 11: 
            for (i = 0; i < 10; i++) {
-             int tt = Time ();
+             int tt = READ_TIMER3;
              char wut = (cmd[i+1]^lastread[i]) & cmd[i+1];
              lastread[i] = cmd[i+1];
              int j = 0;
@@ -355,7 +371,7 @@ start:
                  }
                  out.id = 'D';
                  out.d1 = i*8+j;
-                 out.d2 = latest.time; // change me, 508khz reading?
+                 out.d2 = latest.time;
                  Send (sens, (char*)(&out), sizeof (struct msg), NULL, 0);
                }
                wut <<= 1;
