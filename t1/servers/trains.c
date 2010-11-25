@@ -1,6 +1,7 @@
 #include <bwio.h>
 #include <ts7200.h>
 #include <debug.h>
+#include <lock.h>
 #include "servers.h"
 #include "track.h"
 #include "../user/usyscall.h"
@@ -254,10 +255,12 @@ void train_agent () {
 
         sens_id_to_name(lastsensor, nam2);
         sens_id_to_name(expectednext, msg2);
+        LockAcquire(COM2_W_LOCK);
         bwprintf (COM2, "Got from %s to %s\tdistance %dmm, dt"
                   " %d,"
                   " v %dmm/s\tAverage %dmm/s DIST so far %d\r\n",
                   nam2, msg2, sensdistance, delta_t, realspeed, avg_val, dx);
+        LockRelease(COM2_W_LOCK);
 
         dx = 0;
         timelastsensor = in.d1;
@@ -268,7 +271,8 @@ void train_agent () {
       }
     }
  
-    dx = realspeed * timelastsensor; // calculate distance past current sensor (in mm) FIXME
+    // calculate the distance past the current sensor in mm
+    dx = realspeed * (((timelastsensor - t) * 197) / 100000000);
   }
 }
 
