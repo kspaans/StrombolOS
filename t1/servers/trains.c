@@ -9,6 +9,7 @@
 #include "../kernel/switch.h" // FOREVER, NULL
 #include "../kernel/boot.h"   // TIMER3*          HARDWARE HAX
 #include <ANSI.h>
+#include <lock.h>
 
 typedef unsigned int uint;
 
@@ -341,7 +342,9 @@ start:
           id = 10 + cmd[7] - '0';
         }
         trap.id = id;
+        LockAcquire (COM2_W_LOCK);
         bwprintf(COM2, "Trapping at %c%d\r\n", trap.group, trap.id);
+        LockRelease (COM2_W_LOCK);
       default:
         break;
     }
@@ -364,10 +367,10 @@ start:
              while (wut) {
                if (wut &128) { 
                  latest = fucksensor (i*8+j,tt); 
-                 if (trap.id && trap.id == latest.id && trap.group ==
-                     latest.group) {
-                   Putc(COM1, 0x00);
-                   Putc(COM1, 0x20); //stop train 32
+                 if ((trap.id && trap.id == latest.id && trap.group ==
+                     latest.group) || (latest.id==14 && latest.group=='C')) {
+                   Putc(COM1, 0x61);
+           //        Putc(COM1, 0x0C); //stop train 32
                  }
                  out.id = 'D';
                  out.d1 = i*8+j;
