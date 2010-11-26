@@ -255,13 +255,19 @@ void train_agent () {
 
         sens_id_to_name(lastsensor, nam2);
         sens_id_to_name(expectednext, msg2);
-        LockAcquire(COM2_W_LOCK);
-        bwprintf (COM2, "Got from %s to %s\tdistance %dmm, dt"
-                  " %d,"
-                  " v %dmm/s\tAverage %dmm/s DIST so far %d\r\n",
-                  nam2, msg2, sensdistance, delta_t, realspeed, avg_val, dx);
-        LockRelease(COM2_W_LOCK);
+        //LockAcquire(COM2_W_LOCK);
+        //bwprintf (COM2, "Got from %s to %s\tdistance %dmm, dt"
+        //          " %d,"
+        //          " v %dmm/s\tAverage %dmm/s DIST so far %d\r\n",
+        //          nam2, msg2, sensdistance / 100000, delta_t, realspeed, avg_val, dx);
+        //LockRelease(COM2_W_LOCK);
 
+        if (dx < (sensdistance / 100000)) {
+          LockAcquire(COM2_W_LOCK);
+          bwprintf(COM2, "<<<< UNDERSHOT THE SENSOR(%s) by %dmm\r\n",
+                   msg2, (sensdistance / 100000) - dx);
+          LockRelease(COM2_W_LOCK);
+        }
         dx = 0;
         timelastsensor = in.d1;
         lastsensor = expectednext;
@@ -272,7 +278,15 @@ void train_agent () {
     }
  
     // calculate the distance past the current sensor in mm
-    dx = realspeed * (((timelastsensor - t) * 197) / 100000000);
+    // But we don't want to use seconds to calculate this, not enough
+    // significant digits. Hopefully this caculation is more accurate.
+    dx = ((avg_val * 10) * (((timelastsensor - t) * 197) / 10000000)) / 100;
+    if (dx > sensdistance)
+    {
+      LockAcquire(COM2_W_LOCK);
+      bwprintf(COM2, ">>>> OVERSHOT  THE SENSOR by %dmm\r\n", dx - sensdistance);
+      LockRelease(COM2_W_LOCK);
+    }
   }
 }
 
