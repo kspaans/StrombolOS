@@ -13,6 +13,201 @@
 #include <lock.h>
 
 typedef unsigned int uint;
+struct sensorevent {
+  char group;
+  int id;
+  int time;
+};
+
+#define MAX_TRAINS 6
+#define HEIGHT 8
+#define WIDTH 24
+
+struct pos {
+  int x, y;
+};
+
+struct pos sensorlocation (int sen) {
+  struct pos p;
+  switch (sen) {
+    case 0: case 1:   p.x = 4; p.y = 1; return p; // A1
+    case 2: case 3:   p.x = 7; p.y = 4; return p;// A3
+    case 4: case 5:   p.x = 5; p.y = 8; return p;// A5
+    case 6: case 7:   p.x = 4; p.y = 7; return p;// A7
+    case 8: case 9:   p.x = 3; p.y = 6; return p;// A9
+    case 10: case 11: p.x = 4; p.y = 5; return p; // A11
+    case 12: case 13: p.x = 3; p.y = 2; return p; // A13
+    case 14: case 15: p.x = 4; p.y = 3; return p; // A15
+    case 16: case 17: p.x = 14; p.y = 6; return p;// B1
+    case 18: case 19: p.x = 13; p.y = 5; return p;// B3
+    case 20: case 21: p.x = 14; p.y = 2; return p;// B5
+    case 22: case 23: p.x = 1; p.y = 6; return p;// B7
+    case 24: case 25: p.x = 1; p.y = 8; return p;// B9
+    case 26: case 27: p.x = 1; p.y = 7; return p; // B11
+    case 28: case 29: p.x = 15; p.y = 4; return p;// B13
+    case 30: case 31: p.x = 7; p.y = 4; return p;// B15
+    case 32: case 33: p.x = 15; p.y = 4; return p;// C1
+    case 34: case 35: p.x = 19; p.y = 8; return p;// C3
+    case 36: case 37: p.x = 9; p.y = 7; return p;// C5
+    case 38: case 39: p.x = 11; p.y = 8; return p;// C7
+    case 40: case 41: p.x = 9; p.y = 6; return p;// C9
+    case 42: case 43: p.x = 9; p.y = 2; return p; // C11
+    case 44: case 45: p.x = 8; p.y = 1; return p; // C13
+    case 46: case 47: p.x = 14; p.y = 7; return p;// C15
+    case 48: case 49: p.x = 15; p.y = 4; return p;// E1
+    case 50: case 51: p.x = 17; p.y = 3; return p;// E3
+    case 52: case 53: p.x = 18; p.y = 2; return p;// E5
+    case 54: case 55: p.x = 21; p.y = 1; return p; // E7
+    case 56: case 57: p.x = 22; p.y = 6; return p;// E9
+    case 58: case 59: p.x = 21; p.y = 7; return p;// E11
+    case 60: case 61: p.x = 18; p.y = 6; return p;// E13
+    case 62: case 63: p.x = 13; p.y = 3; return p;// E15
+    case 64: case 65: p.x = 15; p.y = 4; return p;// D1
+    case 66: case 67: p.x = 16; p.y = 2; return p;// D3
+    case 68: case 69: p.x = 22; p.y = 2; return p;// D5
+    case 70: case 71: p.x = 23; p.y = 2; return p; // D7
+    case 72: case 73: p.x = 23; p.y = 6; return p;// D9
+    case 74: case 75: p.x = 16; p.y = 7; return p;// D11
+    case 76: case 77: p.x = 16; p.y = 6; return p;// D13
+    case 78: case 79: p.x = 17; p.y = 5; return p;// D15
+  }
+  return p;
+}
+
+
+struct pos switchlocation (int sw) {
+  struct pos p;
+  switch (sw) {
+    case 0: p.x = 4; p.y = 6; return p; // SW1
+    case 1: p.x = 5; p.y = 7; return p;// SW2
+    case 2: p.x = 6; p.y = 8; return p;// SW3
+    case 3: p.x = 4; p.y = 2; return p; // SW4
+    case 4: p.x = 17; p.y = 8; return p;// SW5
+    case 5: p.x = 12; p.y = 7; return p;// SW6
+    case 6: p.x = 18; p.y = 7; return p;// SW7
+    case 7: p.x = 23; p.y = 5; return p;// SW8
+    case 8: p.x = 23; p.y = 3; return p;// SW9
+    case 9: p.x = 17; p.y = 2; return p;// SW10
+    case 10:p.x = 7; p.y = 1; return p; // SW11
+    case 11:p.x = 5; p.y = 1; return p; // SW12
+    case 12:p.x = 13; p.y = 2; return p;// SW13
+    case 13:p.x = 7; p.y = 3; return p; // SW14
+    case 14:p.x = 7; p.y = 5; return p;// SW15
+    case 15:p.x = 13; p.y = 6; return p;// SW16
+    case 16:p.x = 17; p.y = 6; return p;// SW17
+    case 17:p.x = 13; p.y = 8; return p;// SW18
+    case 18:p.x = 14; p.y = 5; return p;// SW99
+    case 19:p.x = 16; p.y = 5; return p;// SW9A
+    case 20:p.x = 16; p.y = 3; return p;// SW9B
+    case 21:p.x = 14; p.y = 3; return p;// SW9C
+  }
+  return p;
+}
+
+struct sensorevent fucksensor (int x, int time) {
+  struct sensorevent ans;
+  ans.time = time;
+       if (x    >= 0 && x    <= 15) { ans.group = 'A'; ans.id = x+1;    }  
+  else if (x-16 >= 0 && x-16 <= 15) { ans.group = 'B'; ans.id = x-15; }
+  else if (x-32 >= 0 && x-32 <= 15) { ans.group = 'C'; ans.id = x-31; }
+  else if (x-48 >= 0 && x-48 <= 15) { ans.group = 'D'; ans.id = x-47; }
+  else if (x-64 >= 0 && x-64 <= 15) { ans.group = 'E'; ans.id = x-63; }
+//  if (ans.group == 'C' && ans.id == 3) { Putc (COM1, 0x0f); Putc(COM1, 0x34); }
+  return ans;
+}
+
+void drawtrack (char *trk) { 
+  LockAcquire(COM2_W_LOCK);
+  CURSORPUSH();
+  SETCOLOUR(BG+BRIGHT+BLACK);
+  SETCOLOUR(FG+BRIGHT+WHITE);
+  CURSORMOVE(2,1);
+  int x,y; 
+  for (y = 0; y < HEIGHT; y++) { 
+    bwprintf (COM2," [K[%d;1H  ", y+3); 
+    for (x = 0; x < WIDTH; x++) { 
+      bwprintf (COM2,"%c", trk[x+y*WIDTH]); 
+    } 
+  }
+  bwprintf (COM2, "[K\n");
+  CLEARTOEND();
+  SETCOLOUR(BG+BLACK);
+  SETCOLOUR(FG+WHITE);
+  CURSORPOP();
+  LockRelease (COM2_W_LOCK);
+}
+
+char charatlocation(struct pos p, char *trk) {
+  return trk[(p.x-1)+(p.y-1)*WIDTH];
+}
+
+void putpixel (struct pos p, int colour, char *trk) {
+  CURSORPUSH();
+  bwprintf (COM2, "[%d;%dH[%dm%c[m", p.y+2, p.x+2, colour, charatlocation(p,trk));
+  CURSORPOP();
+}
+
+void drawswitches (char *trk, int c) {
+  LockAcquire (COM2_W_LOCK);
+  int i;
+  for (i=0; i< 22; i++) {
+    putpixel (switchlocation(i),c,trk);
+  }
+  LockRelease (COM2_W_LOCK);
+}
+void drawlegend (int *locations, int *dx, int *legend, char *trk) {
+  LockAcquire (COM2_W_LOCK);
+  CURSORPUSH();
+  CURSORMOVE(3,30);
+  SETCOLOUR(BG+BRIGHT+BLACK);
+  bwprintf (COM2, "Train ID\t\tPosition");
+  int i;
+  struct msg in;
+  for (i = 0; legend[i] && i < MAX_TRAINS; i++) {
+    //get train pos
+/* TODO port    packet[1] = (char)legend[i];
+    Send (trid, packet,2, (char*)(&in), sizeof (struct msg));*/
+    CURSORMOVE(4+i,30); 
+    SETCOLOUR(41+i);
+    bwprintf (COM2, "  ");
+    SETCOLOUR(BG+BRIGHT+BLACK);
+    struct sensorevent s;// = fucksensor((int)c,0);
+ /*   switch (locations[legend[i]]) {
+      case 255:
+      case 254:
+        if (locations[legend[i]] != -1) {
+          CURSORPOP();
+          putpixel (sensorlocation(locations[legend[i]]),BG+BRIGHT+BLACK, trk);
+          CURSORPUSH();
+          CURSORMOVE(4+i, 32);
+          locations[legend[i]] = -1;
+        }
+        bwprintf (COM2, "  Train %d\t(lost!)\t", legend[i]); 
+        break; 
+       // bwprintf (COM2, "  I AM ERROR."); 
+        break;
+      default:
+        if (locations[legend[i]] != -1) {
+          CURSORPOP();
+          putpixel (sensorlocation(locations[legend[i]]),BG+BRIGHT+BLACK, trk);
+          CURSORPUSH();
+          CURSORMOVE(4+i, 32);
+          locations[i] = -1;
+        }
+        s = fucksensor(locations[legend[i]],0);
+        CURSORPOP();
+        putpixel (sensorlocation(locations[legend[i]]), 41+i,trk);
+        CURSORPUSH();
+        CURSORMOVE(4+i,32); 
+        SETCOLOUR(BG+BRIGHT+BLACK);
+        bwprintf (COM2, "  Train %d\t(%c%d+%dmm)", legend[i],s.group, s.id, dx[legend[i]]);
+        break;
+    }*/
+  }
+  SETCOLOUR(BG+BLACK);
+  CURSORPOP();
+  LockRelease (COM2_W_LOCK);
+}
 
 void sensorserver () {
   int last = Time ();
@@ -75,23 +270,6 @@ int unfuckswitch (int x) {
   else return x-153+18;
 }
 
-struct sensorevent {
-  char group;
-  int id;
-  int time;
-};
-
-struct sensorevent fucksensor (int x, int time) {
-  struct sensorevent ans;
-  ans.time = time;
-       if (x    >= 0 && x    <= 15) { ans.group = 'A'; ans.id = x+1;    }  
-  else if (x-16 >= 0 && x-16 <= 15) { ans.group = 'B'; ans.id = x-15; }
-  else if (x-32 >= 0 && x-32 <= 15) { ans.group = 'C'; ans.id = x-31; }
-  else if (x-48 >= 0 && x-48 <= 15) { ans.group = 'D'; ans.id = x-47; }
-  else if (x-64 >= 0 && x-64 <= 15) { ans.group = 'E'; ans.id = x-63; }
-//  if (ans.group == 'C' && ans.id == 3) { Putc (COM1, 0x0f); Putc(COM1, 0x34); }
-  return ans;
-}
 
 void zeromsg (struct msg *f) {
   f->id=f->c1=f->c2=f->c3=0;
@@ -206,6 +384,8 @@ void train_agent () {
 
   while(1) {
     t = READ_TIMER3;
+    // TODO: throttle?
+
     updatemsg[1] = lastsensor;
     updatemsg[2] = dx;
 
@@ -274,10 +454,21 @@ void train_agent () {
  
     // calculate the distance past the current sensor in mm
     dx = realspeed * (((timelastsensor - t) * 197) / 100000000);
+    if (dx >= 0) {
+      LockAcquire (COM2_W_LOCK);
+      bwprintf (COM2, "moved %d\n",dx);
+      LockRelease (COM2_W_LOCK);
+    }
+    else {
+      LockAcquire (COM2_W_LOCK);
+      bwprintf (COM2, "uhoh: no movement.\n");
+      LockRelease (COM2_W_LOCK);
+    }
   }
 }
 
 void trains () {
+  RegisterAs ("tr");
   int tid;
   char cmd[32];
   char lastread[10];
@@ -298,14 +489,30 @@ void trains () {
   trap.group   = '\0';
   trap.id      = 0;
   latest.group = 0;
+  int legend[MAX_TRAINS];
+  for (i=0; i<MAX_TRAINS; i++) {
+    legend[i] = 0;
+  }
+  char *trkB = "---------------------,  "
+                "---/  |,-------------,\\ "
+                "   |  /      \\|/      \\|"
+                "   |  |       |        |"
+                "   |  \\      /|\\      /|"
+                "---\\  |`-------------\'/ "
+                "----\\  `-------------\'  "
+                "------------\\---/-------";
+  char *trk = trkB;
+  // Synchro with ui
+  Receive (&tid, NULL, 0);
+  Reply (tid, NULL, 0);
 
+  drawtrack (trk);
   START_TIMER3();
 
   for (i = 0; i < 80; i++) { dx[i] = speeds[i] = tr2tid[i] = 0; tid2tr[i] = 0; locations[i] = -2; }
   for (i = 0; i < 10; i++)  { lastread[i] = 0; }
 
   int r;
-  RegisterAs ("tr");
   Create (USER_HIGH, sensorserver);
   int sens = Create (USER_HIGH, sensor_secretary);
 
@@ -319,24 +526,25 @@ start:
         Reply (tid, &sw[unfuckswitch(cmd[1])], 1);
         goto start;
         break;
-      case 'd':
+ /*     case 'd': // latest sensor.. .TODO DEPRECATE
         Reply (tid, (char*)(&latest), sizeof (struct sensorevent));
         goto start;
-        break;
-      case 'P': // give back location of train
+        break;*/
+/*      case 'P': // give back location of train TODO DEPRECATE
         cmd[0] = (char)locations[(int)cmd[1]];
         out.d1 = locations[(int)cmd[1]];
         out.d2 = dx[(int)cmd[1]];
         Reply (tid, (char*)(&out), sizeof (struct msg));
         goto start;
-        break;
-      case 'U': // update from a train
+        break;*/
+      case 'U': // update from a train TODO ADD DRAW CODE
         locations[tid2tr[tid]] = ((int*)cmd)[1];
         dx[tid2tr[tid]] = ((int*)cmd)[1];
+      //  drawlegend (locations, dx, legend, trk); // ????TODO
         Reply (tid, (char*)(&speeds[tid2tr[tid]]), 4);
         goto start;
         break;
-      case 'T': //set a trap
+      case 'T': //set a trap TODO MAKE BETTER?
         trap.group = cmd[5];
         int id;
         if (cmd[7] == ' ') {
@@ -355,9 +563,16 @@ start:
 
     Reply (tid, NULL, 0);
     switch (cmd[0]) {
-      case 'A': // add train
+      case 'A': // add train TODO DRAW CODE
         tr2tid[(int)cmd[1]] =  Create (USER_HIGH, train_agent);
         tid2tr[tr2tid[(int)cmd[1]]] = (int)cmd[1];
+        i = 0;
+        while (legend[i] != 0 && i < MAX_TRAINS) i++;
+        LockAcquire (COM2_W_LOCK);
+        if (i == MAX_TRAINS) bwprintf (COM2, "Too many trains!\n");  
+        else legend[i] = (int)cmd[1];
+        LockRelease (COM2_W_LOCK);
+        drawlegend (locations, dx, legend, trk); // ??? TODO
         break;
       case 'p': // poll sensors
         switch (r) {
@@ -389,13 +604,13 @@ start:
           default: PANIC;
         }
         break;
-      case 'g': // go
+      case 'g': // go TODO DRAW STUFF
         Putc (COM1, 0x60);
         break;
-      case 's': // stop
+      case 's': // stop TODO DRAW STUFF
         Putc (COM1, 0x61);
         break;
-      case 't': // tr 
+      case 't': // tr
         Putc (COM1, cmd[1]);
         Putc (COM1, cmd[2]);
         speeds[(int)cmd[2]] = cmd[1];
@@ -409,11 +624,16 @@ start:
         Putc (COM1, speeds[(int)cmd[1]]);
         Putc (COM1, cmd[1]);
         break;
-      case 'w': // sw
+      case 'w': // sw 
         trains_switch(cmd[1],cmd[2]); 
-        sw[unfuckswitch(cmd[1])] = cmd[2];  
+        sw[unfuckswitch(cmd[1])] = cmd[2]; 
+        LockAcquire (COM2_W_LOCK);
+        if (cmd[2] == 's' || cmd[2] == 'S') putpixel(switchlocation(unfuckswitch(cmd[1])),47,trk);
+        else putpixel (switchlocation(unfuckswitch(cmd[1])),100,trk);
+        LockRelease (COM2_W_LOCK); 
         break;
       case 'a': // switch all
+        drawswitches(trk, (cmd[1]=='s' || cmd[1]=='S') ? 47 : 100);
         for (i = 0; i < 22; i++) {
           trains_switch(fuckswitch(i), cmd[1]);
           sw[i] = cmd[1];
