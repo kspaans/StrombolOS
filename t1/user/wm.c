@@ -780,7 +780,7 @@ void wm () {
   temp_packet[0] = 't'; // tr N 0
   temp_packet[2] = 0;
   temp_packet[1] = 12;
-  Send (trid, temp_packet, 3, NULL, 0);
+  Send (trid, temp_packet, 3, NULL, 0); // or instead init them when we add them
   temp_packet[1] = 22;
   Send (trid, temp_packet, 3, NULL, 0);
   temp_packet[1] = 23;

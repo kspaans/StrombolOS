@@ -1,3 +1,4 @@
+#if 0
 struct calibration {
   int forteen;  /* cm/s */
   int ten;      /* cm/s */
@@ -37,3 +38,36 @@ t32[EIGHT]   = 12;  35
 t52[FORTEEN] = 36;  135
 t52[TEN]     = 19;  60
 t52[EIGHT]   = 14;  35
+#endif
+
+/* All speeds in mm/s */
+
+#define DEFAULT_08 140
+#define DEFAULT_10 190
+#define DEFAULT_14 360
+
+calibrations[0][0]  = 0;
+calibrations[0][8]  = DEFAULT_08;
+calibrations[0][10] = DEFAULT_10;
+calibrations[0][14] = DEFAULT_14;
+
+calibrations[1][0]  = 0;
+calibrations[1][8]  = DEFAULT_08;
+calibrations[1][10] = DEFAULT_10;
+calibrations[1][14] = DEFAULT_14;
+
+calibrations[2][0]  = 0;
+calibrations[2][8]  = DEFAULT_08;
+calibrations[2][10] = DEFAULT_10;
+calibrations[2][14] = DEFAULT_14;
+
+calibrations[3][0]  = 0;
+calibrations[3][8]  = 120;
+calibrations[3][10] = 180;
+calibrations[3][14] = 350;
+
+calibrations[4][0]  = 0;
+calibrations[4][8]  = 140;
+calibrations[4][10] = 190;
+calibrations[4][14] = 360;
+

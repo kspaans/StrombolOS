@@ -212,6 +212,9 @@ void train_agent () {
     Send (trid, (char*)(updatemsg), 3*sizeof(int), (char*)(&newspeed), 4);
     if (newspeed != virtspeed) {
       virtspeed = newspeed;
+      LockAcquire(COM2_W_LOCK);
+      bwprintf(COM2, "Got new speed from train server: %d\r\n", newspeed);
+      LockRelease(COM2_W_LOCK);
       // time since speed change for blending?
     }
 
@@ -290,6 +293,13 @@ void train_agent () {
   }
 }
 
+#define TR2IDX(n) \
+  n == 12 ? 0 : \
+  n == 22 ? 1 : \
+  n == 23 ? 2 : \
+  n == 32 ? 3 : \
+  n == 52 ? 4 : 0xFFFFFFFF // This'll make us crash!
+
 void trains () {
   int tid;
   char cmd[32];
@@ -301,9 +311,16 @@ void trains () {
   int dx[80];
   int tid2tr[80];
 
+  /*
+   * Train# * Calibrated Speed
+   * 15 speeds, so that calibrations[N][0] can be 0, and all other numbers map
+   * straight into their speeds. Use TR2IDX().
+   */
+  int calibrations[5][15];
+
   char sw[32];
   //int head = 0;
-  int i;
+  int i ,j;
 
   struct msg out;
   struct sensorevent latest;
@@ -315,7 +332,10 @@ void trains () {
   START_TIMER3();
 
   for (i = 0; i < 80; i++) { dx[i] = speeds[i] = tr2tid[i] = 0; tid2tr[i] = 0; locations[i] = -2; }
-  for (i = 0; i < 10; i++)  { lastread[i] = 0; }
+  for (i = 0; i < 10; i++) { lastread[i] = 0; }
+  for (i = 0; i < 5 ; i++) { for (j = 0; j < 15; j++) { calibrations[i][j] = 0; } }
+
+  #include "calibration.h"
 
   int r;
   RegisterAs ("tr");
@@ -346,6 +366,14 @@ start:
       case 'U': // update from a train
         locations[tid2tr[tid]] = ((int*)cmd)[1];
         dx[tid2tr[tid]] = ((int*)cmd)[1];
+        //LockAcquire(COM2_W_LOCK);
+        //bwprintf(COM2, "Giving train %d(%d) new speed: %d --> \r\n",
+        //tid2tr[tid],
+        //TR2IDX(tid2tr[tid]),
+        //speeds[tid2tr[tid]]);
+        ////                    calibrations[TR2IDX(tid2tr[tid])][speeds[tid2tr[tid]]]);
+        //LockRelease(COM2_W_LOCK);
+        //Reply (tid, (char*)(&calibrations[TR2IDX(tid2tr[tid])][speeds[tid2tr[tid]]]), 4);
         Reply (tid, (char*)(&speeds[tid2tr[tid]]), 4);
         goto start;
         break;
@@ -367,7 +395,8 @@ start:
     Reply (tid, NULL, 0);
     switch (cmd[0]) {
       case 'A': // add train
-        tr2tid[(int)cmd[1]] =  Create (USER_HIGH, train_agent);
+        tr2tid[(int)cmd[1]] =  Create (USER_HIGH, train_agent); // It's OK, we
+                                                                // init to 0
         tid2tr[tr2tid[(int)cmd[1]]] = (int)cmd[1];
         break;
       case 'p': // poll sensors
