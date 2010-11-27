@@ -393,6 +393,9 @@ void train_agent () {
     Send (trid, (char*)(updatemsg), 3*sizeof(int), (char*)(&newspeed), 4);
     if (newspeed != virtspeed) {
       virtspeed = newspeed;
+      LockAcquire(COM2_W_LOCK);
+      bwprintf(COM2, "Got new speed from train server: %d\r\n", newspeed);
+      LockRelease(COM2_W_LOCK);
       // time since speed change for blending?
     }
 
@@ -436,13 +439,19 @@ void train_agent () {
 
         sens_id_to_name(lastsensor, nam2);
         sens_id_to_name(expectednext, msg2);
-        LockAcquire(COM2_W_LOCK);
-        bwprintf (COM2, "Got from %s to %s\tdistance %dmm, dt"
-                  " %d,"
-                  " v %dmm/s\tAverage %dmm/s DIST so far %d\r\n",
-                  nam2, msg2, sensdistance, delta_t, realspeed, avg_val, dx);
-        LockRelease(COM2_W_LOCK);
+        //LockAcquire(COM2_W_LOCK);
+        //bwprintf (COM2, "Got from %s to %s\tdistance %dmm, dt"
+        //          " %d,"
+        //          " v %dmm/s\tAverage %dmm/s DIST so far %d\r\n",
+        //          nam2, msg2, sensdistance / 100000, delta_t, realspeed, avg_val, dx);
+        //LockRelease(COM2_W_LOCK);
 
+        if (dx < (sensdistance / 100000)) {
+          LockAcquire(COM2_W_LOCK);
+          bwprintf(COM2, "<<<< UNDERSHOT THE SENSOR(%s) by %dmm\r\n",
+                   msg2, (sensdistance / 100000) - dx);
+          LockRelease(COM2_W_LOCK);
+        }
         dx = 0;
         timelastsensor = in.d1;
         lastsensor = expectednext;
@@ -453,7 +462,15 @@ void train_agent () {
     }
  
     // calculate the distance past the current sensor in mm
-    dx = realspeed * (((timelastsensor - t) * 197) / 100000000);
+    // But we don't want to use seconds to calculate this, not enough
+    // significant digits. Hopefully this caculation is more accurate.
+    dx = ((avg_val * 10) * (((timelastsensor - t) * 197) / 10000000)) / 100;
+    if (dx > sensdistance)
+    {
+      LockAcquire(COM2_W_LOCK);
+      bwprintf(COM2, ">>>> OVERSHOT  THE SENSOR by %dmm\r\n", dx - sensdistance);
+      LockRelease(COM2_W_LOCK);
+    }
     if (dx >= 0) {
       LockAcquire (COM2_W_LOCK);
       bwprintf (COM2, "moved %d\n",dx);
@@ -467,6 +484,13 @@ void train_agent () {
   }
 }
 
+#define TR2IDX(n) \
+  n == 12 ? 0 : \
+  n == 22 ? 1 : \
+  n == 23 ? 2 : \
+  n == 32 ? 3 : \
+  n == 52 ? 4 : 0xFFFFFFFF // This'll make us crash!
+
 void trains () {
   RegisterAs ("tr");
   int tid;
@@ -479,9 +503,16 @@ void trains () {
   int dx[80];
   int tid2tr[80];
 
+  /*
+   * Train# * Calibrated Speed
+   * 15 speeds, so that calibrations[N][0] can be 0, and all other numbers map
+   * straight into their speeds. Use TR2IDX().
+   */
+  int calibrations[5][15];
+
   char sw[32];
   //int head = 0;
-  int i;
+  int i ,j;
 
   struct msg out;
   struct sensorevent latest;
@@ -510,7 +541,10 @@ void trains () {
   START_TIMER3();
 
   for (i = 0; i < 80; i++) { dx[i] = speeds[i] = tr2tid[i] = 0; tid2tr[i] = 0; locations[i] = -2; }
-  for (i = 0; i < 10; i++)  { lastread[i] = 0; }
+  for (i = 0; i < 10; i++) { lastread[i] = 0; }
+  for (i = 0; i < 5 ; i++) { for (j = 0; j < 15; j++) { calibrations[i][j] = 0; } }
+
+  #include "calibration.h"
 
   int r;
   Create (USER_HIGH, sensorserver);
@@ -541,6 +575,13 @@ start:
         locations[tid2tr[tid]] = ((int*)cmd)[1];
         dx[tid2tr[tid]] = ((int*)cmd)[1];
       //  drawlegend (locations, dx, legend, trk); // ????TODO
+        //bwprintf(COM2, "Giving train %d(%d) new speed: %d --> \r\n",
+        //tid2tr[tid],
+        //TR2IDX(tid2tr[tid]),
+        //speeds[tid2tr[tid]]);
+        ////                    calibrations[TR2IDX(tid2tr[tid])][speeds[tid2tr[tid]]]);
+        //LockRelease(COM2_W_LOCK);
+        //Reply (tid, (char*)(&calibrations[TR2IDX(tid2tr[tid])][speeds[tid2tr[tid]]]), 4);
         Reply (tid, (char*)(&speeds[tid2tr[tid]]), 4);
         goto start;
         break;

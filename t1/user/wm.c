@@ -351,12 +351,12 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
 */    Send (trid, packet, 2, NULL, 0);
     LockAcquire (COM2_W_LOCK);
     bwprintf (COM2, "Switching all switches to direction %c.\n", token(cmd,1,buf)[0]);
+    LockRelease (COM2_W_LOCK);
     // Notify the TRACKSERVER about the change in state, later we'll also ask it
     // for train state...
     int ii;
     m.id = 't';
     m.c1 = token(cmd, 2, buf)[0];
-    LockRelease (COM2_W_LOCK);
     for (ii = 0; ii < 22; ii++) {
       sw[ii] = token(cmd,1,buf)[0];
       m.d1 = ii;
@@ -480,6 +480,7 @@ void wm () {
   int done = 0;
   int i=0, j, t;
   char inbuf[32];
+  char temp_packet[3];
   int ch;
   int n = 0;
   int trid, track_tid;
@@ -497,7 +498,7 @@ void wm () {
   RegisterAs ("wm");
 
  // RegisterAs ("ui");
-  
+
 
   SETCOLOUR (BG+BLACK);
   trid = WhoIs ("tr");
@@ -519,7 +520,25 @@ void wm () {
   "|  _\\ \\/ __/ __/ _ \\/  ' \\/ _ \\/ _ \\/ / /_/ /\\ \\   |\n"
   "| /___/\\__/_/  \\___/_/_/_/_.__/\\___/_/\\____/___/   |\n"
   "|                             v0.0.4 (Turbo Samba) |\n"
-  "+--------------------------------------------------+\n\n\n> "); 
+  "+--------------------------------------------------+\n\n\n> "
+  ">>> I N I T I A L I Z I N G  S Y S T E M S <<<\r\n");
+
+  temp_packet[0] = 'a'; // "swall C"
+  temp_packet[1] = 'C';
+  Send (trid, temp_packet, 2, NULL, 0);
+  temp_packet[0] = 't'; // tr N 0
+  temp_packet[2] = 0;
+  temp_packet[1] = 12;
+  Send (trid, temp_packet, 3, NULL, 0); // or instead init them when we add them
+  temp_packet[1] = 22;
+  Send (trid, temp_packet, 3, NULL, 0);
+  temp_packet[1] = 23;
+  Send (trid, temp_packet, 3, NULL, 0);
+  temp_packet[1] = 32;
+  Send (trid, temp_packet, 3, NULL, 0);
+  temp_packet[1] = 52;
+  Send (trid, temp_packet, 3, NULL, 0);
+
    char sensorquery = 'd';
    struct sensorevent sen;
    //tables (sw);
