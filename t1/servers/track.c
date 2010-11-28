@@ -1,9 +1,11 @@
 /*
  * The Track Server - a warehouse for all track related data.
+ * Also acts as the reservation server.
  */
 #include <bwio.h>
 #include <ts7200.h>
 #include <debug.h>
+#include <lock.h>
 #include "servers.h"
 #include "../user/usyscall.h"
 #include "../user/lib.h"
@@ -147,11 +149,14 @@ int distance(int a, int b, struct track_node *map[])
 }
 #endif /* comment */
 
+
 /*
  * PROTOCOL:
  * next:    "n####"  next switch after us?
  * turnout: "t#[SC]" new turnout state -- or use a struct?
  * dist:    "d####"  distance to next sensor
+ * reserve: "r####"  reserve a section of track
+ * release: "f####"  release this TID's reservations
  */
 void track()
 {
@@ -173,11 +178,14 @@ void track()
     &aSW10, &aSW11, &aSW12, &aSW13, &aSW14, &aSW15, &aSW16, &aSW17, &aSW18,
     &aSW99, &aSW9A, &aSW9B, &aSW9C
   };
+  int reservations[40]; // one per physical sensor
   struct trip t;
   struct msg m;
   int i, r, tid;
+  char c;
 
   RegisterAs("trak");
+  FOREACH(i, 40) reservations[i] = 0;
 
   FOREVER {
     r = Receive(&tid, (char *)&m, sizeof(struct msg));
@@ -200,6 +208,24 @@ void track()
         else {
           switches[i]->switch_state = m.c1; // lol overflow
         }
+        break;
+      case 'r':
+        // fold sensor IDs of same sensors into one reservation slot, so / 2
+        if (reservations[m.d1 / 2] == 0) {
+          reservations[m.d1 / 2] = tid;
+          r = Reply(tid, NULL, 0); // successfully reserved
+        }
+        else {
+          r = Reply(tid, &c, 1); // couldn't reserve
+        }
+        break;
+      case 'f':
+        FOREACH(i, 72) {
+          if (reservations[i] == tid) {
+            reservations[i] = 0;
+          }
+        }
+        r = Reply(tid, NULL, 0);
         break;
       default:
         PANIC;

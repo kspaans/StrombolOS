@@ -25,4 +25,7 @@ int Putc(int channel, char ch);
 void LockAcquire(int l);
 void LockRelease(int l);
 
+int ReserveChunks(int sensor, int distance);
+void ReleaseAll();
+
 #endif // USYSCALL__INCLUDED

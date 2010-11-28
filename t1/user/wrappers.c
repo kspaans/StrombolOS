@@ -1,10 +1,12 @@
 #include <bwio.h>
 #include <ts7200.h>
 #include <debug.h>
+#include <lock.h>
 #include "lib.h"
 #include "usyscall.h"
 #include "../kernel/switch.h"
 #include "../ktests/tests.h"
+#include "../servers/track.h"
 
 /*
 int WhoIs (char *name) {
@@ -149,4 +151,49 @@ void LockRelease (int l) {
   msg[0] = 'R';
   msg[1] = (char)l;
   Send (WhoIs("lk"), msg, 2, NULL, 0);
+}
+
+int ReserveChunks(int sensor, int distance)
+{
+  int track_tid;
+  int d; // distance reserved so far
+  int r;
+  char c;
+  struct msg out;
+  struct trip next;
+
+  track_tid = WhoIs("trak"); // TODO: speed me up
+
+  while (d < distance) {
+    out.id = 'n';
+    out.d1 = sensor;
+    if (Send(track_tid, (char *)&out,  sizeof(struct msg), (char *)&next,
+             sizeof(struct trip)) != sizeof(next)) {
+      PANIC;
+    }
+    if (next.destination == -1) { // running to a dead-end
+      return -2;
+    }
+
+    out.id = 'r';
+    out.d1 = next.destination;
+    r = Send(track_tid, (char *)&out, sizeof(struct msg), &c, 1);
+    if (r == 1) { // could not reserve
+      return -1;
+    }
+    else if (r != 0) {
+      PANIC;
+    }
+    d += next.distance;
+    sensor = next.destination;
+  }
+  return 0;
+}
+
+void ReleaseAll()
+{
+  struct msg m;
+
+  m.id = 'f';
+  Send(WhoIs("trak"), (char *)&m, sizeof(struct msg), NULL, 0);
 }
