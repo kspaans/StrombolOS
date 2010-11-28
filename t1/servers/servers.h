@@ -11,6 +11,8 @@ void trains();
 void rps_server();
 void lock123();
 
+void cali();
+
 void notifier_clock();
 void notifier_uart1rx();
 void notifier_uart1tx();

@@ -33,6 +33,6 @@ struct trip {
 
 struct msg { // for IPC
   char id, c1, c2, c3;
-  int d1, d2; 
+  int d1, d2,d3,d4; 
 };
 
