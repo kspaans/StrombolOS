@@ -162,7 +162,7 @@ void drawlegend (int *locations, int *dx, int *legend, char *trk) {
   SETCOLOUR(BG+BRIGHT+BLACK);
   bwprintf (COM2, "Train ID\t\tPosition");
   int i;
-  struct msg in;
+//  struct msg in;
   for (i = 0; legend[i] && i < MAX_TRAINS; i++) {
     //get train pos
 /* TODO port    packet[1] = (char)legend[i];
@@ -171,7 +171,7 @@ void drawlegend (int *locations, int *dx, int *legend, char *trk) {
     SETCOLOUR(41+i);
     bwprintf (COM2, "  ");
     SETCOLOUR(BG+BRIGHT+BLACK);
-    struct sensorevent s;// = fucksensor((int)c,0);
+  //  struct sensorevent s;// = fucksensor((int)c,0);
  /*   switch (locations[legend[i]]) {
       case 255:
       case 254:
@@ -284,7 +284,7 @@ void zeromsg (struct msg *f) {
  */
 void sensor_secretary () {
   int sensor[80]; // Timings, counting down from 0xFFFFFFFF at 508KHz on TIMER3
-  char name[10];
+//  char name[10];
   struct msg in;
   struct msg out;
   int r, i, tid, t;
@@ -357,8 +357,156 @@ int nextsensor (int cur, int trktid, int *d) {
   // update velocity shit?
   if (Send(trktid, (char *)&out, sizeof(struct msg), (char *)&t,
            sizeof(struct trip)) != sizeof(struct trip)) PANIC;
-  *d = t.distance;
+  *d = t.distance*1000;
   return t.destination;
+}
+
+struct msg lostfunc (int sens, int time) {
+ /* first attempt:
+      poll for _any_ sensor, return time properly */
+
+  /* zeroth attempt: return lost always */
+  struct msg out;
+  out.id = 0;
+  return out;
+}
+ 
+#define MARGIN_OF_ERROR 1.5
+void train_agent_notsuck () {
+  int trid = MyParentTid();
+  int senid = WhoIs("sens");
+  int trktid = WhoIs ("trak");
+
+
+  int nextsens; 
+  int lastsensor = -1; // TODO: fucked or unfucked version?
+  
+  // micrometers
+  uint dx = 0;
+  uint dxuntilnextsensor = -1;   
+
+  // in "train speed" units (0-14)
+  uint newtrainspeed;
+  uint currenttrainspeed = 0; 
+  
+  // in micrometers/microsecond
+  uint velocity = 0;
+  uint newvelocity;
+
+  // in micrometers/microseconds^2
+  int acc;
+
+  // boolean variables
+  int lost = 1;
+  int accelerating = 0;
+  
+  // in units of ticks (~1.9microseconds)
+  uint t;
+  uint lastticks = READ_TIMER3;
+  uint timesincelost = lastticks;  
+  uint timeofaccel;
+
+  // in microseconds
+  uint dt;
+  uint sensorlag = 0;
+  uint acceltime= 5000000;//hobo hax
+
+  struct msg in, out;
+  /*
+    out (train server update):
+     d1 - last sensor we reached, -1 if lost
+     d2 - the current speed of the train
+     d3 - the displacement from last sensor
+
+    in:
+     d1 - speed the user wants us to adjust to
+     c1 - 0 if no command, 1 if "go" command
+     d2 - if c1 = 1, this is the sensor of our destination.
+  */
+
+  while (1) {
+    t = READ_TIMER3;
+
+    zeromsg(&out);
+    zeromsg(&in);
+    out.id = 'U';
+    out.d1 = lastsensor;
+    out.d2 = currenttrainspeed;
+    out.d3 = dx;
+    
+    Send (trid, (char*)(&out), sizeof(struct msg), (char*)(&in), sizeof(struct msg));
+    if (!accelerating) {
+      if (in.d1 != currenttrainspeed) {
+        accelerating = 1;
+        newtrainspeed = in.d1;
+      /*TODO  acceltime = PANIC;
+        newvelocity = PANIC;*/
+        acc = (newvelocity - velocity)/acceltime;
+        timeofaccel = READ_TIMER3;
+        LockAcquire (COM2_W_LOCK);
+        bwprintf (COM2, "we were told to accelerate from %d to %d at time %x ticks, it will take %d microsec so it will be done at %x ticktime.\n", currenttrainspeed, newtrainspeed,timeofaccel,acceltime, timeofaccel+(acceltime*100)/197);
+        LockRelease (COM2_W_LOCK);
+      }
+    }
+
+    dt = ((lastticks - READ_TIMER3)*197)/100;
+    lastticks = t;
+
+    if (lost) {
+      zeromsg(&in);
+      in = lostfunc (lastsensor, timesincelost);
+      /*
+        in:
+        id = 0 if still lost, 1 if found
+        d1 = what sensor we got assigned
+        d2 = time sensor was tripped, from timer3
+      */
+      if (in.id) { // found
+        lost = 0;
+        lastsensor = in.d2;
+        dx = velocity*(sensorlag+(((in.d2-t)*197)/100));
+        nextsens = nextsensor(lastsensor, trktid, &dxuntilnextsensor);//TODO:MAKE IT RETURN MICROSEC
+      }
+    }
+    
+    if (accelerating) {
+      if (((timeofaccel-READ_TIMER3)*197)/100 >= acceltime) {
+        LockAcquire (COM2_W_LOCK);
+        bwprintf (COM2, "\ndone accelerating at %d.\n", READ_TIMER3);
+        LockRelease (COM2_W_LOCK);
+        accelerating = 0;
+        currenttrainspeed = newtrainspeed;
+        velocity = newvelocity;
+      }
+      else {
+//        LockAcquire (COM2_W_LOCK);
+  //      bwprintf (COM2, "%d ", acceltime - ((timeofaccel-t)*100)/197);
+    //    LockRelease (COM2_W_LOCK);
+        velocity += acc*dt;
+      }
+    }
+    else if (!lost) {
+      // poll for sensor TODO
+
+      zeromsg(&out);
+      zeromsg(&in);
+      out.id = 'R';
+      out.d1 = nextsens;
+      int r = Send (senid, (char*)(&out), sizeof(struct msg), (char*)(&in), sizeof(struct msg));
+
+      if (r) {
+        dx = velocity * (((in.d2 - t)*100)/197+sensorlag);
+        lastsensor = in.d1;
+        nextsens = nextsensor (lastsensor, trktid, &dxuntilnextsensor);
+      }
+    }
+        
+
+    dx = velocity*dt;
+    if (dxuntilnextsensor*MARGIN_OF_ERROR < dx) {
+      lost = 1;
+    }
+  }
 }
 
 void train_agent () {
@@ -398,7 +546,7 @@ void train_agent () {
       LockRelease(COM2_W_LOCK);
       // time since speed change for blending?
     }
-
+    t = READ_TIMER3;
     if (timelastsensor - t > LOST_TIMEOUT) {
       //bwprintf (COM2, "Now i am lost...\n");
       lost = 1;
@@ -429,10 +577,12 @@ void train_agent () {
       out.d1 = expectednext;
       r = Send (senid, (char*)&out, sizeof (struct msg), (char*)&in, sizeof (struct msg));
       if (r) { // We've hit a fresh sensor, calibrate velocity more????
+        t = READ_TIMER3;
         int delta_t = timelastsensor - t; // in 1.97us
         // Scale the integers, to get mm/sec
-        sensdistance *= 100000;
-        delta_t      /=   1000;
+        sensdistance *= 100000 ; //TODO: wrong?
+      // this was wrong?  delta_t ; // delta_t is approx in microsec
+
         realspeed = (sensdistance / delta_t) / 197; // the ratio of ticks to time
         avg_val = (avg_val * avg_cnt + realspeed) / (avg_cnt + 1);
         ++avg_cnt;
@@ -494,7 +644,7 @@ void train_agent () {
 void trains () {
   RegisterAs ("tr");
   int tid;
-  char cmd[32];
+  char cmd[64];
   char lastread[10];
 
   int speeds[80];
@@ -515,6 +665,7 @@ void trains () {
   int i ,j;
 
   struct msg out;
+  struct msg *in;
   struct sensorevent latest;
   struct sensorevent trap;
   trap.group   = '\0';
@@ -544,6 +695,7 @@ void trains () {
   for (i = 0; i < 10; i++) { lastread[i] = 0; }
   for (i = 0; i < 5 ; i++) { for (j = 0; j < 15; j++) { calibrations[i][j] = 0; } }
 
+//TODO REMOVE
   #include "calibration.h"
 
   int r;
@@ -552,7 +704,7 @@ void trains () {
 
   FOREVER {
 start:
-    r = Receive (&tid, cmd, 32);
+    r = Receive (&tid, cmd, 64);
     zeromsg (&out);
     // "special" ones
     switch (cmd[0]) {
@@ -572,8 +724,11 @@ start:
         goto start;
         break;*/
       case 'U': // update from a train TODO ADD DRAW CODE
-        locations[tid2tr[tid]] = ((int*)cmd)[1];
-        dx[tid2tr[tid]] = ((int*)cmd)[1];
+        in = (struct msg*)cmd;
+        locations[tid2tr[tid]] = in->d1;
+        dx[tid2tr[tid]] = in->d3;
+        zeromsg(&out);
+        out.d1 = speeds[tid2tr[tid]];
       //  drawlegend (locations, dx, legend, trk); // ????TODO
         //bwprintf(COM2, "Giving train %d(%d) new speed: %d --> \r\n",
         //tid2tr[tid],
@@ -582,7 +737,7 @@ start:
         ////                    calibrations[TR2IDX(tid2tr[tid])][speeds[tid2tr[tid]]]);
         //LockRelease(COM2_W_LOCK);
         //Reply (tid, (char*)(&calibrations[TR2IDX(tid2tr[tid])][speeds[tid2tr[tid]]]), 4);
-        Reply (tid, (char*)(&speeds[tid2tr[tid]]), 4);
+        Reply (tid, (char*)(&out), sizeof(struct msg));
         goto start;
         break;
       case 'T': //set a trap TODO MAKE BETTER?
@@ -605,7 +760,7 @@ start:
     Reply (tid, NULL, 0);
     switch (cmd[0]) {
       case 'A': // add train TODO DRAW CODE
-        tr2tid[(int)cmd[1]] =  Create (USER_HIGH, train_agent);
+        tr2tid[(int)cmd[1]] =  Create (USER_HIGH, train_agent_notsuck);
         tid2tr[tr2tid[(int)cmd[1]]] = (int)cmd[1];
         i = 0;
         while (legend[i] != 0 && i < MAX_TRAINS) i++;

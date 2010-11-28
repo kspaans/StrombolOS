@@ -223,7 +223,7 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     LockRelease (COM2_W_LOCK);
   }
   else if (!strcmp ("add", token(cmd,0,buf))) {
-    int i=0;
+//    int i=0;
    // while (legend[i] != 0 && i < MAX_TRAINS) i++;
    // if (i == MAX_TRAINS) bwprintf (COM2, "Too many trains!\n");  
    // else {
@@ -489,7 +489,6 @@ void wm () {
   struct measurement measurements[80][80];
   for (i = 0; i < 32; i++) sw[i] = '?';
   FOREACH(i, 80) {
-//    locations[i]=-1;
     FOREACH(j, 80) {
       measurements[i][j].time = 0;
       measurements[i][j].num  = 0;
@@ -520,26 +519,45 @@ void wm () {
   "|  _\\ \\/ __/ __/ _ \\/  ' \\/ _ \\/ _ \\/ / /_/ /\\ \\   |\n"
   "| /___/\\__/_/  \\___/_/_/_/_.__/\\___/_/\\____/___/   |\n"
   "|                             v0.0.4 (Turbo Samba) |\n"
-  "+--------------------------------------------------+\n\n\n> "
-  ">>> I N I T I A L I Z I N G  S Y S T E M S <<<\r\n");
-
+  "+--------------------------------------------------+\n\n\n");
+  bwputstr(COM2, "Setting switches to curved... ");
+  LockRelease (COM2_W_LOCK);
   temp_packet[0] = 'a'; // "swall C"
   temp_packet[1] = 'C';
   Send (trid, temp_packet, 2, NULL, 0);
+  LockAcquire (COM2_W_LOCK);
+  bwputstr (COM2, "complete.\n");
+  LockRelease (COM2_W_LOCK);
   temp_packet[0] = 't'; // tr N 0
   temp_packet[2] = 0;
   temp_packet[1] = 12;
   Send (trid, temp_packet, 3, NULL, 0); // or instead init them when we add them
+  LockAcquire (COM2_W_LOCK);
+  bwputstr (COM2, "Set train 12 to speed 0.\n");
+  LockRelease (COM2_W_LOCK);
   temp_packet[1] = 22;
   Send (trid, temp_packet, 3, NULL, 0);
+  LockAcquire (COM2_W_LOCK);
+  bwputstr (COM2, "Set train 22 to speed 0.\n");
+  LockRelease (COM2_W_LOCK);
   temp_packet[1] = 23;
   Send (trid, temp_packet, 3, NULL, 0);
+  LockAcquire (COM2_W_LOCK);
+  bwputstr (COM2, "Set train 23 to speed 0.\n");
+  LockRelease (COM2_W_LOCK);
   temp_packet[1] = 32;
   Send (trid, temp_packet, 3, NULL, 0);
+  LockAcquire (COM2_W_LOCK);
+  bwputstr (COM2, "Set train 32 to speed 0.\n");
+  LockRelease (COM2_W_LOCK);
   temp_packet[1] = 52;
   Send (trid, temp_packet, 3, NULL, 0);
+  LockAcquire (COM2_W_LOCK);
+  bwputstr (COM2, "Set train 52 to speed 0.\n");
 
-   char sensorquery = 'd';
+
+  bwputstr (COM2, "> ");
+//   char sensorquery = 'd';
    struct sensorevent sen;
    //tables (sw);
    LockRelease (COM2_W_LOCK);
