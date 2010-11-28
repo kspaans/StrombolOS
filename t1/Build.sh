@@ -20,7 +20,7 @@ OBJS=" build/kernel.o build/switch.o build/user.o build/usyscall.o build/boot.o 
       build/notifier_clock.o build/awaitevent.o build/notifier_uart1rx.o \
       build/notifier_uart1tx.o build/notifier_uart2rx.o build/wm.o \
       build/notifier_uart2tx.o build/trains.o build/bwio.o build/track.o \
-     build/lock.o"
+     build/lock.o build/cali.o"
 
 if [ `basename $PWD` != "t1" ]; then
 	cd ..
@@ -31,6 +31,9 @@ if [ ! -d "build" ]; then
 fi
 
 # Could probably improve this with for loops
+
+gcc ${CFLAGS}  -o build/cali.s servers/cali.c || exit 1
+as  ${ASFLAGS} -o build/cali.o build/cali.s || exit 1
 
 gcc ${CFLAGS}  -o build/lock.s servers/lock.c || exit 1
 as  ${ASFLAGS} -o build/lock.o build/lock.s || exit 1

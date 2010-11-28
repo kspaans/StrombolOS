@@ -162,6 +162,7 @@ void drawlegend (int *locations, int *dx, int *legend, char *trk) {
   SETCOLOUR(BG+BRIGHT+BLACK);
   bwprintf (COM2, "Train ID\t\tPosition");
   int i;
+  struct sensorevent s;
 //  struct msg in;
   for (i = 0; legend[i] && i < MAX_TRAINS; i++) {
     //get train pos
@@ -171,38 +172,39 @@ void drawlegend (int *locations, int *dx, int *legend, char *trk) {
     SETCOLOUR(41+i);
     bwprintf (COM2, "  ");
     SETCOLOUR(BG+BRIGHT+BLACK);
+    bwprintf (COM2, " Train %d\t  foo+dx", legend[i]);
   //  struct sensorevent s;// = fucksensor((int)c,0);
- /*   switch (locations[legend[i]]) {
-      case 255:
-      case 254:
+   switch (locations[legend[i]]) {
+      case -1:
+      case -2:
         if (locations[legend[i]] != -1) {
-          CURSORPOP();
-          putpixel (sensorlocation(locations[legend[i]]),BG+BRIGHT+BLACK, trk);
-          CURSORPUSH();
-          CURSORMOVE(4+i, 32);
-          locations[legend[i]] = -1;
+ //         CURSORPOP();
+ //         putpixel (sensorlocation(locations[legend[i]]),BG+BRIGHT+BLACK, trk);
+ //         CURSORPUSH();
+ //         CURSORMOVE(4+i, 32);
+ //         locations[legend[i]] = -1;
         }
-        bwprintf (COM2, "  Train %d\t(lost!)\t", legend[i]); 
+ //       bwprintf (COM2, "  Train %d\t(lost!)\t", legend[i]); 
         break; 
        // bwprintf (COM2, "  I AM ERROR."); 
         break;
       default:
         if (locations[legend[i]] != -1) {
-          CURSORPOP();
-          putpixel (sensorlocation(locations[legend[i]]),BG+BRIGHT+BLACK, trk);
-          CURSORPUSH();
-          CURSORMOVE(4+i, 32);
-          locations[i] = -1;
+  //        CURSORPOP();
+  //        putpixel (sensorlocation(locations[legend[i]]),BG+BRIGHT+BLACK, trk);
+  //        CURSORPUSH();
+  //        CURSORMOVE(4+i, 32);
+  //        locations[i] = -1;
         }
-        s = fucksensor(locations[legend[i]],0);
-        CURSORPOP();
-        putpixel (sensorlocation(locations[legend[i]]), 41+i,trk);
-        CURSORPUSH();
-        CURSORMOVE(4+i,32); 
-        SETCOLOUR(BG+BRIGHT+BLACK);
-        bwprintf (COM2, "  Train %d\t(%c%d+%dmm)", legend[i],s.group, s.id, dx[legend[i]]);
+  //      s = fucksensor(locations[legend[i]],0);
+  //      CURSORPOP();
+  //      putpixel (sensorlocation(locations[legend[i]]), 41+i,trk);
+  //      CURSORPUSH();
+  //      CURSORMOVE(4+i,32); 
+  //      SETCOLOUR(BG+BRIGHT+BLACK);
+  //      bwprintf (COM2, "  Train %d\t(%c%d+%dmm)", legend[i],s.group, s.id, dx[legend[i]]);
         break;
-    }*/
+    }
   }
   SETCOLOUR(BG+BLACK);
   CURSORPOP();
@@ -218,7 +220,7 @@ void sensorserver () {
   int trid = WhoIs ("tr"); 
   int c;
   Send (trid, msg, 1, NULL, 0);
-
+  LockAcquire (COM1_R_LOCK);
   FOREVER {
     cur = Time ();
     if (cur - last > 50) {
@@ -232,7 +234,9 @@ void sensorserver () {
       c = Getc_r(COM1);
       if (c != -1) {
         last = cur;
-        // DPRINTOK ("bing c=%x i=%d\n",c,i);
+     //   LockAcquire (COM2_W_LOCK);
+     //    DPRINTOK ("bing c=%x i=%d\n",c,i);
+     //   LockRelease (COM2_W_LOCK);
         msg[i] = (char)c;
         i++;
         if (i > 10) {
@@ -361,29 +365,31 @@ int nextsensor (int cur, int trktid, int *d) {
   return t.destination;
 }
 
-struct msg lostfunc (int sens, int time) {
+struct msg lostfunc (int sens, int time, int senid) {
  /* first attempt:
       poll for _any_ sensor, return time properly */
 
-  /* zeroth attempt: return lost always */
-  struct msg out;
-  out.id = 0;
+  struct msg out,in;
+  out.id = 'L';
+  int r = Send (senid, (char*)(&out), sizeof(struct msg), (char*)(&in), sizeof(struct msg));
+  if (r) { in.id = 1; return in; }
+  else   { in.id = 0; return in; }
   return out;
 }
  
-#define MARGIN_OF_ERROR 1.5
+#define MARGIN_OF_ERROR 200
 void train_agent_notsuck () {
   int trid = MyParentTid();
   int senid = WhoIs("sens");
   int trktid = WhoIs ("trak");
-
+  int calitid = WhoIs ("cali");
 
   int nextsens; 
   int lastsensor = -1; // TODO: fucked or unfucked version?
   
   // micrometers
   uint dx = 0;
-  uint dxuntilnextsensor = -1;   
+  uint dxuntilnextsensor = 0xFFFFFFFF;   
 
   // in "train speed" units (0-14)
   uint newtrainspeed;
@@ -406,10 +412,13 @@ void train_agent_notsuck () {
   uint timesincelost = lastticks;  
   uint timeofaccel;
 
-  // in microseconds
+  // in milliseconds
   uint dt;
   uint sensorlag = 0;
-  uint acceltime= 5000000;//hobo hax
+  uint acceltime;
+
+ 
+  int trainnum; // what train am i?
 
   struct msg in, out;
   /*
@@ -423,6 +432,8 @@ void train_agent_notsuck () {
      c1 - 0 if no command, 1 if "go" command
      d2 - if c1 = 1, this is the sensor of our destination.
   */
+  char tmp = '?';
+  Send (trid, &tmp, 1, (char*)(&trainnum), sizeof(int));
 
   while (1) {
     t = READ_TIMER3;
@@ -439,12 +450,26 @@ void train_agent_notsuck () {
       if (in.d1 != currenttrainspeed) {
         accelerating = 1;
         newtrainspeed = in.d1;
-      /*TODO  acceltime = PANIC;
-        newvelocity = PANIC;*/
+ 
+        // get atime
+        out.id = (newtrainspeed == 0) ? 'D' : 'A';
+        out.d1 = trainnum; // DEFINE THIS
+        out.d2 = (newtrainspeed ==0) ? currenttrainspeed : newtrainspeed;
+        Send (calitid, (char*)(&out), sizeof (struct msg), (char*)(&acceltime), sizeof(int));
+
+        // get new velocity
+        out.id = 'S';
+        out.d1 = trainnum;
+        out.d2 = 14;
+        int tmp;
+        Send (calitid, (char*)(&out), sizeof (struct msg), (char*)(&tmp), sizeof (int));
+        newvelocity = (tmp*newtrainspeed)/14;// TRUTH
+
         acc = (newvelocity - velocity)/acceltime;
         timeofaccel = READ_TIMER3;
         LockAcquire (COM2_W_LOCK);
         bwprintf (COM2, "we were told to accelerate from %d to %d at time %x ticks, it will take %d microsec so it will be done at %x ticktime.\n", currenttrainspeed, newtrainspeed,timeofaccel,acceltime, timeofaccel+(acceltime*100)/197);
+        bwprintf (COM2, "velocity now is %d, will end with %d. atime is %d and that gives us an acc of %d\n", velocity, newvelocity,acceltime, acc);
         LockRelease (COM2_W_LOCK);
       }
     }
@@ -454,7 +479,7 @@ void train_agent_notsuck () {
 
     if (lost) {
       zeromsg(&in);
-      in = lostfunc (lastsensor, timesincelost);
+      in = lostfunc (lastsensor, timesincelost, senid);
       /*
         in:
         id = 0 if still lost, 1 if found
@@ -463,9 +488,13 @@ void train_agent_notsuck () {
       */
       if (in.id) { // found
         lost = 0;
-        lastsensor = in.d2;
-        dx = velocity*(sensorlag+(((in.d2-t)*197)/100));
+        dt = 0;
+        lastsensor = in.d1;
+        dx =0;// velocity*(sensorlag+(((in.d2-t)*197)/100))/1000;
         nextsens = nextsensor(lastsensor, trktid, &dxuntilnextsensor);//TODO:MAKE IT RETURN MICROSEC
+        LockAcquire (COM2_W_LOCK);
+        bwprintf (COM2, "found!! %d. next: %d\n", in.d1, nextsens);
+        LockRelease (COM2_W_LOCK);
       }
     }
     
@@ -495,16 +524,28 @@ void train_agent_notsuck () {
       int r = Send (senid, (char*)(&out), sizeof(struct msg), (char*)(&in), sizeof(struct msg));
 
       if (r) {
-        dx = velocity * (((in.d2 - t)*100)/197+sensorlag);
-        lastsensor = in.d1;
+        LockAcquire (COM2_W_LOCK);
+        bwprintf (COM2, "dx (mm)= %d. ", dx);
+        LockRelease (COM2_W_LOCK);
+        dx = 0;//velocity * (((in.d1 - t)*100)/197+sensorlag)/1000;
+        dt=0;
+        lastsensor = nextsens;
+        int off = (dxuntilnextsensor-dx)/1000;
         nextsens = nextsensor (lastsensor, trktid, &dxuntilnextsensor);
+        LockAcquire (COM2_W_LOCK);
+        bwprintf (COM2,"got to %d! next is %d, a distance of %d mm. velocity is %d. I was off by %d mm.\n",lastsensor, nextsens,dxuntilnextsensor/1000,velocity* 1000, off);
+        LockRelease (COM2_W_LOCK);
       }
     }
         
 
-    dx = velocity*dt;
+    dx += 0;//velocity*dt/1000;
     if (dxuntilnextsensor*MARGIN_OF_ERROR < dx) {
+      LockAcquire (COM2_W_LOCK);
+   //   bwprintf (COM2, "%d is lost!\n", trainnum);
+      LockRelease (COM2_W_LOCK);
       lost = 1;
+      
     }
   }
 }
@@ -753,12 +794,21 @@ start:
         LockAcquire (COM2_W_LOCK);
         bwprintf(COM2, "Trapping at %c%d\r\n", trap.group, trap.id);
         LockRelease (COM2_W_LOCK);
+        break;
+      case '?':
+        Reply (tid, (char*)(&tid2tr[tid]), sizeof(int));
+        break;
       default:
         break;
     }
 
     Reply (tid, NULL, 0);
     switch (cmd[0]) {
+      case 'W': // wh
+        LockAcquire (COM2_W_LOCK);
+        bwprintf (COM2, "%c%d at %x\n", latest.group, latest.id, latest.time);
+        LockRelease (COM2_W_LOCK);
+        break;
       case 'A': // add train TODO DRAW CODE
         tr2tid[(int)cmd[1]] =  Create (USER_HIGH, train_agent_notsuck);
         tid2tr[tr2tid[(int)cmd[1]]] = (int)cmd[1];

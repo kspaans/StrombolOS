@@ -393,9 +393,10 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     LockRelease (COM2_W_LOCK);
   }
   else if (!strcmp ("wh", token (cmd, 0, buf))) {
-    LockAcquire (COM2_W_LOCK);
-    bwprintf (COM2, "Latest sensor: %c%d at time %d:%d.%d\n", s.group,s.id, (s.time/1200), (s.time/20)%60, (s.time/2) %10);
-    LockRelease (COM2_W_LOCK);
+    char c;
+    c = 'W';
+    Send (trid, &c, 1, NULL, 0);
+    Pass();
   }
   else if (!strcmp("cal", token(cmd, 0, buf))) {
     int i, j;
