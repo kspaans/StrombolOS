@@ -165,6 +165,13 @@ int ReserveChunks(int sensor, int distance)
 
   track_tid = WhoIs("trak"); // TODO: speed me up
 
+  out.id = 'r';
+  out.d1 = sensor;
+  r = Send(track_tid, (char *)&out, sizeof(struct msg), &c, 1);
+  if (r == 1) { // could not reserve
+    return -1;
+  }
+
   //sens_id_to_name(sensor, sname);
   //LockAcquire(COM2_W_LOCK);
   //bwprintf(COM2, "ReserveChunks: wanting sensor %s for dist %dmm\r\n", sname,

@@ -183,7 +183,7 @@ void track()
   struct msg m;
   int i, r, tid;
   char c;
-  //char sname[4];
+  char sname[4];
 
   RegisterAs("trak");
   FOREACH(i, 40) reservations[i] = 0;
@@ -211,7 +211,7 @@ void track()
         }
         break;
       case 'r':
-        //sens_id_to_name(m.d1, sname);
+        sens_id_to_name(m.d1, sname);
         //LockAcquire(COM2_W_LOCK);
         //bwprintf(COM2, "Task %d asking for %s, current owner: %d\r\n", tid,
         //         sname, reservations[m.d1 / 2]);

@@ -42,7 +42,7 @@
   speeds[2][11] = 0;
   speeds[2][12] = 0;
   speeds[2][13] = 0;
-  speeds[2][14] = 750; //FAKE
+  speeds[2][14] = 825; //FAKE
 
   speeds[3][1] = 0;
   speeds[3][2] = 0;

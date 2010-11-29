@@ -399,6 +399,7 @@ void train_agent_notsuck () {
   // in "train speed" units (0-14)
   uint newtrainspeed;
   uint currenttrainspeed = 0; 
+  uint oldspeed;
   
   // in micrometers/microsecond
   uint velocity = 0;
@@ -410,6 +411,7 @@ void train_agent_notsuck () {
   // boolean variables
   int lost = 1;
   int accelerating = 0;
+  int reserve_blocked = 0;
   
   // in units of ticks (~1.9microseconds)
   uint t;
@@ -452,6 +454,29 @@ void train_agent_notsuck () {
     out.d4 = velocity;
  
     Send (trid, (char*)(&out), sizeof(struct msg), (char*)(&in), sizeof(struct msg));
+    if (reserve_blocked) {
+      ReleaseAll();
+      if (ReserveChunks(lastsensor, 350) == 0) {
+        LockAcquire(COM2_W_LOCK);
+        bwprintf(COM2, "YAY to speed %d\r\n", oldspeed);
+        LockRelease(COM2_W_LOCK);
+        newtrainspeed = oldspeed;
+        currenttrainspeed = oldspeed;
+        out.id = 'S';
+        out.d1 = trainnum;
+        out.d2 = 14;
+        int tmp;
+        Send (calitid, (char*)(&out), sizeof (struct msg), (char*)(&tmp), sizeof (int));
+        newvelocity = (tmp*newtrainspeed)/14;// TRUTH
+        char buf[3];
+        buf[0] = 't'; buf[1] = oldspeed; buf[2] = trainnum;
+        Send(trid, buf, 3, NULL, 0);
+        timeofaccel = READ_TIMER3;
+        reserve_blocked = 0;
+        accelerating = 1;
+      }
+    }
+
     if (!accelerating) {
       if (in.d1 != currenttrainspeed) {
         accelerating = 1;
@@ -529,7 +554,7 @@ void train_agent_notsuck () {
       out.d1 = nextsens;
       int r = Send (senid, (char*)(&out), sizeof(struct msg), (char*)(&in), sizeof(struct msg));
 
-      if (r) {
+      if (r && !reserve_blocked) {
      //   LockAcquire (COM2_W_LOCK);
       //  bwprintf (COM2, "dt = %d, dx (mm)= %d. ", dt,dx/1000000);
      //   LockRelease (COM2_W_LOCK);
@@ -542,8 +567,9 @@ void train_agent_notsuck () {
      //   bwprintf (COM2,"got to %d! next is %d, a distance of %d mm. velocity is %d. I was off by %d mm.\n",lastsensor, nextsens,dxuntilnextsensor/1000,velocity* 1000, off);
      //   LockRelease (COM2_W_LOCK);
 
+        LockAcquire(RESERV_LOCK);
         ReleaseAll();
-        r = ReserveChunks(nextsens, 550); // 350mm is the stopdist at speed 8
+        r = ReserveChunks(lastsensor, 350); // 350mm is the stopdist at speed 8
         if (r == 0) {
           // cool
           char sname[4];
@@ -553,26 +579,35 @@ void train_agent_notsuck () {
           //LockRelease (COM2_W_LOCK);
         }
         else {
+          reserve_blocked = 1;
+          accelerating = 1;
+          newvelocity = 0;
+          newtrainspeed = 0;
+          oldspeed = currenttrainspeed;
+          timeofaccel = READ_TIMER3;
+          ReleaseAll();
           char sname[4];
           sens_id_to_name(nextsens, sname);
           LockAcquire (COM2_W_LOCK);
-          bwprintf (COM2,"XXXXXXX------->Woah, tr %d couldn't reserve %s+550mm\r\n", trainnum, sname);
+          bwprintf (COM2,"XXXXXXX------->Woah, tr %d couldn't reserve %s+350mm\r\n", trainnum, sname);
           LockRelease (COM2_W_LOCK);
           char buf[3];
           buf[0] = 't'; buf[1] = 0; buf[2] = trainnum;
           Send(trid, buf, 3, NULL, 0); // stop the train if we can't reserve
         }
+        LockRelease(RESERV_LOCK);
       }
     }
-        
 
     dx += velocity*dt;
-    if (dxuntilnextsensor*MARGIN_OF_ERROR < dx) {
+    if (dxuntilnextsensor*MARGIN_OF_ERROR < dx && !lost && !accelerating) {
+      LockAcquire(COM2_W_LOCK);
+      bwprintf(COM2, "<<<< LOST TRAIN %d\r\n", trainnum);
+      LockRelease(COM2_W_LOCK);
   //    LockAcquire (COM2_W_LOCK);
    //   bwprintf (COM2, "%d is lost!\n", trainnum);
     //  LockRelease (COM2_W_LOCK);
       lost = 1;
-      
     }
   }
 }
