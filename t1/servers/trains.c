@@ -156,7 +156,7 @@ void drawswitches (char *trk, int c) {
   }
   LockRelease (COM2_W_LOCK);
 }
-void drawlegend (int *locations, int *dx, int *legend, char *trk) {
+void drawlegend (int *locations, uint *dx, int *legend, char *trk,uint *velocity) {
   LockAcquire (COM2_W_LOCK);
   CURSORPUSH();
   CURSORMOVE(3,30);
@@ -175,8 +175,8 @@ void drawlegend (int *locations, int *dx, int *legend, char *trk) {
     SETCOLOUR(BG+BRIGHT+BLACK);
     if (locations[legend[i]] != -1) {
       s = fucksensor (locations[legend[i]],0);
-      bwprintf (COM2,      " Train %d     %c%d+%d.%dcm         ", legend[i], s.group, s.id, dx[legend[i]]/10000000,(dx[legend[i]]/1000000)%10);
-   } else bwprintf (COM2, " Train %d     lost!          ",legend[i]);
+      bwprintf (COM2,      " Train %d     %c%d+%d.%dcm @ %dmm/s        ", legend[i], s.group, s.id, dx[legend[i]]/10000000,(dx[legend[i]]/1000000)%10, velocity[legend[i]]);
+   } else bwprintf (COM2, " Train %d     lost!                ",legend[i]);
 /*   
   //  struct sensorevent s;// = fucksensor((int)c,0);
    switch (locations[legend[i]]) {
@@ -449,7 +449,8 @@ void train_agent_notsuck () {
     out.d1 = lastsensor;
     out.d2 = currenttrainspeed;
     out.d3 = dx;
-    
+    out.d4 = velocity;
+ 
     Send (trid, (char*)(&out), sizeof(struct msg), (char*)(&in), sizeof(struct msg));
     if (!accelerating) {
       if (in.d1 != currenttrainspeed) {
@@ -697,6 +698,7 @@ void trains () {
   int tr2tid[80];
   int locations[80];
   unsigned int dx[80];
+  unsigned int velocity[80];
   int tid2tr[80];
 
   /*
@@ -773,9 +775,10 @@ start:
         in = (struct msg*)cmd;
         locations[tid2tr[tid]] = in->d1;
         dx[tid2tr[tid]] = in->d3;
+        velocity[tid2tr[tid]] = in->d4;
         zeromsg(&out);
         out.d1 = speeds[tid2tr[tid]];
-        if (READ_TIMER3%2 ==0) drawlegend (locations, dx, legend, trk); // ????TODO
+        if (READ_TIMER3%2 ==0) drawlegend (locations, dx, legend, trk, velocity); // ????TODO
         //bwprintf(COM2, "Giving train %d(%d) new speed: %d --> \r\n",
         //tid2tr[tid],
         //TR2IDX(tid2tr[tid]),
@@ -823,7 +826,7 @@ start:
         if (i == MAX_TRAINS) bwprintf (COM2, "Too many trains!\n");  
         else legend[i] = (int)cmd[1];
         LockRelease (COM2_W_LOCK);
-        drawlegend (locations, dx, legend, trk); // ??? TODO
+        drawlegend (locations, dx, legend, trk, velocity); // ??? TODO
         break;
       case 'p': // poll sensors
         switch (r) {
