@@ -572,7 +572,7 @@ void wm () {
   //  Send (trid, &sensorquery, 1, (char*)(&sen), sizeof(struct sensorevent));
   //  prettyprintsensor (sen); 
  //   examine_sensors(sen, data, measurements);
-  prettyprinttime(t);
+ // prettyprinttime(t);
     ch = Getc_r(COM2);
     if (ch !=-1) {
      if (ch == CHR_RETURN) { 
