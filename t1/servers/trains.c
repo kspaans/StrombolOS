@@ -314,7 +314,7 @@ void sensor_secretary () {
         Reply (tid, NULL, 0);
         break;
       case 'R': // train is requesting status of sensor
-        if (sensor[in.d1] != 0 && sensor[in.d1] - t > 1200000) {
+        if (sensor[in.d1] != 0 && sensor[in.d1] - t > 2400000) {
           //sens_id_to_name(in.d1, name);
           //bwprintf (COM2, "Expiring sensor %s, which was triggered at %d\n",
           //          name, sensor[in.d1]);
@@ -333,10 +333,10 @@ void sensor_secretary () {
         break;
      case 'L': // i am lost!
        for (i = 0; i < 80; i++) {
-         if (sensor[i] && sensor[i] - t > 1200000 ) {
+         if (sensor[i] && sensor[i] - t > 2400000 ) {
            sensor[i] = 0;
          }
-         else if (sensor[i] && sensor[i] - t > 400000) {
+         else if (sensor[i] && sensor[i] - t > 800000) {
            out.d1 = i;
            out.d2 = sensor[i];
            sensor[i] = 0;
@@ -382,7 +382,7 @@ struct msg lostfunc (int sens, int time, int senid) {
   return out;
 }
  
-#define MARGIN_OF_ERROR 2
+#define MARGIN_OF_ERROR 3
 void train_agent_notsuck () {
   int trid = MyParentTid();
   int senid = WhoIs("sens");
