@@ -156,14 +156,20 @@ void LockRelease (int l) {
 int ReserveChunks(int sensor, int distance)
 {
   int track_tid;
-  int d; // distance reserved so far
+  int d = 0; // distance reserved so far, in mm
   int r;
   char c;
   struct msg out;
   struct trip next;
+  //char sname[4];
 
   track_tid = WhoIs("trak"); // TODO: speed me up
 
+  //sens_id_to_name(sensor, sname);
+  //LockAcquire(COM2_W_LOCK);
+  //bwprintf(COM2, "ReserveChunks: wanting sensor %s for dist %dmm\r\n", sname,
+  //distance);
+  //LockRelease(COM2_W_LOCK);
   while (d < distance) {
     out.id = 'n';
     out.d1 = sensor;
@@ -185,6 +191,11 @@ int ReserveChunks(int sensor, int distance)
       PANIC;
     }
     d += next.distance;
+    //sens_id_to_name(next.destination, sname);
+    //LockAcquire(COM2_W_LOCK);
+    //bwprintf(COM2, "ReserveChunks: reserved sensor %s, dist so far %dmm\r\n", sname,
+    //d);
+    //LockRelease(COM2_W_LOCK);
     sensor = next.destination;
   }
   return 0;

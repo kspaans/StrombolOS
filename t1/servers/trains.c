@@ -535,6 +535,27 @@ void train_agent_notsuck () {
         LockAcquire (COM2_W_LOCK);
         bwprintf (COM2,"got to %d! next is %d, a distance of %d mm. velocity is %d. I was off by %d mm.\n",lastsensor, nextsens,dxuntilnextsensor/1000,velocity* 1000, off);
         LockRelease (COM2_W_LOCK);
+
+        ReleaseAll();
+        r = ReserveChunks(nextsens, 550); // 350mm is the stopdist at speed 8
+        if (r == 0) {
+          // cool
+          char sname[4];
+          sens_id_to_name(nextsens, sname);
+          //LockAcquire (COM2_W_LOCK);
+          //bwprintf(COM2, "Train %d reserved %s+\r\n", trainnum, sname);
+          //LockRelease (COM2_W_LOCK);
+        }
+        else {
+          char sname[4];
+          sens_id_to_name(nextsens, sname);
+          LockAcquire (COM2_W_LOCK);
+          bwprintf (COM2,"XXXXXXX------->Woah, tr %d couldn't reserve %s+550mm\r\n", trainnum, sname);
+          LockRelease (COM2_W_LOCK);
+          char buf[3];
+          buf[0] = 't'; buf[1] = 0; buf[2] = trainnum;
+          Send(trid, buf, 3, NULL, 0); // stop the train if we can't reserve
+        }
       }
     }
         
@@ -832,11 +853,11 @@ start:
              while (wut) {
                if (wut &128) { 
                  latest = fucksensor (i*8+j,tt); 
-                 if ((trap.id && trap.id == latest.id && trap.group ==
-                     latest.group) || (latest.id==14 && latest.group=='C')) {
-                   Putc(COM1, 0x61);
-           //        Putc(COM1, 0x0C); //stop train 32
-                 }
+                 //if ((trap.id && trap.id == latest.id && trap.group ==
+                 //    latest.group) || (latest.id==14 && latest.group=='C')) {
+                 //  Putc(COM1, 0x61);
+           //    //    Putc(COM1, 0x0C); //stop train 32
+                 //}
                  out.id = 'D';
                  out.d1 = i*8+j;
                  out.d2 = latest.time;
