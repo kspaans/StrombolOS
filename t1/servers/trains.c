@@ -159,7 +159,7 @@ void drawswitches (char *trk, int c) {
 void drawlegend (int *locations, uint *dx, int *legend, char *trk,uint *velocity) {
   LockAcquire (COM2_W_LOCK);
   CURSORPUSH();
-  CURSORMOVE(3,30);
+  CURSORMOVE(3,32);
   SETCOLOUR(BG+BRIGHT+BLACK);
   bwprintf (COM2, "Train ID\t\tPosition");
   int i;
@@ -169,7 +169,7 @@ void drawlegend (int *locations, uint *dx, int *legend, char *trk,uint *velocity
     //get train pos
 /* TODO port    packet[1] = (char)legend[i];
     Send (trid, packet,2, (char*)(&in), sizeof (struct msg));*/
-    CURSORMOVE(4+i,30); 
+    CURSORMOVE(4+i,32);
     SETCOLOUR(41+i);
     bwprintf (COM2, "  ");
     SETCOLOUR(BG+BRIGHT+BLACK);
@@ -455,6 +455,7 @@ void train_agent_notsuck () {
  
     Send (trid, (char*)(&out), sizeof(struct msg), (char*)(&in), sizeof(struct msg));
     if (reserve_blocked) {
+      LockAcquire(RESERV_LOCK);
       ReleaseAll();
       if (ReserveChunks(lastsensor, 350) == 0) {
         LockAcquire(COM2_W_LOCK);
@@ -475,6 +476,7 @@ void train_agent_notsuck () {
         reserve_blocked = 0;
         accelerating = 1;
       }
+      LockRelease(RESERV_LOCK);
     }
 
     if (!accelerating) {

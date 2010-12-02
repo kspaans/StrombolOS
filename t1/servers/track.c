@@ -6,6 +6,7 @@
 #include <ts7200.h>
 #include <debug.h>
 #include <lock.h>
+#include <ANSI.h>
 #include "servers.h"
 #include "../user/usyscall.h"
 #include "../user/lib.h"
@@ -149,6 +150,64 @@ int distance(int a, int b, struct track_node *map[])
 }
 #endif /* comment */
 
+/*
+ * Simply print the reservations:
+ * fit into a 11 x 4 rows table
+ * 01234567 1234567 1234567
+ * -----------------------
+ * SEX #\t SEX #\t SEX #\t SEX #\n
+ * SEX #\t SEX #\t SEX #\n
+ * SEX #\t SEX #\t SEX #\n
+ * ...
+ * -----------------------
+ *  TODO
+ * - I should probably make this print only the reservations of the trains,
+ * not the status of each sensor...
+ * - Use train numbers, not TIDs
+ */
+void print_reservations(int *r)
+{
+  int i = 0;
+
+  LockAcquire(COM2_W_LOCK);
+  CURSORPUSH();
+  CURSORMOVE(2,0); // ugh, may need to make this one less column
+  bwputstr(COM2, "                               ");
+  bwputstr(COM2, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+  bwprintf(COM2, "A01 %d\tB07 %d\tC13 %d\tE03 %d\r\n", r[0],  r[11], r[22], r[33]);
+  bwputstr(COM2, "                               ");
+  bwputstr(COM2, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+  bwprintf(COM2, "A03 %d\tB09 %d\tC15 %d\tE05 %d\r\n", r[1],  r[12], r[23], r[34]);
+  bwputstr(COM2, "                               ");
+  bwputstr(COM2, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+  bwprintf(COM2, "A05 %d\tB11 %d\tD01 %d\tE07 %d\r\n", r[2],  r[13], r[24], r[35]);
+  bwputstr(COM2, "                               ");
+  bwputstr(COM2, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+  bwprintf(COM2, "A07 %d\tB13 %d\tD03 %d\tE09 %d\r\n", r[3],  r[14], r[25], r[36]);
+  bwputstr(COM2, "                               ");
+  bwputstr(COM2, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+  bwprintf(COM2, "A09 %d\tB15 %d\tD05 %d\tE11 %d\r\n", r[4],  r[15], r[26], r[37]);
+  bwputstr(COM2, "                               ");
+  bwputstr(COM2, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+  bwprintf(COM2, "A11 %d\tC01 %d\tD07 %d\tE13 %d\r\n", r[5],  r[16], r[27], r[38]);
+  bwputstr(COM2, "                               ");
+  bwputstr(COM2, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+  bwprintf(COM2, "A13 %d\tC03 %d\tD09 %d\tE15 %d\r\n", r[6],  r[17], r[28], r[39]);
+  bwputstr(COM2, "                               ");
+  bwputstr(COM2, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+  bwprintf(COM2, "A15 %d\tC05 %d\tD11 %d\r\n",         r[7],  r[18], r[29]);
+  bwputstr(COM2, "                               ");
+  bwputstr(COM2, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+  bwprintf(COM2, "B01 %d\tC07 %d\tD13 %d\r\n",         r[8],  r[19], r[30]);
+  bwputstr(COM2, "                               ");
+  bwputstr(COM2, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+  bwprintf(COM2, "B03 %d\tC09 %d\tD15 %d\r\n",         r[9],  r[20], r[31]);
+  bwputstr(COM2, "                               ");
+  bwputstr(COM2, "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+  bwprintf(COM2, "B05 %d\tC11 %d\tE01 %d\r\n",         r[10], r[21], r[32]);
+  CURSORPOP();
+  LockRelease(COM2_W_LOCK);
+}
 
 /*
  * PROTOCOL:
@@ -224,6 +283,7 @@ void track()
         else {
           r = Reply(tid, &c, 1); // couldn't reserve
         }
+        print_reservations(reservations);
         break;
       case 'f':
         FOREACH(i, 72) {
@@ -232,6 +292,7 @@ void track()
           }
         }
         r = Reply(tid, NULL, 0);
+        print_reservations(reservations);
         break;
       default:
         PANIC;

@@ -61,3 +61,4 @@ Use stop distances. in asking for reservations -- calibrate this
 get path planning with Dijkstra's Algorithm
 get more tight reservations -- poll more often??
 be able to tell the trains to go the same speed -- calibrate!
+Use Cowan's online train calibration hack.
