@@ -36,3 +36,7 @@ struct msg { // for IPC
   int d1, d2,d3,d4; 
 };
 
+struct neighbours {
+  int count;
+  int n[4]; // This should never overflow
+};

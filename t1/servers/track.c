@@ -136,6 +136,61 @@ struct trip next_sensor(int current, struct track_node **map)
 }
 
 /*
+ * Return the neighbours of a sensor (ideal for finding a train that got lost
+ * over a switch). There are at most 4 neighbours given our track arrangements.
+ * Map must be used before calling this function
+ */
+void neighbour(struct track_node *cur, struct track_node *next,
+               struct neighbours *ne)
+{
+  //bwputc(COM2, 'N');
+  //bwprintf(COM2, "%d", next->id);
+  if (next->type == SWITCH) { // Must decide if we are ahead/behind
+    //bwputc(COM2, '1');
+    if (next->edges[AHEAD].dest == cur) {
+      //bwprintf(COM2, "ne6xt%d", next->edges[BEHIND].dest->id);
+      neighbour(next, next->edges[BEHIND].dest, ne);
+    }
+    else if (next->edges[BEHIND].dest == cur) {
+      //bwprintf(COM2, "ne7xt%d", next->edges[AHEAD].dest->id);
+      neighbour(next, next->edges[AHEAD].dest, ne);
+      //bwprintf(COM2, "ne8xt%d", next->edges[CURVED].dest->id);
+      neighbour(next, next->edges[CURVED].dest, ne);
+    }
+    else { // Always go to same place when coming at switch in this direction
+      //bwprintf(COM2, "ne9xt%d", next->edges[BEHIND].dest->id);
+      neighbour(next, next->edges[BEHIND].dest, ne);
+    }
+  }
+  else if (next->type == STOP) { // We have nowhere to go "next"
+    //bwputc(COM2, '2');
+    return;
+  }
+  else {
+    //bwputc(COM2, '3');
+    // To decide which switch direction, see if it points at cur AHEAD or
+    // BEHIND
+    if (next->edges[AHEAD].dest == cur) {
+      ne->n[ne->count++] = (next->id * 2) + 1;
+      //bwputc(COM2, '4');
+      if (ne->count > 4) {
+        bwprintf(COM2, "waaaah neighbours overflow\r\n");
+      }
+    }
+    else {
+      ne->n[ne->count++] = (next->id * 2);
+      //bwputc(COM2, '5');
+      if (ne->count > 4) {
+        bwprintf(COM2, "waaaah neighbours overflow\r\n");
+      }
+    }
+    //bwputc(COM2, '3');
+  }
+
+  return;
+}
+
+/*
  * Find the edge between sensors A and B (possibly including segments between
  * switches) to report the distance between them.
  */
@@ -167,8 +222,6 @@ int distance(int a, int b, struct track_node *map[])
  */
 void print_reservations(int *r)
 {
-  int i = 0;
-
   LockAcquire(COM2_W_LOCK);
   CURSORPUSH();
   CURSORMOVE(2,0); // ugh, may need to make this one less column
@@ -211,11 +264,12 @@ void print_reservations(int *r)
 
 /*
  * PROTOCOL:
- * next:    "n####"  next switch after us?
- * turnout: "t#[SC]" new turnout state -- or use a struct?
- * dist:    "d####"  distance to next sensor
- * reserve: "r####"  reserve a section of track
- * release: "f####"  release this TID's reservations
+ * next:       "n####"  next switch after us?
+ * turnout:    "t#[SC]" new turnout state -- or use a struct?
+ * dist:       "d####"  distance to next sensor
+ * reserve:    "r####"  reserve a section of track
+ * release:    "f####"  release this TID's reservations
+ * neighbours: "N####"  find all possible neighbours of a sensor
  */
 void track()
 {
@@ -239,6 +293,7 @@ void track()
   };
   int reservations[40]; // one per physical sensor
   struct trip t;
+  struct neighbours n;
   struct msg m;
   int i, r, tid;
   char c;
@@ -293,6 +348,17 @@ void track()
         }
         r = Reply(tid, NULL, 0);
         print_reservations(reservations);
+        break;
+      case 'N':
+        n.count = 0; n.n[0] = n.n[1] = n.n[2] = n.n[3] = 0;
+        if (m.d1 % 2 == 0) {
+          neighbour(sens_num_to_node[m.d1],
+                    sens_num_to_node[m.d1]->edges[AHEAD].dest, &n);
+        } else {
+          neighbour(sens_num_to_node[m.d1],
+                    sens_num_to_node[m.d1]->edges[BEHIND].dest, &n);
+        }
+        r = Reply(tid, (char *)&n, sizeof(struct neighbours));
         break;
       default:
         PANIC;

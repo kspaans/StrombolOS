@@ -222,6 +222,23 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     bwputstr (COM2, "Train set started.\n");
     LockRelease (COM2_W_LOCK);
   }
+  else if (!strcmp("neighbourhood", token(cmd, 0, buf))) {
+    struct neighbours ne;
+    int i;
+    m.id = 'N';
+    for (i = 0; i < 80; ++i) {
+      m.d1 = i;
+      Send(track_tid, (char *)&m, sizeof(struct msg), (char *)&ne,
+           sizeof(struct neighbours));
+      LockAcquire(COM2_W_LOCK);
+      bwprintf(COM2, "{Neighbours of %d %d(%d %d %d %d)} ", i, ne.count, ne.n[0],
+               ne.n[1], ne.n[2], ne.n[3]);
+      LockRelease(COM2_W_LOCK);
+    }
+    LockAcquire(COM2_W_LOCK);
+    bwprintf(COM2, "\r\n");
+    LockRelease(COM2_W_LOCK);
+  }
   else if (!strcmp ("add", token(cmd,0,buf))) {
 //    int i=0;
    // while (legend[i] != 0 && i < MAX_TRAINS) i++;
