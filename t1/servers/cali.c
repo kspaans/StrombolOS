@@ -22,7 +22,7 @@ int trainid (int trainnum) {
   }
 }
 
-#define NUM_TRAINS 5
+#define NUM_TRAINS 7
 void cali () {
   RegisterAs ("cali");
   struct msg in, out;
@@ -31,6 +31,7 @@ void cali () {
   int speeds[NUM_TRAINS][15];
   int atime[NUM_TRAINS][15];
   int dtime[NUM_TRAINS][15];
+  int stime[NUM_TRAINS][15]; // in mm
 
   for (i = 0; i < NUM_TRAINS; i++) {
     speeds[i][0] = 0;
@@ -45,6 +46,7 @@ void cali () {
       case 'S': out.d1 = speeds[trainid(in.d1)][in.d2]; break;
       case 'A': out.d1 = atime[trainid(in.d1)][in.d2]; break;
       case 'D': out.d1 = dtime[trainid(in.d1)][in.d2]; break; 
+      //case 'T': out.d1 = stoptime[trainid(in.d1)][in.d2]; break;
       default: PANIC;
     }
     Reply (tid, (char*)(&out.d1),sizeof(int)); 

@@ -457,7 +457,7 @@ void train_agent_notsuck () {
     if (reserve_blocked) {
       LockAcquire(RESERV_LOCK);
       ReleaseAll();
-      if (ReserveChunks(lastsensor, 350) == 0) {
+      if (ReserveChunks(lastsensor, 350) == 0) { // use stopdist
         LockAcquire(COM2_W_LOCK);
         bwprintf(COM2, "YAY to speed %d\r\n", oldspeed);
         LockRelease(COM2_W_LOCK);
@@ -899,9 +899,12 @@ start:
                if (wut &128) { 
                  latest = fucksensor (i*8+j,tt); 
                  //if ((trap.id && trap.id == latest.id && trap.group ==
-                 //    latest.group) || (latest.id==14 && latest.group=='C')) {
+                 //     latest.group) || (latest.id==8 && latest.group=='E')) {
                  //  Putc(COM1, 0x61);
-           //    //    Putc(COM1, 0x0C); //stop train 32
+                 //  LockAcquire(COM1_W_LOCK);
+                 //  Putc(COM1, 0x00);
+                 //  Putc(COM1,   52); //stop train xx
+                 //  LockRelease(COM1_W_LOCK);
                  //}
                  out.id = 'D';
                  out.d1 = i*8+j;
