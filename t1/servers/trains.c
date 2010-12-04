@@ -392,6 +392,9 @@ void train_agent_notsuck () {
   int nextsens; 
   int lastsensor = -1; // TODO: fucked or unfucked version?
   
+  // millimeters
+  int stopping_distance;
+
   // micrometers
   uint dx = 0;
   uint dxuntilnextsensor = 0xFFFFFFFF;   
@@ -447,6 +450,15 @@ void train_agent_notsuck () {
 
     zeromsg(&out);
     zeromsg(&in);
+    out.id = 'T';
+    out.d1 = trainnum;
+    out.d2 = currenttrainspeed;
+    Send(calitid, (char *)&out, sizeof(struct msg), (char *)&in,
+         sizeof(struct msg));
+    stopping_distance = in.d1;
+
+    zeromsg(&out);
+    zeromsg(&in);
     out.id = 'U';
     out.d1 = lastsensor;
     out.d2 = currenttrainspeed;
@@ -457,7 +469,7 @@ void train_agent_notsuck () {
     if (reserve_blocked) {
       LockAcquire(RESERV_LOCK);
       ReleaseAll();
-      if (ReserveChunks(lastsensor, 350) == 0) { // use stopdist
+      if (ReserveChunks(lastsensor, stopping_distance) == 0) {
         LockAcquire(COM2_W_LOCK);
         bwprintf(COM2, "YAY to speed %d\r\n", oldspeed);
         LockRelease(COM2_W_LOCK);
@@ -571,7 +583,7 @@ void train_agent_notsuck () {
 
         LockAcquire(RESERV_LOCK);
         ReleaseAll();
-        r = ReserveChunks(lastsensor, 350); // 350mm is the stopdist at speed 8
+        r = ReserveChunks(lastsensor, stopping_distance);
         if (r == 0) {
           // cool
           char sname[4];
