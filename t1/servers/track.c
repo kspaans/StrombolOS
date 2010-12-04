@@ -16,6 +16,55 @@
 
 //#define // some macro for mapping numbers to IDs
 
+#define MIN(x, y) x < y ? x : y
+#define INFTY 1000000
+/*
+ * Dijkstra's Algorithm
+ * All data should be initialized to 1000000 (infinity) when first calling this.
+ */
+void dijkstra(int current, int dest, int *data, int *visited, int *previous,
+         struct path *p, struct track_node **graph)
+{
+  int i;
+  int neighbour;
+  int min = INFTY;
+  int next;
+  int direction = 8;
+
+  LockAcquire(COM2_W_LOCK);
+  bwprintf(COM2, "DIJKSTRA: current %d dest %d path so far %d\r\n", current,
+           dest, p->count);
+  LockRelease(COM2_W_LOCK);
+  if (current == dest) return;
+
+  for (i = 0; i < graph[current]->num_edges; ++i) { // neighbours
+    neighbour = graph[current]->edges[i].dest->id;
+    if (visited[neighbour]) continue;
+    data[neighbour] = MIN(data[neighbour],
+                          data[current] + graph[current]->edges[i].dist);
+    min = MIN(min, data[neighbour]);
+    if (min == data[neighbour]) {
+      direction = i;
+      next = neighbour;
+      previous[neighbour] = current;
+    }
+    LockAcquire(COM2_W_LOCK);
+    bwprintf(COM2, "DIJKSTRA-LOOP: i %d neighbour %d data[n] %d min %d\r\n",
+             i, neighbour, data[neighbour], min);
+    LockRelease(COM2_W_LOCK);
+  }
+  visited[current] = 1;
+  p->node[p->count].node = min;
+  p->node[p->count].dir  = direction;
+  ++p->count;
+  if (p->count >= 20) {
+    bwprintf(COM2, "ZAZA overflow of path\r\n");
+    PANIC;
+  }
+
+  return dijkstra(next, dest, data, visited, previous, p, graph);
+}
+
 /*
  * Takes the current sensor and reports the next expected one given the track
  * and current state of switches. The trick is to know relative directions when
@@ -270,6 +319,7 @@ void print_reservations(int *r)
  * reserve:    "r####"  reserve a section of track
  * release:    "f####"  release this TID's reservations
  * neighbours: "N####"  find all possible neighbours of a sensor
+ * Path:       "Pd1|d2" use Dijkstra's Algorithm for d1 to d2
  */
 void track()
 {
@@ -292,9 +342,13 @@ void track()
     &aSW99, &aSW9A, &aSW9B, &aSW9C
   };
   int reservations[40]; // one per physical sensor
+  int pdata[80];        // graph node distance values
+  int pvisited[80];     // have we visited the graph node?
+  int pprevious[80];    // shortest path in reverse direction
   struct trip t;
   struct neighbours n;
   struct msg m;
+  struct path path;
   int i, r, tid;
   char c;
   char sname[4];
@@ -303,6 +357,10 @@ void track()
   FOREACH(i, 40) reservations[i] = 0;
 
   FOREVER {
+    FOREACH(i, 80) { pdata[i] = INFTY; pvisited[i] = 0; pprevious[i] = -1; }
+    path.count = 0;
+    FOREACH(i, 20) { path.node[i].dir = 0; path.node[i].node = -1; }
+
     r = Receive(&tid, (char *)&m, sizeof(struct msg));
 
     switch (m.id) {
@@ -359,6 +417,12 @@ void track()
                     sens_num_to_node[m.d1]->edges[BEHIND].dest, &n);
         }
         r = Reply(tid, (char *)&n, sizeof(struct neighbours));
+        break;
+      case 'P':
+        pdata[m.d1] = 0; // set the initial node's dist to 0
+        dijkstra(m.d1, m.d2, pdata, pvisited, pprevious, &path,
+                 sens_num_to_node);
+        r = Reply(tid, (char *)&path, sizeof(struct path));
         break;
       default:
         PANIC;

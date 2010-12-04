@@ -55,10 +55,11 @@ What about delays when we call Time(), e.g. timer is probed, but THEN task is pu
 Fix TRAP to work for any train
 Improve tracking of lost trains py propogating switch states if they aren't what we expect.
 
-Robustify tracking my making secondary and tertiaery predictions of where we are.
+Robustify tracking my making secondary and tertiary predictions of where we are.
  `-- help with lost-tracking too
 Use stop distances. in asking for reservations -- calibrate this
 get path planning with Dijkstra's Algorithm
 get more tight reservations -- poll more often??
+ `-- or instead use their estimated distance to sooner when they are within stopping distance of the next train. (wait, can we know this? -- Inter-train communication?)
 be able to tell the trains to go the same speed -- calibrate!
 Use Cowan's online train calibration hack.

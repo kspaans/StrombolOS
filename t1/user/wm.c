@@ -222,6 +222,14 @@ void eval (char *cmd, int trid, int track_tid, char *sw, struct sensorevent s,
     bwputstr (COM2, "Train set started.\n");
     LockRelease (COM2_W_LOCK);
   }
+  else if (!strcmp("path", token(cmd, 0, buf))) {
+    struct path p;
+    m.id = 'P';
+    m.d1 = stoi(token(cmd, 1, buf));
+    m.d2 = stoi(token(cmd, 2, buf));
+    Send(track_tid, (char *)&m, sizeof(struct msg), (char *)&p,
+         sizeof(struct path));
+  }
   else if (!strcmp("neighbourhood", token(cmd, 0, buf))) {
     struct neighbours ne;
     int i;

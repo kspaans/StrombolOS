@@ -31,6 +31,16 @@ struct trip {
   struct track_node destnode;
 };
 
+struct path_part {
+  int node;
+  int dir;
+};
+
+struct path {
+  int count;
+  struct path_part node[20];
+};
+
 struct msg { // for IPC
   char id, c1, c2, c3;
   int d1, d2,d3,d4; 
