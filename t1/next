@@ -57,9 +57,11 @@ Improve tracking of lost trains py propogating switch states if they aren't what
 
 Robustify tracking my making secondary and tertiary predictions of where we are.
  `-- help with lost-tracking too
+  `-- chance lostfunc to make use of last sensor, and new neighbours function
 Use stop distances. in asking for reservations -- calibrate this
 get path planning with Dijkstra's Algorithm
 get more tight reservations -- poll more often??
  `-- or instead use their estimated distance to sooner when they are within stopping distance of the next train. (wait, can we know this? -- Inter-train communication?)
 be able to tell the trains to go the same speed -- calibrate!
 Use Cowan's online train calibration hack.
+measure accel times, get decel times given stop distances

@@ -16,7 +16,8 @@ enum edge_type {AHEAD, BEHIND, CURVED};
 
 struct track_node {
   enum { SENSOR, SWITCH, STOP } type;
-  int id; // From the track data file
+  int id;     // From the track data file
+  int abs_id; // globally unique id
   char switch_state;
   int x;
   int y;
@@ -32,8 +33,9 @@ struct trip {
 };
 
 struct path_part {
-  int node;
-  int dir;
+  int type; // sensor, switch, or dead-end? see enum {} type in track_node
+  int node; // id, either sensor ID like user-land expects or switch num
+  int dir;  // for switches, what direction they should be in
 };
 
 struct path {

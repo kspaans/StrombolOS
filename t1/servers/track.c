@@ -21,40 +21,46 @@
 /*
  * Dijkstra's Algorithm
  * All data should be initialized to 1000000 (infinity) when first calling this.
+ *
+ * DERP DERP need to do breadth-first
  */
-void dijkstra(int current, int dest, int *data, int *visited, int *previous,
-         struct path *p, struct track_node **graph)
+void dijkstra(struct track_node *current, struct track_node *dest, int *data,
+              int *visited, int *previous, struct path *p)
 {
   int i;
-  int neighbour;
+  struct track_node *neighbour;
+  struct track_node *nnode;
   int min = INFTY;
   int next;
   int direction = 8;
 
   LockAcquire(COM2_W_LOCK);
-  bwprintf(COM2, "DIJKSTRA: current %d dest %d path so far %d\r\n", current,
-           dest, p->count);
+  bwprintf(COM2, "DIJKSTRA: c id %d abs %d  d id %d abs %d path so far %d\r\n",
+           current->id, current->abs_id, dest->id, dest->abs_id, p->count);
   LockRelease(COM2_W_LOCK);
   if (current == dest) return;
 
-  for (i = 0; i < graph[current]->num_edges; ++i) { // neighbours
-    neighbour = graph[current]->edges[i].dest->id;
-    if (visited[neighbour]) continue;
-    data[neighbour] = MIN(data[neighbour],
-                          data[current] + graph[current]->edges[i].dist);
-    min = MIN(min, data[neighbour]);
-    if (min == data[neighbour]) {
-      direction = i;
-      next = neighbour;
-      previous[neighbour] = current;
+  for (i = 0; i < current->num_edges; ++i) { // neighbours
+    neighbour = current->edges[i].dest;
+    if (visited[neighbour->abs_id]) continue;
+    data[neighbour->abs_id] =
+      MIN(data[neighbour->abs_id],
+          data[current->abs_id] + current->edges[i].dist);
+    min = MIN(min, data[neighbour->abs_id]);
+    if (min == data[neighbour->abs_id]) {
+      direction = i; // ahead, behind, or curved
+      next = neighbour->id * 2; // an id, as userland expects
+      nnode = neighbour;
+      previous[neighbour->abs_id] = current->abs_id;
     }
     LockAcquire(COM2_W_LOCK);
-    bwprintf(COM2, "DIJKSTRA-LOOP: i %d neighbour %d data[n] %d min %d\r\n",
-             i, neighbour, data[neighbour], min);
+    bwprintf(COM2, "DIJKSTRA-LOOP: i %d neighbour %d data[n] %dmm min %dmm\r\n",
+             i, neighbour->abs_id, data[neighbour->abs_id], min);
     LockRelease(COM2_W_LOCK);
   }
-  visited[current] = 1;
-  p->node[p->count].node = min;
+  visited[current->abs_id] = 1;
+
+  p->node[p->count].node = next; // kind of dumb/wrong, probably won't end up using this
   p->node[p->count].dir  = direction;
   ++p->count;
   if (p->count >= 20) {
@@ -62,7 +68,7 @@ void dijkstra(int current, int dest, int *data, int *visited, int *previous,
     PANIC;
   }
 
-  return dijkstra(next, dest, data, visited, previous, p, graph);
+  return dijkstra(nnode, dest, data, visited, previous, p);
 }
 
 /*
@@ -419,9 +425,10 @@ void track()
         r = Reply(tid, (char *)&n, sizeof(struct neighbours));
         break;
       case 'P':
-        pdata[m.d1] = 0; // set the initial node's dist to 0
-        dijkstra(m.d1, m.d2, pdata, pvisited, pprevious, &path,
-                 sens_num_to_node);
+        pdata[sens_num_to_node[m.d1]->abs_id] = 0; // set the initial node's dist to 0
+        dijkstra(sens_num_to_node[m.d1], sens_num_to_node[m.d2], pdata,
+                 pvisited, pprevious, &path);
+        // now fixup the path
         r = Reply(tid, (char *)&path, sizeof(struct path));
         break;
       default:
