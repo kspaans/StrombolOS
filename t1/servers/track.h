@@ -40,6 +40,7 @@ struct path_part {
 
 struct path {
   int count;
+  int length;
   struct path_part node[20];
 };
 

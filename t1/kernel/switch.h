@@ -71,7 +71,7 @@ int activate(struct trapframe *t, int SPSR, void (*entry)());
 void install_handler();
 
 #define MAXTASKS 50           // Should do for now.
-#define STACKSIZE 32768       // 32KB
+#define STACKSIZE 327680       // 320KB
 
 #define FOREVER for(;;)
 #define FOREACH(i,n) for(i = 0; i < n; ++i)
