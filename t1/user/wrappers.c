@@ -178,6 +178,9 @@ int ReserveChunks(int sensor, int distance, int goal)
   //distance);
   //LockRelease(COM2_W_LOCK);
   while (d < distance) {
+    if (sensor/2 == goal/2) {
+      return 1337;
+    }
     out.id = 'n';
     out.d1 = sensor;
     out.d2 = goal;
@@ -188,7 +191,7 @@ int ReserveChunks(int sensor, int distance, int goal)
     if (next.destination == -1) { // running to a dead-end
       return -2;
     }
-
+    if (next.destnode.id == goal/2) { return 1337; }
     out.id = 'r';
     out.d1 = next.destination;
     r = Send(track_tid, (char *)&out, sizeof(struct msg), &c, 1);

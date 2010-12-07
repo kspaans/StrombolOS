@@ -394,8 +394,12 @@ struct msg lostfunc (int sens, int time, int senid) {
   return out;
 }
  
+int wiggle (int x) {
+  return (x*3)/2;
+}
+
 #define MARGIN_OF_ERROR 3
-#define STOP_MARGIN     100 // in mm
+#define STOP_MARGIN     200 // in mm
 void train_agent_notsuck () {
   int trid = MyParentTid();
   int senid = WhoIs("sens");
@@ -440,7 +444,7 @@ void train_agent_notsuck () {
  // uint sensorlag = 0;
   uint acceltime;
 
- 
+  int atgoal = 0;
   int trainnum; // what train am i?
 
   struct msg in, out;
@@ -479,10 +483,11 @@ void train_agent_notsuck () {
     out.d4 = velocity;
     Send (trid, (char*)(&out), sizeof(struct msg), (char*)(&in), sizeof(struct msg));
     goal = in.d2;
-    if (reserve_blocked) {
+    if (reserve_blocked && !atgoal) {
       LockAcquire(RESERV_LOCK);
       ReleaseAll();
-      if (ReserveChunks(lastsensor, stopping_distance + STOP_MARGIN, goal) == 0) {
+      int foo = ReserveChunks(lastsensor, wiggle(stopping_distance) + STOP_MARGIN, goal);
+      if (foo == 0) {
         LockAcquire(COM2_W_LOCK);
         bwprintf(COM2, "Train %d reacquired reservation and reaccelerating to "
                  "speed %d\r\n", trainnum, oldspeed);
@@ -502,10 +507,14 @@ void train_agent_notsuck () {
         reserve_blocked = 0;
         accelerating = 1;
       }
+      else if (foo==1337) {
+        atgoal = 1;
+        bwprintf (COM2, "at goal!\n");
+      }
       LockRelease(RESERV_LOCK);
     }
 
-    if (!accelerating) {
+    if (!accelerating && !atgoal) {
       if (in.d1 != currenttrainspeed) {
         accelerating = 1;
         newtrainspeed = in.d1;
@@ -536,7 +545,7 @@ void train_agent_notsuck () {
     dt = ((lastticks - t)*197)/100;
     lastticks = t;
 
-    if (lost) {
+    if (lost && !atgoal) {
       zeromsg(&in);
       in = lostfunc (lastsensor, timesincelost, senid);
       /*
@@ -573,7 +582,7 @@ void train_agent_notsuck () {
         velocity += acc*dt;
       }
     }
-    else if (!lost) {
+    else if (!lost && !atgoal) {
       // poll for sensor TODO
 
       zeromsg(&out);
@@ -597,7 +606,7 @@ void train_agent_notsuck () {
 
         LockAcquire(RESERV_LOCK);
         ReleaseAll();
-        r = ReserveChunks(lastsensor, stopping_distance + STOP_MARGIN,goal);
+        r = ReserveChunks(lastsensor, wiggle(stopping_distance) + STOP_MARGIN,goal);
         if (r == 0) {
           // cool
           char sname[4];
@@ -605,6 +614,18 @@ void train_agent_notsuck () {
           //LockAcquire (COM2_W_LOCK);
           //bwprintf(COM2, "Train %d reserved %s+\r\n", trainnum, sname);
           //LockRelease (COM2_W_LOCK);
+        }
+        else if (r==1337) {
+          accelerating = 1;
+          newvelocity = 0;
+          newtrainspeed = 0;
+          oldspeed = currenttrainspeed;
+          timeofaccel = READ_TIMER3;
+          atgoal = 1;
+          char buf[3];
+          buf[0] = 't'; buf[1] = 0; buf[2] = trainnum;
+          Send(trid, buf, 3, NULL, 0); // stop the train if we can't reserve
+          bwprintf (COM2, "at goal!\n");
         }
         else {
           reserve_blocked = 1;
@@ -628,7 +649,7 @@ void train_agent_notsuck () {
     }
 
     dx += velocity*dt;
-    if (dxuntilnextsensor*MARGIN_OF_ERROR < dx && !lost && !accelerating) {
+    if (dxuntilnextsensor*MARGIN_OF_ERROR < dx && !lost && !accelerating && !atgoal) {
       LockAcquire(COM2_W_LOCK);
       bwprintf(COM2, "<<<< LOST TRAIN %d\r\n", trainnum);
       LockRelease(COM2_W_LOCK);
