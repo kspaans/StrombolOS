@@ -57,10 +57,12 @@ void insertv (struct visitelem *v, struct track_node *n, int dist, struct track_
   }
 }
 
-struct track_node *findpath (struct track_node *current, struct track_node *dest) {
+struct track_node *findpath (struct track_node *current, struct track_node *dest,
+                             struct track_node **switches) {
   LockAcquire (COM2_W_LOCK);
   bwprintf (COM2, "trying to go from %d to %d\n", current->abs_id, dest->abs_id);
   LockRelease (COM2_W_LOCK);
+  int trtid = WhoIs("tr");
   struct visitelem v[80];
   int vi = 0;
   int seen[80];
@@ -91,10 +93,18 @@ struct track_node *findpath (struct track_node *current, struct track_node *dest
 
     struct visitelem n = findnext (v);
     if (n.next->abs_id == dest->abs_id) { // found our guy
-      // SWITCH n.swid to n.swdir
-      // ....
+      char hobomsg[3];
+      hobomsg[0] = 'w';
+      hobomsg[1] = n.swid;
+      hobomsg[2] = n.swdir == 0 ? 'S' :
+                   n.swdir == 1 ? 'S' :
+                   n.swdir == 2 ? 'C' :
+                   'X';
+      if (Send(trtid, hobomsg, 3, NULL, 0) != 0) PANIC;
+
       // UPDATE TRACK SERVER
-      // ....
+      int unfudgedswitch = n.swid < 19 ? n.swid - 1 : (n.swid - 153) + 18;
+      switches[unfudgedswitch]->switch_state = hobomsg[1];
 
       LockAcquire (COM2_W_LOCK);
       char c[4];
@@ -124,7 +134,7 @@ struct track_node *findpath (struct track_node *current, struct track_node *dest
         LockRelease (COM2_W_LOCK);
         vi++;
         seen[n.next->edges[i].dest->abs_id] = 1;
-        if (n.swid = 666 && n.next->abs_id > 40) { n.swid = n.prev->id; n.swdir = n.i; }
+        if (n.swid == 666 && n.next->abs_id > 40) { n.swid = n.prev->id; n.swdir = n.i; }
         insertv (v, n.next->edges[i].dest, n.dist+n.next->edges[i].dist, n.source, n.swid, n.swdir, n.next, i);
       }
       else { LockAcquire (COM2_W_LOCK); bwprintf (COM2, "Already saw %d\n", n.next->edges[i].dest->abs_id); LockRelease (COM2_W_LOCK); }
@@ -583,7 +593,7 @@ void track()
         bwprintf (COM2, "whaT?\n");
   LockRelease (COM2_W_LOCK);
         //pdata[sens_num_to_node[m.d1]->abs_id] = 0; // set the initial node's dist to 0
-        findpath (sens_num_to_node[m.d1], sens_num_to_node[m.d2]);
+        findpath (sens_num_to_node[m.d1], sens_num_to_node[m.d2], switches);
         // now fixup the path
         r = Reply(tid, NULL, 0);
         break;
