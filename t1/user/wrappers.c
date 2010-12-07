@@ -153,7 +153,7 @@ void LockRelease (int l) {
   Send (WhoIs("lk"), msg, 2, NULL, 0);
 }
 
-int ReserveChunks(int sensor, int distance)
+int ReserveChunks(int sensor, int distance, int goal)
 {
   int track_tid;
   int d = 0; // distance reserved so far, in mm
@@ -180,6 +180,7 @@ int ReserveChunks(int sensor, int distance)
   while (d < distance) {
     out.id = 'n';
     out.d1 = sensor;
+    out.d2 = goal;
     if (Send(track_tid, (char *)&out,  sizeof(struct msg), (char *)&next,
              sizeof(struct trip)) != sizeof(next)) {
       PANIC;

@@ -392,7 +392,7 @@ void train_agent_notsuck () {
   int senid = WhoIs("sens");
   int trktid = WhoIs ("trak");
   int calitid = WhoIs ("cali");
-
+  int goal = -1;
   int nextsens; 
   int lastsensor = -1; // TODO: fucked or unfucked version?
   
@@ -469,11 +469,11 @@ void train_agent_notsuck () {
     out.d3 = dx;
     out.d4 = velocity;
     Send (trid, (char*)(&out), sizeof(struct msg), (char*)(&in), sizeof(struct msg));
-
+    goal = in.d2;
     if (reserve_blocked) {
       LockAcquire(RESERV_LOCK);
       ReleaseAll();
-      if (ReserveChunks(lastsensor, stopping_distance + STOP_MARGIN) == 0) {
+      if (ReserveChunks(lastsensor, stopping_distance + STOP_MARGIN, goal) == 0) {
         LockAcquire(COM2_W_LOCK);
         bwprintf(COM2, "Train %d reacquired reservation and reaccelerating to "
                  "speed %d\r\n", trainnum, oldspeed);
@@ -588,7 +588,7 @@ void train_agent_notsuck () {
 
         LockAcquire(RESERV_LOCK);
         ReleaseAll();
-        r = ReserveChunks(lastsensor, stopping_distance + STOP_MARGIN);
+        r = ReserveChunks(lastsensor, stopping_distance + STOP_MARGIN,goal);
         if (r == 0) {
           // cool
           char sname[4];
@@ -768,7 +768,7 @@ void trains () {
   int tid;
   char cmd[64];
   char lastread[10];
-
+  int goals[80];
   int speeds[80];
   int tr2tid[80];
   int locations[80];
@@ -810,11 +810,12 @@ void trains () {
   // Synchro with ui
   Receive (&tid, NULL, 0);
   Reply (tid, NULL, 0);
+    
 
   //drawtrack (trk);
   START_TIMER3();
 
-  for (i = 0; i < 80; i++) { dx[i] = speeds[i] = tr2tid[i] = 0; tid2tr[i] = 0; locations[i] = -2; }
+  for (i = 0; i < 80; i++) { goals[i] = -1; dx[i] = speeds[i] = tr2tid[i] = 0; tid2tr[i] = 0; locations[i] = -2; }
   for (i = 0; i < 10; i++) { lastread[i] = 0; }
   for (i = 0; i < 5 ; i++) { for (j = 0; j < 15; j++) { calibrations[i][j] = 0; } }
 
@@ -853,6 +854,7 @@ start:
         velocity[tid2tr[tid]] = in->d4;
         zeromsg(&out);
         out.d1 = speeds[tid2tr[tid]];
+        out.d2 = goals[tid2tr[tid]];
         if (READ_TIMER3%2 ==0) drawlegend (locations, dx, legend, trk, velocity); // ????TODO
         //bwprintf(COM2, "Giving train %d(%d) new speed: %d --> \r\n",
         //tid2tr[tid],
@@ -887,6 +889,9 @@ start:
 
     Reply (tid, NULL, 0);
     switch (cmd[0]) {
+      case '@': // traingo
+        goals[(int)cmd[1]] = cmd[2];
+        break;
       case 'W': // wh
         LockAcquire (COM2_W_LOCK);
         bwprintf (COM2, "%c%d at %x\n", latest.group, latest.id, latest.time);
