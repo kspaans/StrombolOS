@@ -466,8 +466,8 @@ void train_agent_notsuck () {
     out.id = 'T';
     out.d1 = trainnum;
     out.d2 = currenttrainspeed;
-    Send(calitid, (char *)&out, sizeof(struct msg), (char *)&in,
-         sizeof(struct msg));
+    if (Send(calitid, (char *)&out, sizeof(struct msg), (char *)&in,
+        sizeof(struct msg)) != sizeof(struct msg)) PANIC;
     stopping_distance = in.d1;
 
     zeromsg(&out);
@@ -477,7 +477,8 @@ void train_agent_notsuck () {
     out.d2 = currenttrainspeed;
     out.d3 = dx;
     out.d4 = velocity;
-    Send (trid, (char*)(&out), sizeof(struct msg), (char*)(&in), sizeof(struct msg));
+    if (Send (trid, (char*)(&out), sizeof(struct msg), (char*)(&in),
+              sizeof(struct msg)) != sizeof(struct msg)) PANIC;
 
     if (reserve_blocked) {
       LockAcquire(RESERV_LOCK);
@@ -492,9 +493,9 @@ void train_agent_notsuck () {
         out.id = 'S';
         out.d1 = trainnum;
         out.d2 = 14;
-        int tmp;
-        Send (calitid, (char*)(&out), sizeof (struct msg), (char*)(&tmp), sizeof (int));
-        newvelocity = (tmp*newtrainspeed)/14;// TRUTH
+        if (Send (calitid, (char*)(&out), sizeof (struct msg), (char*)(&in),
+                  sizeof (struct msg)) != sizeof (struct msg)) PANIC;
+        newvelocity = (in.d1*newtrainspeed)/14;// TRUTH
         char buf[3];
         buf[0] = 't'; buf[1] = oldspeed; buf[2] = trainnum;
         Send(trid, buf, 3, NULL, 0);
@@ -520,9 +521,9 @@ void train_agent_notsuck () {
         out.id = 'S';
         out.d1 = trainnum;
         out.d2 = 14;
-        int tmp;
-        Send (calitid, (char*)(&out), sizeof (struct msg), (char*)(&tmp), sizeof (int));
-        newvelocity = (tmp*newtrainspeed)/14;// TRUTH
+        if (Send (calitid, (char*)(&out), sizeof (struct msg), (char*)(&in),
+                  sizeof (struct msg)) != sizeof (struct msg)) PANIC;
+        newvelocity = (in.d1*newtrainspeed)/14;// TRUTH
 
         acc = (newvelocity - velocity)/acceltime;
         timeofaccel = READ_TIMER3;

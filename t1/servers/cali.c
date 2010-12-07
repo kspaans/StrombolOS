@@ -1,6 +1,7 @@
 #include <bwio.h>
 #include <ts7200.h>
 #include <debug.h>
+#include <lock.h>
 #include "servers.h"
 #include "../user/usyscall.h"
 #include "../user/lib.h"
@@ -51,6 +52,6 @@ void cali () {
       case 'T': out.d1 = sdist[trainid(in.d1)][in.d2]; break;
       default: PANIC;
     }
-    Reply (tid, (char*)(&out.d1),sizeof(int)); 
+    Reply (tid, (char*)(&out), sizeof(struct msg));
   }
 }
