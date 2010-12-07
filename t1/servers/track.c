@@ -17,8 +17,11 @@
 //#define // some macro for mapping numbers to IDs
 
 struct visitelem {
-  struct track_node *next, *source;
+  struct track_node *next, *source, *prev;
   int dist;
+  int swdir;
+  int swid;
+  int i;
 };
 
 struct visitelem findnext (struct visitelem *v) {
@@ -38,13 +41,17 @@ struct visitelem findnext (struct visitelem *v) {
   return ans;
 }
 
-void insertv (struct visitelem *v, struct track_node *n, int dist, struct track_node *source) {
+void insertv (struct visitelem *v, struct track_node *n, int dist, struct track_node *source,int swid, int swdir, struct track_node *prev, int ii) {
   int i;
   for (i = 0; i < 80; i++) {
     if (v[i].next == 0) {
       v[i].next = n;
       v[i].dist = dist;
       v[i].source = source;
+      v[i].swid = swid;
+      v[i].swdir = swdir;
+      v[i].prev = prev;
+      v[i].i=ii;
       return;
     }
   }
@@ -56,7 +63,6 @@ struct track_node *findpath (struct track_node *current, struct track_node *dest
   LockRelease (COM2_W_LOCK);
   struct visitelem v[80];
   int vi = 0;
-
   int seen[80];
   int i;
   for (i = 0; i < 80; i++) {
@@ -69,6 +75,7 @@ struct track_node *findpath (struct track_node *current, struct track_node *dest
     v[i].next  = current->edges[i].dest;
     v[i].source = current->edges[i].dest;
     v[i].dist = current->edges[i].dist;
+    if (current->edges[i].dest->abs_id > 40) { v[i].swid = current->edges[i].dest->id; v[i].swdir = i; } else v[i].swid = 666;
     vi++;    
   }
   while (vi) {
@@ -84,6 +91,11 @@ struct track_node *findpath (struct track_node *current, struct track_node *dest
 
     struct visitelem n = findnext (v);
     if (n.next->abs_id == dest->abs_id) { // found our guy
+      // SWITCH n.swid to n.swdir
+      // ....
+      // UPDATE TRACK SERVER
+      // ....
+
       LockAcquire (COM2_W_LOCK);
       char c[4];
       if (n.source->id < 40) {
@@ -112,7 +124,8 @@ struct track_node *findpath (struct track_node *current, struct track_node *dest
         LockRelease (COM2_W_LOCK);
         vi++;
         seen[n.next->edges[i].dest->abs_id] = 1;
-        insertv (v, n.next->edges[i].dest, n.dist+n.next->edges[i].dist, n.source);
+        if (n.swid = 666 && n.next->abs_id > 40) { n.swid = n.prev->id; n.swdir = n.i; }
+        insertv (v, n.next->edges[i].dest, n.dist+n.next->edges[i].dist, n.source, n.swid, n.swdir, n.next, i);
       }
       else { LockAcquire (COM2_W_LOCK); bwprintf (COM2, "Already saw %d\n", n.next->edges[i].dest->abs_id); LockRelease (COM2_W_LOCK); }
     }
