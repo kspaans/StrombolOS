@@ -16,6 +16,115 @@
 
 //#define // some macro for mapping numbers to IDs
 
+struct visitelem {
+  struct track_node *next, *source;
+  int dist;
+};
+
+struct visitelem findnext (struct visitelem *v) {
+  int i;
+  int mini;
+  int mindist = 100000;
+
+  for (i = 0; i < 80; i ++) {
+    if (v[i].next != 0) {
+      mindist = (mindist>v[i].dist) ? v[i].dist : mindist;
+      mini = (mindist==v[i].dist) ? i : mini;
+    }
+  }
+
+  struct visitelem ans = v[mini];
+  v[mini].next = 0;
+  return ans;
+}
+
+void insertv (struct visitelem *v, struct track_node *n, int dist, struct track_node *source) {
+  int i;
+  for (i = 0; i < 80; i++) {
+    if (v[i].next == 0) {
+      v[i].next = n;
+      v[i].dist = dist;
+      v[i].source = source;
+      return;
+    }
+  }
+}
+
+struct track_node *findpath (struct track_node *current, struct track_node *dest) {
+  LockAcquire (COM2_W_LOCK);
+  bwprintf (COM2, "trying to go from %d to %d\n", current->abs_id, dest->abs_id);
+  LockRelease (COM2_W_LOCK);
+  struct visitelem v[80];
+  int vi = 0;
+
+  int seen[80];
+  int i;
+  for (i = 0; i < 80; i++) {
+    seen[i] = 0;
+    v[i].next = 0;
+  }
+    
+  for (i = 0; i < current->num_edges; i++) {
+    seen[current->abs_id] = 1;
+    v[i].next  = current->edges[i].dest;
+    v[i].source = current->edges[i].dest;
+    v[i].dist = current->edges[i].dist;
+    vi++;    
+  }
+  while (vi) {
+    LockAcquire(COM2_W_LOCK);
+    bwprintf (COM2, ">> Iteration\n");
+    bwprintf (COM2, "vi = %d\nvisit list = {", vi);
+    for (i = 0; i < 80; i++) { if (v[i].next != 0) bwprintf (COM2, "%d, ", v[i].next->abs_id); }
+    bwprintf (COM2, "}\nseen = ");
+    for (i=0;i<80;i++) { bwprintf (COM2, "%d",seen[i]); }
+    bwprintf (COM2, "\n");
+    LockRelease (COM2_W_LOCK);
+
+
+    struct visitelem n = findnext (v);
+    if (n.next->abs_id == dest->abs_id) { // found our guy
+      LockAcquire (COM2_W_LOCK);
+      char c[4];
+      if (n.source->id < 40) {
+        sens_id_to_name(n.source->id*2, c); 
+        bwprintf (COM2, "The answer is apparently %s\n", c);
+        LockRelease (COM2_W_LOCK);
+        return n.source;
+       }
+       else {
+         bwprintf (COM2, "next thing is apparently a switch, %d\n", n.source->id);
+         LockRelease (COM2_W_LOCK);
+         return 0; /// ????
+       }
+      return n.source;
+    } 
+    vi--;
+    seen[n.next->abs_id] = 1;
+    LockAcquire (COM2_W_LOCK);
+    bwprintf (COM2, "Next: %d, visit count: %d\n", n.next->abs_id, vi);
+    LockRelease (COM2_W_LOCK);
+    // add their new neighbours to the seen/v 
+    for (i = 0; i < n.next->num_edges; i++) {
+      if (!seen[n.next->edges[i].dest->abs_id]) {
+        LockAcquire (COM2_W_LOCK);
+        bwprintf (COM2, "Adding %d to visit list.\n", n.next->edges[i].dest->abs_id);
+        LockRelease (COM2_W_LOCK);
+        vi++;
+        seen[n.next->edges[i].dest->abs_id] = 1;
+        insertv (v, n.next->edges[i].dest, n.dist+n.next->edges[i].dist, n.source);
+      }
+      else { LockAcquire (COM2_W_LOCK); bwprintf (COM2, "Already saw %d\n", n.next->edges[i].dest->abs_id); LockRelease (COM2_W_LOCK); }
+    }
+   // Delay(100);
+  }
+  bwprintf (COM2, "none found???\n");
+  return 0;
+}
+
+
+
+
 #define MIN(x, y) x < y ? x : y
 #define INFTY 1000000
 #if 0
@@ -55,7 +164,7 @@ void shortestpath(struct track_node *current, struct track_node *dest)
 void dijkstra(struct track_node *current, struct track_node *dest, int *data,
               int *visited, int *previous, struct path *p)
 {
-  int i;
+ /* int i;
   struct track_node *neighbour;
   struct track_node *nnode;
   int min = INFTY;
@@ -97,7 +206,7 @@ void dijkstra(struct track_node *current, struct track_node *dest, int *data,
   }
 
   return dijkstra(nnode, dest, data, visited, previous, p);
-}
+*/}
 
 /*
  * Takes the current sensor and reports the next expected one given the track
@@ -422,10 +531,10 @@ void track()
         break;
       case 'r':
         sens_id_to_name(m.d1, sname);
-        //LockAcquire(COM2_W_LOCK);
-        //bwprintf(COM2, "Task %d asking for %s, current owner: %d\r\n", tid,
-        //         sname, reservations[m.d1 / 2]);
-        //LockRelease(COM2_W_LOCK);
+        LockAcquire(COM2_W_LOCK);
+        bwprintf(COM2, "Task %d asking for %s, current owner: %d\r\n", tid,
+                 sname, reservations[m.d1 / 2]);
+        LockRelease(COM2_W_LOCK);
         // fold sensor IDs of same sensors into one reservation slot, so / 2
         if (reservations[m.d1 / 2] == 0) {
           reservations[m.d1 / 2] = tid;
@@ -457,11 +566,13 @@ void track()
         r = Reply(tid, (char *)&n, sizeof(struct neighbours));
         break;
       case 'P':
-        pdata[sens_num_to_node[m.d1]->abs_id] = 0; // set the initial node's dist to 0
-        dijkstra(sens_num_to_node[m.d1], sens_num_to_node[m.d2], pdata,
-                 pvisited, pprevious, &path);
+        LockAcquire (COM2_W_LOCK);
+        bwprintf (COM2, "whaT?\n");
+  LockRelease (COM2_W_LOCK);
+        //pdata[sens_num_to_node[m.d1]->abs_id] = 0; // set the initial node's dist to 0
+        findpath (sens_num_to_node[m.d1], sens_num_to_node[m.d2]);
         // now fixup the path
-        r = Reply(tid, (char *)&path, sizeof(struct path));
+        r = Reply(tid, NULL, 0);
         break;
       case 'R':
         cnt = 0;
