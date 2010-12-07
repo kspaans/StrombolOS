@@ -380,7 +380,7 @@ void track()
   int pdata[80];        // graph node distance values
   int pvisited[80];     // have we visited the graph node?
   int pprevious[80];    // shortest path in reverse direction
-  int ureserves[10];     // to tell the user (train server) about their reservations
+  int ureserves[800];     // to tell the user (train server) about their reservations
   int *ures = ureserves;
   struct trip t;
   struct neighbours n;
@@ -465,10 +465,10 @@ void track()
         break;
       case 'R':
         cnt = 0;
-        FOREACH(i, 10) { ureserves[i] = -1; }
+        FOREACH(i, 800) { ureserves[i] = -1; }
         FOREACH(i, 72) {
           if (reservations[i] == m.d1) {
-            ureserves[cnt++] = i;
+            ureserves[(m.d1 * 10) + cnt++] = i;
           }
         }
         r = Reply(tid, (char *)&ures, 4);

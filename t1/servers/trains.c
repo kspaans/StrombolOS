@@ -160,7 +160,7 @@ void drawswitches (char *trk, int c) {
  * Reservations are an array of int[10], stop printing after hitting a -1
  */
 void drawlegend (int *locations, uint *dx, int *legend, char *trk,
-                 uint *velocity, int *res) {
+                 uint *velocity, int *res, int *tr2tid) {
   LockAcquire (COM2_W_LOCK);
   CURSORPUSH();
   CURSORMOVE(3,32);
@@ -183,8 +183,10 @@ void drawlegend (int *locations, uint *dx, int *legend, char *trk,
                 s.group, s.id, dx[legend[i]]/10000000,
                 (dx[legend[i]]/1000000)%10, velocity[legend[i]]);
       for (j = 0; j < 10; ++j) {
-        if (res[j] == -1) break;
-        bwprintf(COM2, "%d ", res[j]);
+        //bwprintf(COM2, "||leg %d  tr %d  tid %d ->%x", i, legend[i],
+        //  tr2tid[legend[i]], res[tr2tid[legend[i]]]);
+        if (res[(tr2tid[legend[i]] * 10) + j] == -1) break;
+        bwprintf(COM2, "%d ", res[(tr2tid[legend[i]] * 10) + j]);
       }
    } else bwprintf (COM2, " Train %d     lost!                ",legend[i]);
 /*   
@@ -862,8 +864,9 @@ start:
         if (READ_TIMER3%2 ==0) {
           out.id = 'R';
           out.d1 = tid;
-          Send(WhoIs("trak"), (char *)&out, sizeof(struct msg), (char *)&ures, 4);
-          drawlegend (locations, dx, legend, trk, velocity, ures);
+          if (Send(WhoIs("trak"), (char *)&out, sizeof(struct msg), (char
+          *)&ures, 4) != 4) PANIC;
+          drawlegend (locations, dx, legend, trk, velocity, ures, tr2tid);
         }
         zeromsg(&out);
         out.d1 = speeds[tid2tr[tid]];
@@ -916,8 +919,9 @@ start:
         LockRelease (COM2_W_LOCK);
         out.id = 'R';
         out.d1 = tid2tr[tid];
-        Send(WhoIs("trak"), (char *)&out, sizeof(struct msg), (char *)&ures, 4);
-        drawlegend (locations, dx, legend, trk, velocity, ures);
+        if (Send(WhoIs("trak"), (char *)&out, sizeof(struct msg), (char *)&ures,
+        4) != 4) PANIC;
+        drawlegend (locations, dx, legend, trk, velocity, ures, tr2tid);
         break;
       case 'p': // poll sensors
         switch (r) {
