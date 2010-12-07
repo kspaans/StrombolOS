@@ -127,6 +127,34 @@ struct track_node *findpath (struct track_node *current, struct track_node *dest
 
 #define MIN(x, y) x < y ? x : y
 #define INFTY 1000000
+#if 0
+void shortestpath(struct track_node *current, struct track_node *dest)
+{
+  int to_visit[80];
+  int visit_dist[80];
+  int visit_idx = 0;
+  int curdist   = 0;
+  int i, j;
+
+  while () {
+    for (i = 0; i < current->num_edges; ++i) {
+      to_visit[visit_idx]       = current->edges[i];
+      visit_distance[visit_idx] = current->edges[i].dist + curdist;
+      ++visit_idx;
+    }
+
+    if (visit_idx == 0) {
+      // no path!
+      return;
+    }
+
+
+    asd;
+    opf;
+  }
+}
+#endif
+
 /*
  * Dijkstra's Algorithm
  * All data should be initialized to 1000000 (infinity) when first calling this.
@@ -435,6 +463,7 @@ void print_reservations(int *r)
  * release:    "f####"  release this TID's reservations
  * neighbours: "N####"  find all possible neighbours of a sensor
  * Path:       "Pd1|d2" use Dijkstra's Algorithm for d1 to d2
+ * Res?:       "R####"  ask for train ##'s reservations
  */
 void track()
 {
@@ -460,11 +489,14 @@ void track()
   int pdata[80];        // graph node distance values
   int pvisited[80];     // have we visited the graph node?
   int pprevious[80];    // shortest path in reverse direction
+  int ureserves[800];     // to tell the user (train server) about their reservations
+  int *ures = ureserves;
   struct trip t;
   struct neighbours n;
   struct msg m;
   struct path path;
   int i, r, tid;
+  int cnt;
   char c;
   char sname[4];
 
@@ -511,7 +543,7 @@ void track()
         else {
           r = Reply(tid, &c, 1); // couldn't reserve
         }
-        print_reservations(reservations);
+        //print_reservations(reservations);
         break;
       case 'f':
         FOREACH(i, 72) {
@@ -520,7 +552,7 @@ void track()
           }
         }
         r = Reply(tid, NULL, 0);
-        print_reservations(reservations);
+        //print_reservations(reservations);
         break;
       case 'N':
         n.count = 0; n.n[0] = n.n[1] = n.n[2] = n.n[3] = 0;
@@ -541,6 +573,16 @@ void track()
         findpath (sens_num_to_node[m.d1], sens_num_to_node[m.d2]);
         // now fixup the path
         r = Reply(tid, NULL, 0);
+        break;
+      case 'R':
+        cnt = 0;
+        FOREACH(i, 800) { ureserves[i] = -1; }
+        FOREACH(i, 72) {
+          if (reservations[i] == m.d1) {
+            ureserves[(m.d1 * 10) + cnt++] = i;
+          }
+        }
+        r = Reply(tid, (char *)&ures, 4);
         break;
       default:
         PANIC;

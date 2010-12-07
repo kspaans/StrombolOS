@@ -12,3 +12,6 @@
 !k3/user/usyscall.s
 !k4/kernel/switch.s
 !k4/user/usyscall.s
+
+!t1/kernel/switch.s
+!t1/user/usyscall.s
