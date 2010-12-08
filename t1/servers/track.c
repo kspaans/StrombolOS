@@ -59,9 +59,10 @@ void insertv (struct visitelem *v, struct track_node *n, int dist, struct track_
 
 struct track_node *findpath (struct track_node *current, struct track_node *dest,
                              struct track_node **switches) {
-  LockAcquire (COM2_W_LOCK);
-  bwprintf (COM2, "trying to go from %d to %d\n", current->abs_id, dest->abs_id);
-  LockRelease (COM2_W_LOCK);
+  //LockAcquire (COM2_W_LOCK);
+  //bwprintf (COM2, "trying to go from %d to %d\n", current->abs_id, dest->abs_id);
+  //LockRelease (COM2_W_LOCK);
+bwputc(COM2, 'f');
   int trtid = WhoIs("tr");
   struct visitelem v[80];
   int vi = 0;
@@ -80,64 +81,80 @@ struct track_node *findpath (struct track_node *current, struct track_node *dest
     if (current->edges[i].dest->abs_id > 40) { v[i].swid = current->edges[i].dest->id; v[i].swdir = i; } else v[i].swid = 666;
     vi++;    
   }
+bwputc(COM2, 'g');
   while (vi) {
-    LockAcquire(COM2_W_LOCK);
-    bwprintf (COM2, ">> Iteration\n");
-    bwprintf (COM2, "vi = %d\nvisit list = {", vi);
-    for (i = 0; i < 80; i++) { if (v[i].next != 0) bwprintf (COM2, "%d, ", v[i].next->abs_id); }
-    bwprintf (COM2, "}\nseen = ");
-    for (i=0;i<80;i++) { bwprintf (COM2, "%d",seen[i]); }
-    bwprintf (COM2, "\n");
-    LockRelease (COM2_W_LOCK);
+    //LockAcquire(COM2_W_LOCK);
+    //bwprintf (COM2, ">> Iteration\n");
+    //bwprintf (COM2, "vi = %d\nvisit list = {", vi);
+    //for (i = 0; i < 80; i++) { if (v[i].next != 0) bwprintf (COM2, "%d, ", v[i].next->abs_id); }
+    //bwprintf (COM2, "}\nseen = ");
+    //for (i=0;i<80;i++) { bwprintf (COM2, "%d",seen[i]); }
+    //bwprintf (COM2, "\n");
+    //LockRelease (COM2_W_LOCK);
 
 
     struct visitelem n = findnext (v);
     if (n.next->abs_id == dest->abs_id) { // found our guy
-      char hobomsg[3];
-      hobomsg[0] = 'w';
-      hobomsg[1] = n.swid;
-      hobomsg[2] = n.swdir == 0 ? 'S' :
-                   n.swdir == 1 ? 'S' :
-                   n.swdir == 2 ? 'C' :
-                   'X';
-      if (Send(trtid, hobomsg, 3, NULL, 0) != 0) PANIC;
+      if (n.swid != 666) {
+      LockAcquire(COM2_W_LOCK);
+      bwprintf(COM2, "found our guy: swid %d dir %d\r\n", n.swid, n.swdir);
+      LockRelease(COM2_W_LOCK);
+        char hobomsg[3];
+        hobomsg[0] = 'w';
+        hobomsg[1] = n.swid;
+        hobomsg[2] = n.swdir == 0 ? 'S' :
+                     n.swdir == 1 ? 'S' :
+                     n.swdir == 2 ? 'C' :
+                     'X';
+//bwputc(COM2, 'h');
+        if (Send(trtid, hobomsg, 3, NULL, 0) != 0) PANIC;
+//bwputc(COM2, 'i');
 
-      // UPDATE TRACK SERVER
-      int unfudgedswitch = n.swid < 19 ? n.swid - 1 : (n.swid - 153) + 18;
-      switches[unfudgedswitch]->switch_state = hobomsg[1];
+        // UPDATE TRACK SERVER
+        //int unfudgedswitch = n.swid < 19 ? n.swid - 1 : (n.swid - 153) + 18;
+        //switches[unfudgedswitch]->switch_state = hobomsg[1];
+      }
+//bwputc(COM2, 'j');
 
-      LockAcquire (COM2_W_LOCK);
-      char c[4];
+      //LockAcquire (COM2_W_LOCK);
+      //char c[4];
       if (n.source->id < 40) {
-        sens_id_to_name(n.source->id*2, c); 
-        bwprintf (COM2, "The answer is apparently %s\n", c);
-        LockRelease (COM2_W_LOCK);
+        //sens_id_to_name(n.source->id*2, c); 
+        //bwprintf (COM2, "The answer is apparently %s\n", c);
+        //LockRelease (COM2_W_LOCK);
         return n.source;
        }
        else {
-         bwprintf (COM2, "next thing is apparently a switch, %d\n", n.source->id);
-         LockRelease (COM2_W_LOCK);
+         //bwprintf (COM2, "next thing is apparently a switch, %d\n", n.source->id);
+         //LockRelease (COM2_W_LOCK);
          return 0; /// ????
        }
       return n.source;
     } 
     vi--;
+//bwputc(COM2, 'k');
     seen[n.next->abs_id] = 1;
-    LockAcquire (COM2_W_LOCK);
-    bwprintf (COM2, "Next: %d, visit count: %d\n", n.next->abs_id, vi);
-    LockRelease (COM2_W_LOCK);
+    //LockAcquire (COM2_W_LOCK);
+    //bwprintf (COM2, "Next: %d, visit count: %d\n", n.next->abs_id, vi);
+    //LockRelease (COM2_W_LOCK);
     // add their new neighbours to the seen/v 
     for (i = 0; i < n.next->num_edges; i++) {
       if (!seen[n.next->edges[i].dest->abs_id]) {
-        LockAcquire (COM2_W_LOCK);
-        bwprintf (COM2, "Adding %d to visit list.\n", n.next->edges[i].dest->abs_id);
-        LockRelease (COM2_W_LOCK);
+bwputc(COM2, 'l');
+        //LockAcquire (COM2_W_LOCK);
+        //bwprintf (COM2, "Adding %d to visit list.\n", n.next->edges[i].dest->abs_id);
+        //LockRelease (COM2_W_LOCK);
         vi++;
         seen[n.next->edges[i].dest->abs_id] = 1;
         if (n.swid == 666 && n.next->abs_id > 40) { n.swid = n.prev->id; n.swdir = n.i; }
         insertv (v, n.next->edges[i].dest, n.dist+n.next->edges[i].dist, n.source, n.swid, n.swdir, n.next, i);
       }
-      else { LockAcquire (COM2_W_LOCK); bwprintf (COM2, "Already saw %d\n", n.next->edges[i].dest->abs_id); LockRelease (COM2_W_LOCK); }
+      else {
+//bwputc(COM2, 'L');
+        //LockAcquire (COM2_W_LOCK);
+        //bwprintf (COM2, "Already saw %d\n", n.next->edges[i].dest->abs_id);
+        ////LockRelease (COM2_W_LOCK);
+      }
     }
    // Delay(100);
   }
@@ -521,7 +538,7 @@ void track()
   int i, r, tid;
   int cnt;
   char c;
-  char sname[4];
+  //char sname[4];
 
   RegisterAs("trak");
   FOREACH(i, 40) reservations[i] = 0;
@@ -553,11 +570,11 @@ void track()
         }
         break;
       case 'r':
-        sens_id_to_name(m.d1, sname);
-        LockAcquire(COM2_W_LOCK);
-        bwprintf(COM2, "Task %d asking for %s, current owner: %d\r\n", tid,
-                 sname, reservations[m.d1 / 2]);
-        LockRelease(COM2_W_LOCK);
+        //sens_id_to_name(m.d1, sname);
+        //LockAcquire(COM2_W_LOCK);
+        //bwprintf(COM2, "Task %d asking for %s, current owner: %d\r\n", tid,
+        //         sname, reservations[m.d1 / 2]);
+        //LockRelease(COM2_W_LOCK);
         // fold sensor IDs of same sensors into one reservation slot, so / 2
         if (reservations[m.d1 / 2] == 0) {
           reservations[m.d1 / 2] = tid;
@@ -607,6 +624,10 @@ void track()
         }
         r = Reply(tid, (char *)&ures, 4);
         break;
+      case '~':
+bwputc(COM2, 'e');
+        findpath(sens_num_to_node[m.d1], sens_num_to_node[m.d2], switches);
+        r = Reply(tid, NULL, 0);
       default:
         PANIC;
     }

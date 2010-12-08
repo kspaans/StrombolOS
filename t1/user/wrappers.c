@@ -155,6 +155,7 @@ void LockRelease (int l) {
 
 int ReserveChunks(int sensor, int distance, int goal)
 {
+bwputc(COM2, 'b');
   int track_tid;
   int d = 0; // distance reserved so far, in mm
   int r;
@@ -163,7 +164,22 @@ int ReserveChunks(int sensor, int distance, int goal)
   struct trip next;
   //char sname[4];
 
+
   track_tid = WhoIs("trak"); // TODO: speed me up
+
+  out.id = '~';
+  out.d1 = sensor;
+  out.d2 = goal;
+  r = Send(track_tid, (char *)&out, sizeof(struct msg), NULL, 0);
+  if (r != 0) PANIC;
+bwputc(COM2, 'c');
+bwputc(COM2, 'c');
+bwputc(COM2, 'c');
+bwputc(COM2, 'c');
+bwputc(COM2, 'c');
+bwputc(COM2, 'c');
+bwputc(COM2, 'c');
+bwputc(COM2, 'c');
 
   out.id = 'r';
   out.d1 = sensor;
@@ -171,6 +187,7 @@ int ReserveChunks(int sensor, int distance, int goal)
   if (r == 1) { // could not reserve
     return -1;
   }
+//bwputc(COM2, 'd');
 
   //sens_id_to_name(sensor, sname);
   //LockAcquire(COM2_W_LOCK);

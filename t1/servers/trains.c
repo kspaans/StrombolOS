@@ -489,6 +489,7 @@ void train_agent_notsuck () {
       LockAcquire(RESERV_LOCK);
       ReleaseAll();
       int foo = ReserveChunks(lastsensor, wiggle(stopping_distance) + STOP_MARGIN, goal);
+bwputc(COM2, 'a');
       if (foo == 0) {
         LockAcquire(COM2_W_LOCK);
         bwprintf(COM2, "Train %d reacquired reservation and reaccelerating to "
@@ -608,6 +609,7 @@ void train_agent_notsuck () {
 
         LockAcquire(RESERV_LOCK);
         ReleaseAll();
+bwputc(COM2, '0');
         r = ReserveChunks(lastsensor, wiggle(stopping_distance) + STOP_MARGIN,goal);
         if (r == 0) {
           // cool
