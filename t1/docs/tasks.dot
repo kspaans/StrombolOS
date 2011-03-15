@@ -1,0 +1,30 @@
+digraph tasks {
+  kernel [shape="rectangle"];
+  usys   [label="User Syscall\nLibrary"];
+  wm     [label="Window Manager"];
+ 
+  kernel -> usys [arrowhead = none];
+  kernel -> clock_not [arrowhead = none];
+  kernel -> uart1rx_not [arrowhead = none];
+  kernel -> uart1tx_not [arrowhead = none];
+  kernel -> uart2rx_not [arrowhead = none];
+  kernel -> uart2tx_not [arrowhead = none];
+
+  clock_not -> clock_serv
+  uart1rx_not -> uart1_serv
+  uart1tx_not -> uart1_serv
+  uart2rx_not -> uart2_serv
+  uart2tx_not -> uart2_serv
+
+  uart2_serv -> bwio [arrowhead = none, arrowtail = normal];
+  uart2_serv -> Getc [arrowhead = none, arrowtail = normal];
+  uart2_serv -> Putc [arrowhead = none, arrowtail = normal];
+  uart1_serv -> Getc [arrowhead = none, arrowtail = normal];
+  uart1_serv -> Putc [arrowhead = none, arrowtail = normal];
+  train_serv -> uart1_serv;
+
+  {clock_serv; uart1_serv; uart2_serv; train_serv; sensor_serv; wm} -> name_serv; //[arrowhead = none, arrowtail = normal];
+
+  {clock_serv; uart2_serv; name_serv; train_serv; sensor_serv; wm; wm} -> Users [arrowhead = none, arrowtail = normal];
+  //name_serv -> Users [style = invis];
+}

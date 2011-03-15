@@ -1,0 +1,12 @@
+digraph track_data {
+  rankdir = LR;
+  label = "struct track_node {}";
+
+  track_data [shape=record, label="enum type|int id|char switch_state|int x|int y|int num_edges|"
+                                 +"{track_edge edges | {int dist|<AHEAD> track"
+                                 +"_node dest|int dist|<BEHIND> track_node des"
+                                 +"t|int dist|<CURVED> track_node dest}}"];
+  track_data:AHEAD  -> track_ahead;
+  track_data:BEHIND -> track_behind;
+  track_data:CURVED -> track_curved;
+}

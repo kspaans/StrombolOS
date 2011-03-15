@@ -1,0 +1,67 @@
+TD should only be defined to the kernel proper?
+C struct -> DOT tool
+
+Deadlock detection?
+using timer to try and gague how long we spend in the kernel
+USE A STATE MACHINE FOR SEND/RECV/REPLY  (with coroutines?)
+  coroutines shouldn't be that bad, but something very similar can probably be implemented using two tasks and something like direct context switches!
+Write a "IS_IN_USERS_STACK" macro
+write stub code for testing our libraries, etc
+do a state diagram of the SRR to make sure we have it correct
+
+Don't overflow names for nameserver
+Bugs in replying to delayed tasks. -- have artificial wakeups to test this?
+
+Hardware independent stuff is is in switch.s and servers/notifier_*, boot.{c,h},
+  ts7200.h, kernel.c, ...
+multiple senders all sending at once handled? XXX test me! <--- Even though messageQueue is only of size 10, we seem to be able to handle 19 senders?
+Check that replies are going to the correct TIDs?
+cleanup includes and user-->/<--kernel separation
+scheulder printing code -- show entire state of scheduler.
+
+ADD RECV+REPLY() function to make speedfastgood!
+add more instrumentaiton counters, like how many times a certain codepath is
+  taken in the kernel... use timer to see how long a task has been running, how
+  many context switches, how long tasks spend in each state, etc.
+if we recv, that removes it from our mesgq, so is there a way to recover that state? so that we can recover from receving in the wrong order...
+measure how long tasks spend in what states
+syscall to change task priority
+OH SHIT, make sure to remove everything on Exit(), including awaitevent!!
+Ugh, it takes 30us just to go through the priority queues to find the USER_LOW tasks vs SYSCALL_HIGH tasks
+Warehouse for the UART1 server.
+
+train server has command of polling rather than periodic?
+train server reads sensors, play there.
+tests to see how long it takes to print X (100,1000,10000) chars to the screen/ctrlr -- to measure syscall overhead
+putstr, right inside of serial server. -- test it using calls to syscalls, number of interrupts, etc.
+`-> Make a special shutdown function that prints everything
+re-add Shutdown() to PANIC
+ugh, add size stuff to heap code
+cleanup the delayqueue allocation
+fiddle with UART2 notifier so that it does auto-echo of keys pressed?
+
+sometimes when going over thr rough spots, the train misses commands?
+
+What we want for train tracking:
+A graph representing the track - notes with pointers to edges, etc
+edges have weights for distance, features like switch, sensor?
+list of pointers for sensors, a lookup table that we can launch from when we start/find ourselves after getting lost
+With that, Dijkstra's algo should be easy, and "next_expected_sensor" should be easy.
+count interrupt response time
+count number of context switches
+implement WaitPid()
+
+What about delays when we call Time(), e.g. timer is probed, but THEN task is put to sleep
+Fix TRAP to work for any train
+Improve tracking of lost trains py propogating switch states if they aren't what we expect.
+
+Robustify tracking my making secondary and tertiary predictions of where we are.
+ `-- help with lost-tracking too
+  `-- chance lostfunc to make use of last sensor, and new neighbours function
+Use stop distances. in asking for reservations -- calibrate this
+get path planning with Dijkstra's Algorithm
+get more tight reservations -- poll more often??
+ `-- or instead use their estimated distance to sooner when they are within stopping distance of the next train. (wait, can we know this? -- Inter-train communication?)
+be able to tell the trains to go the same speed -- calibrate!
+Use Cowan's online train calibration hack.
+measure accel times, get decel times given stop distances

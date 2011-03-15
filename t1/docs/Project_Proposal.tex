@@ -1,0 +1,48 @@
+\documentclass{article}
+\usepackage{fullpage}
+
+\title{CS 452 Project Proposal}
+\author{Jacob Parker, Kyle Spaans}
+\date{Monday November 29, 2010}
+
+\begin{document}
+
+\maketitle
+
+\section*{In Which the Trains are Entrained}
+Also known as, ``Entrain Tracking'' or perhaps ``$N$-Train Tracking'' if you're
+so inclined.
+
+\subsection*{Overview}
+For our final project, we propose to track more than two trains. We plan to
+track at least 3 trains on the track simultaneously. $N$ trains will be
+travelling on the track, either in loops, or to and from destinations, or both.
+The trains will throttle their speeds or stop to avoid collisions.
+
+\subsection*{Technical Challenges}
+\begin{itemize}
+\item Tracking multiple trains requires tight calibration.
+\item We need to finish the better lost-train algorithm as described in our T2
+documentation. We have to be careful when trying to find ourselves because we
+wish to avoid teleportation.
+\item We will need to have better deadlock dedication and resolution (when
+possible) strategies.
+\end{itemize} 
+
+\subsection*{Technical Solutions}
+\begin{itemize}
+\item For better calibration we will need to spend more time calibrating trains
+instead of our current data (which was derived from one train and tweaked as
+needed.)
+\item The lost algorithm is partially written but has some bugs that need to be
+ironed out. 
+\item With three trains the possible combinations for deadlocking are more
+severe. There now exist impossible cases such as one train being trapped in
+between two stopped trains. We need to be able to detect this and display a
+friendly message.
+\item It may help our reservation code if we reduce the size of segments (i.e.
+subdivide the track.) This has limited utility in tight sections of the track
+(subdivided lines may not have a sensor) but on longer portions of the track it
+may be necessary so as to prevent deadlocks.
+\end{itemize}
+\end{document}

@@ -44,6 +44,7 @@ struct td {
   int mq_next;            // next message in queue to be processed
   int mq_last;            // free slot in the queue
   struct mq replyq;
+  struct mq fuckq;
 };
 
 int swtch(int arg);

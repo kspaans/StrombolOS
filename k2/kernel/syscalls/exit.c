@@ -8,7 +8,7 @@
 
 void _kExit(struct td *taskd)
 {
-  bwprintf (COM2, "TID %d EXITING\r\n", taskd->tid);
+//  bwprintf (COM2, "TID %d EXITING\r\n", taskd->tid);
   taskd->state = DEFUNCT;
   return;
 }
